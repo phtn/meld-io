@@ -1,444 +1,232 @@
-'use client'
-import { type EndpointConfig, hasBodySchema } from '@/lib/meld/endpoints'
-import { parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from '@octanejs/nuqs'
-import { useCallback, useEffect, useMemo } from 'octane'
+import { type EndpointConfig, type EndpointParameter, type OpenApiSchema, MELD_API_VERSION } from '@/lib/meld/endpoints'
+import { useCallback, useEffect, useLinkedState } from 'octane'
 import type { MeldEnvironment } from '../types'
+
+type RequestParams = Record<string, string | string[]>
 
 interface UseEndpointFormProps {
   endpoint: EndpointConfig
   apiKey: string
+  apiKeyAvailable: boolean
   countryCode: string
   onRequestChange?: (
     url: string,
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    method: EndpointConfig['method'],
     headers: Record<string, string>,
     body?: unknown,
-    params?: Record<string, string>
+    params?: RequestParams,
   ) => void
 }
+
 interface RequestInfo {
   url: string
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  method: EndpointConfig['method']
   headers: Record<string, string>
+  wireHeaders: Record<string, string>
   body?: unknown
-  params?: Record<string, string>
+  params?: RequestParams
+  bodyError?: string
 }
-// Helper to create query state parsers for all endpoint parameters
-function createParamParsers(endpoint: EndpointConfig) {
-  const parsers: Record<string, ReturnType<typeof parseAsString.withOptions>> = {}
-  endpoint.params?.forEach((param) => {
-    parsers[`meld.param.${param.name}`] = parseAsString.withOptions({
-      history: 'push',
-      shallow: false
-    })
+
+function parameterKey(parameter: EndpointParameter): string {
+  return `${parameter.in}:${parameter.name}`
+}
+
+function stringifyValue(value: unknown): string {
+  if (value === undefined || value === null) return ''
+  if (Array.isArray(value)) return value.join(', ')
+  if (typeof value === 'object') return JSON.stringify(value)
+  return String(value)
+}
+
+function getParameterExample(parameter: EndpointParameter): unknown {
+  if (parameter.example !== undefined && parameter.example !== '') return parameter.example
+  if (parameter.schema.example !== undefined && parameter.schema.example !== '') return parameter.schema.example
+  if (parameter.schema.default !== undefined && parameter.schema.default !== '') return parameter.schema.default
+  return parameter.schema.enum?.[0]
+}
+
+function initialParameterValues(endpoint: EndpointConfig, countryCode: string): Record<string, string> {
+  const values: Record<string, string> = {}
+  endpoint.parameters.forEach((parameter) => {
+    if (parameter.name.toLowerCase() === 'meld-version' || parameter.name.toLowerCase() === 'authorization') return
+    const example = parameter.name === 'countryCode' && !parameter.example
+      ? countryCode || getParameterExample(parameter)
+      : getParameterExample(parameter)
+    values[parameterKey(parameter)] = stringifyValue(example)
   })
-  if (hasBodySchema(endpoint)) {
-    const bodySchemaKeys = Object.keys(endpoint.bodySchema) as Array<keyof typeof endpoint.bodySchema>
-    bodySchemaKeys.forEach((key) => {
-      parsers[`meld.body.${String(key)}`] = parseAsString.withOptions({
-        history: 'push',
-        shallow: false
-      })
-    })
+  return values
+}
+
+function exampleFromSchema(schema: OpenApiSchema | undefined, depth = 0): unknown {
+  if (!schema || depth > 7) return {}
+  if (schema.example !== undefined) return schema.example
+  if (schema.default !== undefined) return schema.default
+  if (schema.enum?.length) return schema.enum[0]
+  if (schema.oneOf?.length) return exampleFromSchema(schema.oneOf[0], depth + 1)
+  if (schema.anyOf?.length) return exampleFromSchema(schema.anyOf[0], depth + 1)
+  if (schema.allOf?.length) {
+    return Object.assign({}, ...schema.allOf.map((part) => exampleFromSchema(part, depth + 1)))
   }
-  return parsers
+
+  if (schema.type === 'object' || schema.properties) {
+    const result: Record<string, unknown> = {}
+    Object.entries(schema.properties || {}).forEach(([key, property]) => {
+      if (schema.required?.includes(key) || property.example !== undefined || property.default !== undefined) {
+        result[key] = exampleFromSchema(property, depth + 1)
+      }
+    })
+    return result
+  }
+  if (schema.type === 'array') return []
+  if (schema.type === 'integer' || schema.type === 'number') return schema.minimum ?? 0
+  if (schema.type === 'boolean') return false
+  if (schema.type === 'string') return ''
+  return {}
 }
-export function useEndpointForm({ endpoint, apiKey, countryCode, onRequestChange }: UseEndpointFormProps) {
-  const [environment, setEnvironment] = useQueryState(
-    'meld.environment',
-    parseAsStringEnum(['sandbox', 'production']).withDefault('sandbox').withOptions({
-      history: 'push',
-      shallow: false
-    })
-  ) as [MeldEnvironment, (value: MeldEnvironment) => void]
-  // Create query states for all parameters dynamically
-  const paramParsers = useMemo(() => createParamParsers(endpoint), [endpoint])
-  const [paramStates, setParamStates] = useQueryStates(paramParsers as Parameters<typeof useQueryStates>[0], {
-    history: 'push',
-    shallow: false
+
+function applyDetectedCountry(value: unknown, schema: OpenApiSchema | undefined, countryCode: string): unknown {
+  if (!countryCode || !schema || !value || typeof value !== 'object') return value
+  if (Array.isArray(value)) return value.map((item) => applyDetectedCountry(item, schema.items, countryCode))
+
+  const result = { ...(value as Record<string, unknown>) }
+  Object.entries(schema.properties || {}).forEach(([name, property]) => {
+    if (name === 'countryCode' && typeof result[name] === 'string') result[name] = countryCode
+    else if (result[name] !== undefined) result[name] = applyDetectedCountry(result[name], property, countryCode)
   })
-  // Extract param and body values from query states
-  const paramValues = useMemo(() => {
-    const values: Record<string, string> = {}
-    endpoint.params?.forEach((param) => {
-      const key = `meld.param.${param.name}`
-      const value = paramStates[key]
-      if (value) {
-        values[param.name] = value
-      } else if (param.name === 'countryCode' && endpoint.id === 'quote' && countryCode) {
-        values[param.name] = countryCode
-      }
-    })
-    return values
-  }, [endpoint.params, endpoint.id, paramStates, countryCode])
-  const bodyValues = useMemo(() => {
-    const values: Record<string, string> = {}
-    if (hasBodySchema(endpoint)) {
-      // Type-safe iteration over bodySchema keys
-      const bodySchemaKeys = Object.keys(endpoint.bodySchema) as Array<keyof typeof endpoint.bodySchema>
-      bodySchemaKeys.forEach((key) => {
-        const queryKey = `meld.body.${String(key)}`
-        const value = paramStates[queryKey]
-        if (value) {
-          values[String(key)] = value
-        } else {
-          // If param is also in params, check paramValues as fallback
-          const param = endpoint.params?.find((p) => p.name === String(key))
-          if (param) {
-            const paramKey = `meld.param.${String(key)}`
-            const paramValue = paramStates[paramKey]
-            if (paramValue) {
-              values[String(key)] = paramValue
-            } else if (key === 'countryCode' && endpoint.id === 'quote' && countryCode) {
-              values[String(key)] = countryCode
-            }
-          } else if (key === 'countryCode' && endpoint.id === 'quote' && countryCode) {
-            values[String(key)] = countryCode
-          }
-        }
-      })
-    }
-    return values
-  }, [endpoint, paramStates, countryCode])
-  const setParamValue = useCallback(
-    (name: string, value: string | null) => {
-      const key = `meld.param.${name}`
-      const updates: Record<string, string | null> = { [key]: value }
-      // If this param is also in bodySchema, sync the body value
-      if (hasBodySchema(endpoint) && name in endpoint.bodySchema) {
-        const bodyKey = name as keyof typeof endpoint.bodySchema
-        updates[`meld.body.${String(bodyKey)}`] = value
-      }
-      setParamStates(updates)
-    },
-    [setParamStates, endpoint]
+  return result
+}
+
+function initialBodyText(endpoint: EndpointConfig, countryCode: string): string {
+  if (!endpoint.requestBody) return ''
+  const example = endpoint.requestBody.example !== undefined
+    ? endpoint.requestBody.example
+    : exampleFromSchema(endpoint.requestBody.schema)
+  const value = applyDetectedCountry(example, endpoint.requestBody.schema, countryCode)
+  return JSON.stringify(value, null, 2)
+}
+
+function parseRequestBody(bodyText: string, requestBody: EndpointConfig['requestBody']): { body?: unknown; error?: string } {
+  if (!requestBody) return {};
+  if (!bodyText.trim()) {
+    return requestBody.required ? { error: 'A JSON request body is required.' } : {};
+  }
+  try {
+    return { body: JSON.parse(bodyText) };
+  } catch {
+    return { error: 'Request body must be valid JSON.' };
+  }
+}
+
+function shouldRedactHeader(name: string): boolean {
+  return /authorization|private|oauth/i.test(name)
+}
+
+export function useEndpointForm({ endpoint, apiKey, apiKeyAvailable, countryCode, onRequestChange }: UseEndpointFormProps) {
+  const [environment, setEnvironment] = useLinkedState('meld-environment', () => 'sandbox' as MeldEnvironment)
+  const [paramValues, setParamValues] = useLinkedState(
+    endpoint.id,
+    () => initialParameterValues(endpoint, countryCode),
   )
-  const setBodyValue = useCallback(
-    (name: string, value: string | null) => {
-      const key = `meld.body.${name}`
-      const updates: Record<string, string | null> = { [key]: value }
-      // If this body field is also in params, sync the param value
-      const param = endpoint.params?.find((p) => p.name === name)
-      if (param) {
-        updates[`meld.param.${name}`] = value
-      }
-      setParamStates(updates)
-    },
-    [setParamStates, endpoint.params]
-  )
-  // Helper function to get base URL
-  const getBaseUrl = useCallback((env: MeldEnvironment): string => {
-    return env === 'sandbox' ? 'https://api-sb.meld.io' : 'https://api.meld.io'
-  }, [])
-  // Helper function to get param type
-  const getParamType = useCallback(
-    (paramName: string): string | undefined => {
-      return endpoint.params?.find((p) => p.name === paramName)?.type
-    },
-    [endpoint.params]
-  )
-  // Helper function to get value with proper type conversion
-  const getTypedValue = useCallback((value: string, paramType: string | undefined): unknown => {
-    if (paramType === 'number') {
-      const numValue = Number(value)
-      return isNaN(numValue) ? value : numValue
-    }
-    return value
-  }, [])
-  // Build request info
+  const [bodyText, setBodyText] = useLinkedState(endpoint.id, () => initialBodyText(endpoint, countryCode))
+
+  const setParamValue = useCallback((key: string, value: string | null) => {
+    setParamValues((current) => ({ ...current, [key]: value || '' }))
+  }, [setParamValues])
+
+  const setBodyValue = useCallback((value: string) => setBodyText(value), [setBodyText])
+
   const buildRequestInfo = useCallback((): RequestInfo => {
-    const baseUrl = getBaseUrl(environment)
     const pathParams: Record<string, string> = {}
-    const queryParams: Record<string, string> = {}
-    // Separate path params from query params
-    endpoint.params?.forEach((param) => {
-      const value = paramValues[param.name]
-      if (value) {
-        if (endpoint.path.includes(`{${param.name}}`)) {
-          pathParams[param.name] = value
-        } else if (endpoint.method === 'GET') {
-          queryParams[param.name] = value
+    const queryParams: RequestParams = {}
+    const wireHeaders: Record<string, string> = {}
+    let url = `${environment === 'sandbox' ? 'https://api-sb.meld.io' : 'https://api.meld.io'}${endpoint.path}`
+
+    endpoint.parameters.forEach((parameter) => {
+      const value = paramValues[parameterKey(parameter)] || ''
+      const normalizedLocation = parameter.in.toLowerCase()
+      if (normalizedLocation === 'path') {
+        if (value) pathParams[parameter.name] = value
+      } else if (normalizedLocation === 'query') {
+        if (value) {
+          const isArray = parameter.schema.type === 'array'
+          const arrayValues = isArray ? value.split(',').map((part) => part.trim()).filter(Boolean) : []
+          if (!isArray) {
+            queryParams[parameter.name] = value
+          } else {
+            const delimiter = parameter.style === 'spaceDelimited' ? ' ' : parameter.style === 'pipeDelimited' ? '|' : ','
+            const explode = parameter.explode ?? (parameter.style ?? 'form') === 'form'
+            queryParams[parameter.name] = explode ? arrayValues : arrayValues.join(delimiter)
+          }
         }
+      } else if (normalizedLocation === 'header' && parameter.name.toLowerCase() !== 'meld-version' && parameter.name.toLowerCase() !== 'authorization') {
+        if (value) wireHeaders[parameter.name] = value
       }
     })
-    // Build URL
-    let url = `${baseUrl}${endpoint.path.startsWith('/') ? endpoint.path : `/${endpoint.path}`}`
-    // Replace path parameters
-    Object.entries(pathParams).forEach(([key, value]) => {
-      url = url.replace(`{${key}}`, value)
+
+    Object.entries(pathParams).forEach(([name, value]) => {
+      url = url.replace(`{${name}}`, encodeURIComponent(value))
     })
-    // Add query parameters for GET requests
-    if (Object.keys(queryParams).length > 0 && endpoint.method === 'GET') {
-      const queryString = new URLSearchParams(queryParams).toString()
-      url = `${url}?${queryString}`
-    }
-    // Build body
-    let body: unknown | undefined
-    if (endpoint.method === 'POST' || endpoint.method === 'PUT') {
-      // Special handling for createWidgetSession endpoint
-      if (endpoint.id === 'createWidgetSession') {
-        const sessionData: Record<string, unknown> = {}
-        let sessionTypeValue: string | undefined
-        // Collect all values from bodyValues and paramValues
-        const allValues: Record<string, string> = { ...bodyValues }
-        endpoint.params?.forEach((param) => {
-          const value = paramValues[param.name]
-          if (value && !endpoint.path.includes(`{${param.name}}`)) {
-            allValues[param.name] = value
-          }
-        })
-        // Structure the body for createWidgetSession
-        Object.entries(allValues).forEach(([key, value]) => {
-          if (value) {
-            if (key === 'sessionType') {
-              sessionTypeValue = value
-            } else {
-              // For sessionData, keep sourceAmount as string (as per API requirement)
-              // All other fields respect their type definitions
-              if (key === 'sourceAmount') {
-                sessionData[key] = value
-              } else {
-                const paramType = getParamType(key)
-                sessionData[key] = getTypedValue(value, paramType)
-              }
-            }
-          }
-        })
-        // Build the nested body structure
-        const nestedBody: Record<string, unknown> = {}
-        if (sessionTypeValue) {
-          nestedBody.sessionType = sessionTypeValue
-        }
-        if (Object.keys(sessionData).length > 0) {
-          nestedBody.sessionData = sessionData
-        }
-        body = Object.keys(nestedBody).length > 0 ? nestedBody : undefined
+    const queryString = new URLSearchParams()
+    Object.entries(queryParams).forEach(([name, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((item) => queryString.append(name, item))
       } else {
-        // Default behavior for other endpoints
-        const bodyObj: Record<string, unknown> = {}
-        // Type-safe iteration over bodyValues
-        Object.entries(bodyValues).forEach(([key, value]) => {
-          if (value) {
-            const paramType = getParamType(key)
-            // Type assertion needed here since bodyObj is Record<string, unknown>
-            // but we know the keys are valid from bodySchema
-            bodyObj[key] = getTypedValue(value, paramType)
-          }
-        })
-        // Also include params that aren't path params for POST/PUT
-        endpoint.params?.forEach((param) => {
-          const value = paramValues[param.name]
-          if (value && !endpoint.path.includes(`{${param.name}}`)) {
-            bodyObj[param.name] = getTypedValue(value, param.type)
-          }
-        })
-        // Auto-inject countryCode for quote endpoint if not already present
-        if (endpoint.id === 'quote' && !bodyObj.countryCode && countryCode) {
-          bodyObj.countryCode = countryCode
-        }
-        body = Object.keys(bodyObj).length > 0 ? bodyObj : undefined
+        queryString.set(name, value)
       }
-    }
-    // Build headers
+    })
+    if (queryString.size > 0) url += `?${queryString.toString()}`
+
+    const { body, error: bodyError } = parseRequestBody(bodyText, endpoint.requestBody)
+
     const headers: Record<string, string> = {
-      Authorization: apiKey ? `BASIC ${apiKey.substring(0, 10)}...` : 'BASIC [API Key Required]',
+      Authorization: apiKey.trim()
+        ? 'BASIC [OVERRIDE REDACTED]'
+        : apiKeyAvailable ? 'BASIC [SERVER KEY]' : 'BASIC [NOT CONFIGURED]',
       Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'Meld-Version': '2025-03-04'
+      'Meld-Version': MELD_API_VERSION,
     }
-    // Combine params - include pathParams for all methods so they can be replaced in URL
-    const allParams = { ...pathParams, ...queryParams }
+    if (endpoint.requestBody) headers['Content-Type'] = endpoint.requestBody.contentType || 'application/json'
+    Object.entries(wireHeaders).forEach(([name, value]) => {
+      headers[name] = shouldRedactHeader(name) ? '[REDACTED]' : value
+    })
+
+    const params = { ...pathParams, ...queryParams }
     return {
       url,
       method: endpoint.method,
       headers,
+      wireHeaders,
       body,
-      params: Object.keys(allParams).length > 0 ? allParams : undefined
+      params: Object.keys(params).length > 0 ? params : undefined,
+      bodyError,
     }
-  }, [endpoint, environment, paramValues, bodyValues, apiKey, countryCode, getBaseUrl, getParamType, getTypedValue])
-  // Notify parent of request changes
+  }, [endpoint, environment, paramValues, bodyText, apiKey, apiKeyAvailable])
+
   useEffect(() => {
     if (!onRequestChange) return
     const requestInfo = buildRequestInfo()
     onRequestChange(requestInfo.url, requestInfo.method, requestInfo.headers, requestInfo.body, requestInfo.params)
   }, [onRequestChange, buildRequestInfo])
-  // Initialize default values and sync countryCode
-  useEffect(() => {
-    const updates: Record<string, string | null> = {}
-    endpoint.params?.forEach((param) => {
-      const key = `meld.param.${param.name}`
-      const currentValue = paramStates[key]
-      const isInBodySchema = hasBodySchema(endpoint) && param.name in endpoint.bodySchema
-      const bodyKey = isInBodySchema ? `meld.body.${param.name}` : undefined
-      const currentBodyValue = bodyKey ? paramStates[bodyKey] : undefined
-      if (!currentValue) {
-        if (param.name === 'countryCode' && endpoint.id === 'quote' && countryCode) {
-          updates[key] = countryCode
-          if (isInBodySchema && bodyKey) {
-            updates[bodyKey] = countryCode
-          }
-        } else if (param.examples.length > 0) {
-          const defaultValue = param.examples[0] || null
-          updates[key] = defaultValue
-          // Sync to body if it's also in bodySchema
-          if (isInBodySchema && bodyKey && !currentBodyValue) {
-            updates[bodyKey] = defaultValue
-          }
-        }
-      } else if (
-        param.name === 'countryCode' &&
-        endpoint.id === 'quote' &&
-        countryCode &&
-        currentValue !== countryCode
-      ) {
-        updates[key] = countryCode
-        if (isInBodySchema && bodyKey) {
-          updates[bodyKey] = countryCode
-        }
-      } else if (isInBodySchema && bodyKey && currentValue && !currentBodyValue) {
-        // Sync param value to body if param has value but body doesn't
-        updates[bodyKey] = currentValue
-      } else if (isInBodySchema && bodyKey && currentBodyValue && !currentValue) {
-        // Sync body value to param if body has value but param doesn't
-        updates[key] = currentBodyValue
-      } else if (isInBodySchema && bodyKey && currentValue && currentBodyValue && currentValue !== currentBodyValue) {
-        // If both exist but differ, prefer param value (or we could prefer body, but param seems more authoritative)
-        updates[bodyKey] = currentValue
-      }
-    })
-    if (hasBodySchema(endpoint)) {
-      const bodySchemaKeys = Object.keys(endpoint.bodySchema) as Array<keyof typeof endpoint.bodySchema>
-      bodySchemaKeys.forEach((key) => {
-        const keyStr = String(key)
-        const queryKey = `meld.body.${keyStr}`
-        const currentValue = paramStates[queryKey]
-        const param = endpoint.params?.find((p) => p.name === keyStr)
-        const paramKey = param ? `meld.param.${keyStr}` : undefined
-        const currentParamValue = paramKey ? paramStates[paramKey] : undefined
-        if (!currentValue) {
-          if (keyStr === 'countryCode' && endpoint.id === 'quote' && countryCode) {
-            updates[queryKey] = countryCode
-            if (paramKey) {
-              updates[paramKey] = countryCode
-            }
-          } else if (param && param.examples.length > 0) {
-            const defaultValue = param.examples[0] || null
-            updates[queryKey] = defaultValue
-            // Sync to param if param doesn't have a value
-            if (paramKey && !currentParamValue) {
-              updates[paramKey] = defaultValue
-            }
-          }
-        } else if (keyStr === 'countryCode' && endpoint.id === 'quote' && countryCode && currentValue !== countryCode) {
-          updates[queryKey] = countryCode
-          if (paramKey) {
-            updates[paramKey] = countryCode
-          }
-        } else if (paramKey && currentValue && !currentParamValue) {
-          // Sync body value to param if body has value but param doesn't
-          updates[paramKey] = currentValue
-        }
-      })
-    }
-    if (Object.keys(updates).length > 0) {
-      setParamStates(updates)
-    }
-  }, [endpoint, countryCode, paramStates, setParamStates])
-  // Build request info for submission
+
   const buildSubmitRequest = useCallback(() => {
-    const pathParams: Record<string, string> = {}
-    const queryParams: Record<string, string> = {}
-    // Separate path params from query params
-    endpoint.params?.forEach((param) => {
-      const value = paramValues[param.name]
-      if (value) {
-        if (endpoint.path.includes(`{${param.name}}`)) {
-          pathParams[param.name] = value
-        } else if (endpoint.method === 'GET') {
-          queryParams[param.name] = value
-        }
-      }
-    })
-    let body: unknown | undefined
-    if (endpoint.method === 'POST' || endpoint.method === 'PUT') {
-      // Special handling for createWidgetSession endpoint
-      if (endpoint.id === 'createWidgetSession') {
-        const sessionData: Record<string, unknown> = {}
-        let sessionTypeValue: string | undefined
-        // Collect all values from bodyValues and paramValues
-        const allValues: Record<string, string> = { ...bodyValues }
-        endpoint.params?.forEach((param) => {
-          const value = paramValues[param.name]
-          if (value && !endpoint.path.includes(`{${param.name}}`)) {
-            allValues[param.name] = value
-          }
-        })
-        // Structure the body for createWidgetSession
-        Object.entries(allValues).forEach(([key, value]) => {
-          if (value) {
-            if (key === 'sessionType') {
-              sessionTypeValue = value
-            } else {
-              // For sessionData, keep sourceAmount as string (as per API requirement)
-              // All other fields respect their type definitions
-              if (key === 'sourceAmount') {
-                sessionData[key] = value
-              } else {
-                const paramType = getParamType(key)
-                sessionData[key] = getTypedValue(value, paramType)
-              }
-            }
-          }
-        })
-        // Build the nested body structure
-        const nestedBody: Record<string, unknown> = {}
-        if (sessionTypeValue) {
-          nestedBody.sessionType = sessionTypeValue
-        }
-        if (Object.keys(sessionData).length > 0) {
-          nestedBody.sessionData = sessionData
-        }
-        body = Object.keys(nestedBody).length > 0 ? nestedBody : undefined
-      } else {
-        // Default behavior for other endpoints
-        const bodyObj: Record<string, unknown> = {}
-        // Type-safe iteration over bodyValues
-        Object.entries(bodyValues).forEach(([key, value]) => {
-          if (value) {
-            const paramType = getParamType(key)
-            // Type assertion needed here since bodyObj is Record<string, unknown>
-            // but we know the keys are valid from bodySchema
-            bodyObj[key] = getTypedValue(value, paramType)
-          }
-        })
-        // Also include params that aren't path params for POST/PUT
-        endpoint.params?.forEach((param) => {
-          const value = paramValues[param.name]
-          if (value && !endpoint.path.includes(`{${param.name}}`)) {
-            bodyObj[param.name] = getTypedValue(value, param.type)
-          }
-        })
-        // Auto-inject countryCode for quote endpoint if not already present
-        if (endpoint.id === 'quote' && !bodyObj.countryCode && countryCode) {
-          bodyObj.countryCode = countryCode
-        }
-        body = Object.keys(bodyObj).length > 0 ? bodyObj : undefined
-      }
-    }
-    // Include pathParams for all methods so they can be replaced in URL
-    const allParams = { ...pathParams, ...queryParams }
+    const requestInfo = buildRequestInfo()
     return {
-      body,
-      params: allParams
+      body: requestInfo.body,
+      params: requestInfo.params || {},
+      headers: requestInfo.wireHeaders,
+      bodyError: requestInfo.bodyError,
     }
-  }, [endpoint, paramValues, bodyValues, countryCode, getParamType, getTypedValue])
+  }, [buildRequestInfo])
+
   return {
     environment,
     setEnvironment,
     paramValues,
-    bodyValues,
     setParamValue,
+    bodyText,
+    bodyError: parseRequestBody(bodyText, endpoint.requestBody).error,
     setBodyValue,
-    buildSubmitRequest
+    buildSubmitRequest,
   }
 }

@@ -1,4 +1,4 @@
-# meld-io
+# Meld API Studio
 
 A [Beast](https://www.npmjs.com/package/beast-tsrx) project powered by
 [TSRX](https://tsrx.dev/) and [Octane](https://octanejs.dev/).
@@ -8,17 +8,31 @@ bun install
 bun run dev
 ```
 
-The starter is one quiet screen: a headline, a counter that shows component
-state, and links to the docs. It follows the system light/dark preference. The
-palette, type, and motion live in a few custom properties at the top of
-`src/style.css`.
+For default authentication, copy `.env.example` to `.env` and set
+`MELD_API_KEY` to your Meld API key. The server uses this key for dashboard
+requests; it is not added to the browser bundle or browser storage. You can
+enter an optional per-tab override in the dashboard. `bun run preview` serves
+the production build with the same server-side API proxy.
 
-Edit `src/App.btsx` to get started. Declare typed props at the top of the BTSX
-file; the Beast bundler adapter compiles it into native TSRX and then lets Octane
-produce the browser module.
+The catalog follows Meld's dated `2026-02-03` OpenAPI reference and groups all 77
+operations under Crypto, Network Partners, Bank Linking, Payments, Customer,
+Service Providers, Webhooks, and Beta. Service Providers is marked deprecated
+and disabled because Meld says that API was removed on July 31, 2026. Requests
+use the matching `Meld-Version` header. The theme toggle follows the browser
+preference on first load and remembers your choice.
 
-The starter pins the tested `octane@0.13.8` toolchain. Run the complete local
-verification before shipping:
+Refresh the generated endpoint catalog from Meld's official OpenAPI specs with:
+
+```bash
+bun run sync:meld-api
+```
+
+The dashboard composition starts in `src/App.btsx`; endpoint forms and category
+navigation live in `src/components/`. `src/lib/meld/catalog.generated.json` is
+generated from Meld's OpenAPI specs by `scripts/sync-meld-openapi.ts`.
+
+The project pins the `octane@0.13.8` toolchain and compatible adapters. Run the
+complete local verification before shipping:
 
 ```bash
 bun run check
@@ -42,8 +56,8 @@ import { createScope } from "octane/signals"
 
 Record application changes in [CHANGELOG.md](CHANGELOG.md).
 
-Node compiler builds require `@tsrx/oxc@0.20.0`, included explicitly in the
-starter. The TSRX type-checking plugin is pinned to `0.6.3`.
+Node compiler builds require `@tsrx/oxc@0.20.0`. The TSRX type-checking plugin is
+pinned to `0.6.3`.
 
 ## Selected stack
 

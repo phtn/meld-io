@@ -1,7 +1,16 @@
+import { cn } from "@/lib/utils";
+
 props { method }: { method: string }
-setup const color = method === "GET" ? "var(--color-get)" : method === "POST" ? "var(--color-post)" : "var(--color-put)";
+setup
+  const methodColor = method === "GET"
+    ? "bg-[#82D8F0] dark:bg-[#58CEEE]"
+    : method === "POST" || method === "PUT"
+      ? "bg-[#FDCA7B] dark:bg-[#FDC268]"
+      : method === "PATCH"
+        ? "bg-[#EAB0FD] dark:bg-[#E397FC]"
+        : "bg-[#FC9785] dark:bg-[#FB806A]";
+  const letter = method === "GET" ? "G" : method === "DELETE" ? "D" : "P";
 span(
-  ~ className="text-xs font-brk rounded-sm px-1 py-0.5 bg-zinc-200 dark:bg-zinc-950"
-  ~ style={{ color }}
+  ~ className={cn("grid size-7 shrink-0 place-items-center rounded-[5px] font-mono text-base font-bold leading-none text-[#111111] dark:text-white", methodColor)}
   ~ )
-  | #{method}
+  | #{letter}

@@ -1,93 +1,87 @@
 module "use client";
 import EndpointForm from "@/components/EndpointForm.btsx";
-import EndpointSelector from "@/components/EndpointSelector.btsx";
 import RequestType from "@/components/RequestType.btsx";
 import Response from "@/components/Response.btsx";
-import { getEndpointById, meldEndpoints } from "@/lib/meld/endpoints";
+import { getEndpointById } from "@/lib/meld/endpoints";
+import type { MeldMethod } from "@/lib/meld/endpoints";
 import { useCountryDetection } from "@/hooks/use-country-detection";
 import { useMeldApi } from "@/hooks/use-meld-api";
 import type { MeldEnvironment, RequestPreview } from "../types";
-import { useEffect, useState } from "octane";
-import { useProviderContext } from "@/ctx/ProviderCtx.btsx";
+import { useCallback, useEffect, useState } from "octane";
 
+module
+  interface MeldContentProps {
+    selectedEndpointId: string;
+  }
+
+props { selectedEndpointId }: MeldContentProps
 setup
-  const projectContext = useProviderContext();
-  const defaultEndpointId = meldEndpoints[0]?.id || "health";
-  const contextEndpointId = projectContext?.meldEndpointId || null;
-  const [selectedEndpointId, setSelectedEndpointId] = useState<string>(contextEndpointId || defaultEndpointId);
+  const defaultEndpointId = "crypto-post-payments-crypto-quote";
   const [apiKey, setApiKey] = useState<string>("");
+  const [serverApiKeyAvailable, setServerApiKeyAvailable] = useState(false);
   const [requestPreview, setRequestPreview] = useState<RequestPreview | null>(null);
   const { loading, response, handleApiCall } = useMeldApi();
   const { countryCode } = useCountryDetection();
 
-  // Sync with context when it changes
-  // useEffect(() => {
-  //   if (contextEndpointId) {
-  //     setSelectedEndpointId(contextEndpointId)
-  //   }
-  // }, [contextEndpointId])
-  // Update context when endpoint changes
-  const handleEndpointChange = (id: string) => {
-    setSelectedEndpointId(id);
-    projectContext?.setMeldEndpointId(id);
-  };
-
   useEffect(() => {
-    const loadApiKey = async () => {
-      try {
-        const res = await fetch("/api/meld/config");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.apiKey) {
-            setApiKey(data.apiKey);
-          }
-        }
-      }
-      catch (error) {
-        console.error("Failed to load API key:", error);
-      }
-    };
-    loadApiKey();
+    let active = true;
+    fetch("/api/meld/config")
+      .then((result) => result.ok ? result.json() : null)
+      .then((config: { configured?: boolean } | null) => {
+        if (active) setServerApiKeyAvailable(Boolean(config?.configured));
+      })
+      .catch(() => {
+        if (active) setServerApiKeyAvailable(false);
+      });
+    return () => { active = false; };
   }, []);
 
-  const selectedEndpoint = getEndpointById(selectedEndpointId);
-
-  const handleSubmit = (endpoint: string, apiKey: string, environment: MeldEnvironment, method: "GET" | "POST" | "PUT" | "DELETE", body?: unknown, params?: Record<string, string>) => {
-    handleApiCall(endpoint, apiKey, environment, method, body, params);
+  const handleApiKeyChange = (value: string) => {
+    setApiKey(value);
   };
 
-  const handleRequestChange = (url: string, method: "GET" | "POST" | "PUT" | "DELETE", headers: Record<string, string>, body?: unknown, params?: Record<string, string>) => {
-    setRequestPreview({
-      url,
-      method,
-      headers,
-      body,
-      params
-    });
+  const selectedEndpoint = getEndpointById(selectedEndpointId) || getEndpointById(defaultEndpointId);
+
+  const handleSubmit = (endpoint: string, key: string, environment: MeldEnvironment, method: MeldMethod, body?: unknown, params?: Record<string, string | string[]>, headers?: Record<string, string>) => {
+    handleApiCall(endpoint, key, environment, method, body, params, headers, serverApiKeyAvailable);
   };
-div(className="min-h-screen bg-zinc-50 dark:bg-black p-4 md:p-0")
-  div(className="w-full h-full")
-    div(className="grid grid-cols-1 lg:grid-cols-12 gap-0")
-      div(className="lg:col-span-2")
-        EndpointSelector(selectedEndpoint={selectedEndpointId} onSelect={handleEndpointChange})
-      div(className="lg:col-span-6")
-        div(className="grid grid-cols-1 lg:grid-cols-5 gap-0")
-          div(className="lg:col-span-2")
-            if selectedEndpoint
-              RequestType(endpoint={selectedEndpoint})
-          div(className="lg:col-span-3")
-            if selectedEndpoint
-              EndpointForm(
-                ~ endpoint={selectedEndpoint}
-                ~ onSubmit={handleSubmit}
-                ~ onRequestChange={handleRequestChange}
-                ~ loading={loading}
-                ~ apiKey={apiKey}
-                ~ countryCode={countryCode}
-                ~ )
-      div(className="lg:col-span-4")
-        Response(
-          ~ response={response}
-          ~ requestPreview={requestPreview}
-          ~ responseWithURL={selectedEndpoint?.responseWithURL}
+
+  const handleRequestChange = useCallback((url: string, method: MeldMethod, headers: Record<string, string>, body?: unknown, params?: Record<string, string | string[]>) => {
+    setRequestPreview({ url, method, headers, body, params });
+  }, []);
+
+div(className="space-y-5")
+  section(className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-950/[0.025] sm:p-5 dark:border-zinc-800 dark:bg-zinc-900/80")
+    div(className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between")
+      div(className="max-w-md")
+        label(className="block text-sm font-semibold" htmlFor="meld-api-key") Meld API key
+        p(className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400") Optional override. Blank uses MELD_API_KEY from the server environment.
+      div(className="w-full sm:max-w-xl")
+        input(
+          ~ id="meld-api-key"
+          ~ className="w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 font-mono text-sm text-zinc-900 outline-none transition placeholder:font-sans placeholder:text-zinc-400 focus:border-zinc-500 focus:ring-4 focus:ring-zinc-950/5 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:focus:border-zinc-500 dark:focus:ring-white/5"
+          ~ type="password"
+          ~ autoComplete="off"
+          ~ spellCheck={false}
+          ~ placeholder={serverApiKeyAvailable ? "Using server key; enter an override if needed" : "Paste a Meld API key or set MELD_API_KEY in .env"}
+          ~ value={apiKey}
+          ~ onInput={(event) => handleApiKeyChange(event.currentTarget.value)}
           ~ )
+  div(className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(19rem,0.9fr)_minmax(21rem,1.1fr)]")
+    section(className="min-w-0 space-y-4")
+      if selectedEndpoint
+        fragment
+          div(className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-950/[0.025] dark:border-zinc-800 dark:bg-zinc-900/80")
+            RequestType(endpoint={selectedEndpoint})
+          div(className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-950/[0.025] dark:border-zinc-800 dark:bg-zinc-900/80")
+            EndpointForm(
+              ~ endpoint={selectedEndpoint}
+              ~ onSubmit={handleSubmit}
+              ~ onRequestChange={handleRequestChange}
+              ~ loading={loading}
+              ~ apiKey={apiKey}
+              ~ apiKeyAvailable={serverApiKeyAvailable}
+              ~ countryCode={countryCode}
+              ~ )
+    section(className="min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-950/[0.025] dark:border-zinc-800 dark:bg-zinc-900/80")
+      Response(response={response} requestPreview={requestPreview} responseWithURL={selectedEndpoint?.responseWithURL})

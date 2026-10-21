@@ -15,7 +15,7 @@ component ThemeToggle
     ~ type='button'
     ~ className='inline-flex size-7 cursor-pointer items-center justify-center rounded-full hover:bg-muted hover:text-foreground/85 text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/30 dark:hover:bg-white/15 transition-all duration-200 ease-out active:scale-97 active:rotate-6'
     ~ onClick={toggleTheme}
-    ~ aria-label='Dark theme'
+    ~ aria-label={title}
     ~ aria-pressed={theme === 'dark'}
     ~ title={title}
     ~ )
@@ -27,7 +27,7 @@ module
   }
 
   export { ThemeToggle }
-  export { useTheme } from '@/lib/theme-context'
+  export { useTheme } from '@/lib/theme/theme-context'
 
 props { children }: ThemeProviderProps
 
@@ -43,4 +43,4 @@ setup
   useEffect(() => applyTheme(theme), [theme])
 
 ThemeContext(value={value})
-  div(className="size-screen overflow-hidden") #{children}
+  div(className="min-h-screen w-full") #{children}

@@ -1,0 +1,9 @@
+module "use client";
+import { createRootRoute, createRouter, RouterProvider } from "@octanejs/tanstack-router";
+import App from "./App.btsx";
+
+setup
+  const rootRoute = createRootRoute({ component: App });
+  const router = createRouter({ routeTree: rootRoute });
+
+RouterProvider(router={router})

@@ -105,7 +105,7 @@ else
               ~ rel="noopener noreferrer"
               ~ )
               | Open Widget &rarr;
-        JsonViewer(data={response.data || response.error} maxHeight="max-h-96")
+        JsonViewer(data={response.data !== undefined ? response.data : response.error} maxHeight="max-h-96")
     if !response
       div
         p(className="text-xs text-zinc-500 dark:text-zinc-400 italic") No response yet. Send the request to see the result.

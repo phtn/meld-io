@@ -1,8 +1,8 @@
 import { createRoot } from 'octane'
-import App from './App.btsx'
+import RouterRoot from './RouterRoot.btsx'
 import './style.css'
 
 const container = document.getElementById('app')
 if (container === null) throw new Error('Missing #app container.')
 
-createRoot(container).render(App, { docsUrl: 'https://beast-docs.vercel.app' })
+createRoot(container).render(RouterRoot, {})

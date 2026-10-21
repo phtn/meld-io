@@ -1,7 +1,7 @@
 props { type }: { type: string }
-setup const color = type === "string" ? "var(--color-string)" : type === "number" ? "var(--color-number)" : "var(--color-boolean)";
+setup const color = type === "string" ? "#1d4ed8" : type === "number" ? "#7e22ce" : "#b45309";
 span(
-  ~ className="text-xs font-brk rounded-sm px-1 py-0.5 bg-zinc-200 dark:bg-zinc-950"
+  ~ className="inline-flex rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-[10px] dark:border-zinc-700 dark:bg-zinc-950"
   ~ style={{ color }}
   ~ )
   | #{type}

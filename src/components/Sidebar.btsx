@@ -2,12 +2,16 @@ import { cn } from "@/lib/utils"
 import {Icon, type IconName} from "@/lib/icons"
 import { navGroups } from "@/lib/navs"
 import { Link } from "@octanejs/tanstack-router"
-import { createElement, useRef, useLayoutEffect } from "octane"
+import { createElement, useRef, useLayoutEffect, type OctaneNode } from "octane"
 import FluidTooltip, { FluidTooltipContent, FluidTooltipRoot, FluidTooltipTrigger } from "@/ui/FluidTooltip.btsx"
 import { ThemeToggle } from './ThemeProvider.btsx';
 
 module
   export interface SidebarProps {
+    path: string
+    isCompact?: boolean
+    toggleSidebar: VoidFunction
+    children?: OctaneNode
   }
 
   export interface SidebarItemProps {
@@ -145,13 +149,17 @@ component SidebarNav
   props { path, className, isCompact = false }: { path: string; className?: string; isCompact?: boolean }
   SidebarNavTooltips(path={path} className={cn('mt-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden', className)} isCompact={isCompact})
 
-props { path, isCompact = false, toggleSidebar }: { path: string; isCompact?: boolean; toggleSidebar: VoidFunction }
+props { path, isCompact = false, toggleSidebar, children }: SidebarProps
 aside(className={SIDEBAR_CLASS} data-compact={isCompact || undefined})
 
   div(className="flex items-center justify-center size-16")
     button(className={cn('h-[16px] w-[19px] rounded-[4px] bg-muted-foreground flex items-center px-0.75 py-0.75 relative transition-all duration-180 active:scale-97 active:bg-foreground group active:skew-2', {'active:-skew-3': isCompact})} onClick={toggleSidebar})
       div(className={cn('h-[10px] w-[6.25px] rounded-[2.5px] bg-background absolute transition-all duration-240 ease-out group-active:scale-102 active:shadow-1px', {'translate-x-[6.5px] group-active:scale-85': !isCompact})})
-  SidebarNavTooltips(path={path} isCompact={isCompact} className="mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden")
+  if children && !isCompact
+    div(className="mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden")
+      | #{children}
+  else
+    SidebarNavTooltips(path={path} isCompact={isCompact} className="mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden")
   div(className="h-12 shrink-0")
     div(className="flex items-center h-12 gap-2 px-2-xs")
       div(className="flex-1 min-w-0")

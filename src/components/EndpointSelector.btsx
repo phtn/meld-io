@@ -1,37 +1,89 @@
 module "use client";
 import Method from "./Method.btsx";
-import { meldEndpoints } from "@/lib/meld/endpoints";
+import { endpointCategories, meldEndpoints } from "@/lib/meld/endpoints";
+import { cn } from "@/lib/utils";
 import { useState } from "octane";
+
 module
+  interface CategoryListProps {
+    categories: Array<{
+      id: string;
+      name: string;
+      endpoints: typeof meldEndpoints;
+    }>;
+    selectedEndpoint: string;
+    onSelect: (endpointId: string) => void;
+  }
+
   interface EndpointSelectorProps {
     ~ selectedEndpoint: string;
     ~ onSelect: (endpointId: string) => void;
-    ~ }
+  }
+
+component CategoryList
+  props { categories, selectedEndpoint, onSelect }: CategoryListProps
+  each category in categories key category.id
+    section
+      div(className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-surface px-1 py-2 dark:bg-surface/33")
+        span(className="truncate text-[10px] font-normal uppercase tracking-widest text-muted-foreground/70") #{category.name}
+        span(className="shrink-0 font-mono text-2xs tabular-nums text-muted-foreground") #{category.endpoints.length}
+      div(className="space-y-1")
+        each endpoint in category.endpoints key endpoint.id
+          button(
+            ~ onClick={() => onSelect(endpoint.id)}
+            ~ disabled={endpoint.categoryDeprecated || endpoint.deprecated}
+            ~ className={cn(
+            ~ "relative z-10 flex w-full min-w-0 items-center gap-3.5 rounded-[10px] border border-transparent px-2 py-2 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+            ~ selectedEndpoint === endpoint.id
+            ~ ? "bg-[#111111] text-[#F8F8F8] shadow-[0_0_0_1px_#777] dark:bg-[#F7F7F7] dark:text-[#111111] dark:shadow-[0_0_0_1px_#888]"
+            ~ : "bg-transparent text-foreground/70 hover:text-foreground",
+            ~ "disabled:cursor-not-allowed disabled:opacity-45",
+            ~ )}
+            ~ )
+            div(className="flex min-w-0 flex-1 items-center gap-3")
+              Method(method={endpoint.method})
+              span(className="min-w-0 flex-1 truncate font-mono text-xs font-medium leading-tight sm:text-[13px]") #{endpoint.name}
+              if endpoint.deprecated || endpoint.categoryDeprecated
+                span(className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-amber-300 dark:text-amber-800") Deprecated
 
 props { selectedEndpoint, onSelect }: EndpointSelectorProps
 setup
   const [searchQuery, setSearchQuery] = useState("");
+  const query = searchQuery.trim().toLowerCase();
+  const filteredCategories = endpointCategories.map((category) => ({
+    ...category,
+    endpoints: meldEndpoints.filter((endpoint) =>
+        endpoint.categoryId === category.id && (!query ||
+        endpoint.name.toLowerCase().includes(query) ||
+        endpoint.path.toLowerCase().includes(query) ||
+        endpoint.description.toLowerCase().includes(query) ||
+        category.name.toLowerCase().includes(query) ||
+        (category.deprecated && query.includes("deprecated"))),
+    ),
+  })).filter((category) => category.endpoints.length > 0);
+  const activeCategories = filteredCategories.filter((category) => !category.deprecated);
+  const deprecatedCategories = filteredCategories.filter((category) => category.deprecated);
 
-  const filteredEndpoints = meldEndpoints.filter((endpoint) => endpoint.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    endpoint.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    endpoint.description.toLowerCase().includes(searchQuery.toLowerCase()));
-div(className="dark:bg-zinc-900")
-  .mb-4
+div(className="min-w-0 bg-transparent")
+  .px-2.py-3
     input(
-      ~ className="w-full px-1 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600"
+      ~ aria-label="Search endpoints"
+      ~ className="w-full rounded-[8px] border border-sidebar-border bg-background/60 px-2.5 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus-visible:ring-2 focus-visible:ring-focus"
       ~ type="text"
-      ~ placeholder="Search endpoints..."
+      ~ placeholder="Search all API categories..."
       ~ value={searchQuery}
-      ~ onInput={(e) => setSearchQuery(e.target.value)}
+      ~ onInput={(event) => setSearchQuery(event.currentTarget.value)}
       ~ )
-  div(className="space-y-1 h-[calc(100lvh-200px)] overflow-y-auto")
-    each endpoint in filteredEndpoints key endpoint.id
-      button(
-        ~ onClick={() => onSelect(endpoint.id)}
-        ~ className={`w-full text-left p-2 text-sm transition-colors ${selectedEndpoint === endpoint.id
-        ~ ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100" : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-950"}`}
-        ~ )
-        div(className="flex items-center gap-2")
-          Method(method={endpoint.method})
-          span.font-okxs #{endpoint.name}
-        div(className="font-brk text-xs text-zinc-500 dark:text-zinc-500 mt-0.5 truncate") #{endpoint.path}
+  div(className="max-h-[calc(100dvh-11rem)] space-y-4 overflow-y-auto px-2 pb-3")
+    if activeCategories.length > 0
+      section(className="space-y-1")
+        h3(className="px-2 pt-1 font-normal text-xs uppercase tracking-widest text-muted-foreground/70") Active endpoints
+        CategoryList(categories={activeCategories} selectedEndpoint={selectedEndpoint} onSelect={onSelect})
+    if deprecatedCategories.length > 0
+      section(className="space-y-2 border-t border-sidebar-border pt-3")
+        div(className="px-2")
+          h3(className="font-normal text-xs uppercase tracking-widest text-warning-foreground") Deprecated endpoints
+          p(className="mt-1 text-[11px] leading-4 text-muted-foreground") Retained for reference; unavailable for new requests.
+        CategoryList(categories={deprecatedCategories} selectedEndpoint={selectedEndpoint} onSelect={onSelect})
+    if filteredCategories.length === 0
+      p(className="px-2 py-6 text-center text-xs text-muted-foreground") No endpoints match this search.

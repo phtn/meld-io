@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils"
 import Button from "@/ui/Button.btsx";
-import { Link, useLocation } from "@octanejs/tanstack-router";
-import { breadcrumbsForPath } from "@/lib/breadcrumbs"
+import { Link } from "@octanejs/tanstack-router";
 import { type ReactNode, useState } from "octane";
 import { AnimatePresence, motion, useReducedMotion } from "@octanejs/motion"
 
@@ -13,6 +12,7 @@ module
       toggleExtra?: VoidFunction
       isCompact?: boolean
       isMobile?: boolean
+      endpointPath?: string
       children?: ReactNode
     }
   export interface BrandProps {
@@ -41,32 +41,26 @@ component Brand
     div #{children}
 
 
-props { toggleExtra, isCompact = false, children }: TopbarProps
+props { toggleExtra, isCompact = false, endpointPath, children }: TopbarProps
 setup
-  const pathname = useLocation({ select: location => location.pathname })
-  const breadcrumbs = breadcrumbsForPath(pathname)
   const reducedMotion = useReducedMotion() === true
 header(className="sticky top-0 z-40 backdrop-blur-3xl w-full border-b border-sidebar-border dark:border-surface/33")
   div(className="topbar w-full px-6 flex items-center justify-between gap-4")
-    nav(aria-label="Breadcrumb" className="min-w-0 flex-1 overflow-x-auto")
+    nav(aria-label="Endpoint path" className="min-w-0 flex-1 overflow-x-auto")
       ol(className="flex w-max min-w-0 items-center gap-1 py-1 text-sm")
         AnimatePresence(mode="sync")
-          each crumb, index in breadcrumbs key crumb.href
+          each path in endpointPath ? [endpointPath] : [] key path
             MotionLi(
               ~ initial={false}
               ~ animate={{ opacity: 1, clipPath: 'inset(0 0% 0 0)' }}
               ~ exit={{ opacity: 0, clipPath: 'inset(0 100% 0 0)', transition: { duration: reducedMotion ? 0 : 0.35, ease: [0.67, 0.12, 0.29, 0.97] } }}
               ~ className="flex min-w-0 items-center gap-3"
               ~ )
-              if index > 0
-                span(aria-hidden="true" className="select-none text-muted-foreground/50") /
               span(className="smooth-reveal breadcrumb-reveal")
                 span
-                  if index === breadcrumbs.length - 1
-                    span(aria-current="page" title={crumb.label} className="inline-block max-w-[min(45vw,24rem)] truncate align-bottom font-medium text-foreground") #{crumb.label}
-                  else
-                    Link(to={crumb.href} title={crumb.label} className="inline-block max-w-40 truncate rounded-sm align-bottom text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring") #{crumb.label}
-    div(className="flex shrink-0 items-center gap-2")
-      if toggleExtra
-        Button(onClick={toggleExtra} className='size-6') T
-      | #{children}
+                  code(aria-current="page" title={path} className="inline-block max-w-[min(55vw,42rem)] truncate align-bottom font-mono text-xs font-medium text-foreground sm:text-sm") #{path}
+    if toggleExtra || children
+      div(className="flex shrink-0 items-center gap-2")
+        if toggleExtra
+          Button(onClick={toggleExtra} className='size-6') T
+        | #{children}

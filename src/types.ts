@@ -6,7 +6,7 @@ export interface ApiResponse {
   method?: string
   headers?: Record<string, string>
   body?: unknown
-  params?: Record<string, string>
+  params?: Record<string, string | string[]>
 }
 
 export interface RequestPreview {
@@ -14,7 +14,7 @@ export interface RequestPreview {
   method?: string
   headers?: Record<string, string>
   body?: unknown
-  params?: Record<string, string>
+  params?: Record<string, string | string[]>
 }
 
 export type MeldEnvironment = 'sandbox' | 'production'
