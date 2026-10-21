@@ -149,9 +149,16 @@ function presetLeafValue(
     return /crypto|digital asset/i.test(description) ? 'USDC' : 'USD'
   }
   if (
-    ['paymentmethodtype', 'serviceprovider', 'serviceproviders', 'includeswap', 'customerid', 'subdivision'].includes(
-      normalizedName
-    )
+    [
+      'paymentmethodtype',
+      'serviceprovider',
+      'serviceproviders',
+      'includeswap',
+      'customerid',
+      'customerids',
+      'externalcustomerid',
+      'subdivision'
+    ].includes(normalizedName)
   )
     return ''
   if (normalizedName.includes('currency')) {
