@@ -27,15 +27,15 @@ module
 
   const SIDEBAR_CLASS = "hidden md:flex flex-col w-full h-full min-h-0 bg-background dark:bg-surface/33 overflow-hidden"
   const SIDEBAR_ITEM_CLASS = "relative z-10 flex w-full items-center gap-1.75 rounded-[10px] border-0 py-1.75 pl-1.75 text-left focus-visible:ring-2 focus-visible:ring-focus"
-  const SIDEBAR_ITEM_SELECTED_CLASS = "bg-[linear-gradient(in_oklab_180deg,oklab(95.2%_0_0)_0%,oklab(91.3%_0_0)_100%)] shadow-[inset_0_1px_0_#FFFFFF54,0_2.5px_3.5px_-1px_#00000026,0_0_0_1px_#D4D4D4] bg-origin-border dark:bg-[linear-gradient(in_oklab_180deg,oklab(32%_0_0)_0%,oklab(25%_0_0)_100%)] dark:shadow-[inset_0_1px_0_#F0F0F010,0_3px_3px_-0.5px_#00000026,0_0_0_1px_#04040460] border-border/0"
+  // const SIDEBAR_ITEM_SELECTED_CLASS = "bg-[linear-gradient(in_oklab_180deg,oklab(95.2%_0_0)_0%,oklab(91.3%_0_0)_100%)] shadow-[inset_0_1px_0_#FFFFFF54,0_2.5px_3.5px_-1px_#00000026,0_0_0_1px_#D4D4D4] bg-origin-border dark:bg-[linear-gradient(in_oklab_180deg,oklab(32%_0_0)_0%,oklab(25%_0_0)_100%)] dark:shadow-[inset_0_1px_0_#F0F0F010,0_3px_3px_-0.5px_#00000026,0_0_0_1px_#04040460] border-border/0"
   const SIDEBAR_ITEM_SELECTED_CLASS_DARK = "_bg-[linear-gradient(in_oklab_180deg,oklab(95.2%_0_0)_0%,oklab(91.3%_0_0)_100%)] _shadow-[inset_0_1px_0_#FFFFFF54,0_2.5px_3.5px_-1px_#00000026,0_0_0_1px_#D4D4D4] bg-origin-border bg-[linear-gradient(in_oklab_180deg,oklab(32%_0_0)_0%,oklab(25%_0_0)_100%)] border-border/0"
   const SIDEBAR_ITEM_DEFAULT_CLASS = "border-transparent bg-transparent"
   const SIDEBAR_ICON_CONTAINER_CLASS = "flex size-7.5 shrink-0 items-center justify-center rounded-[8px] bg-transparent"
   const SIDEBAR_ICON_SELECTED_CONTAINER_CLASS = "flex size-7.5 shrink-0 items-center justify-center rounded-[8px] light:bg-background"
   const SIDEBAR_ICON_CLASS = "m-0 text-muted-foreground/90"
   const SIDEBAR_LABEL_CLASS = "flex-1 font-sans font-medium text-foreground/70 text-sm leading-5 tracking-[-0.48px] truncate"
-  const SIDEBAR_VALUE_CLASS = "ml-auto shrink-0 text-right font-mono text-2xs leading-none tabular-nums text-muted-foreground"
-  const SIDEBAR_SELECTED_TEXT_CLASS = "text-foreground"
+  // const SIDEBAR_VALUE_CLASS = "ml-auto shrink-0 text-right font-mono text-2xs leading-none tabular-nums text-muted-foreground"
+  // const SIDEBAR_SELECTED_TEXT_CLASS = "text-foreground"
   const SIDEBAR_SELECTED_TEXT_CLASS_DARK = "text-sidebar-primary-foreground"
   const SIDEBAR_ITEM_COMPACT_CLASS = "mx-auto size-10 justify-center gap-0 p-1"
 

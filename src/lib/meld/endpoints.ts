@@ -198,7 +198,7 @@ const emptyFieldsByEndpointId: Record<string, string[]> = {
   'service-providers-get-service-providers-limits-fiat-currency-purchases': [],
   'service-providers-get-service-providers-limits-kyc-fiat-levels': [],
   'webhooks-post-notifications-webhooks': [],
-  'webhooks-get-notifications-webhooks': [],
+  'webhooks-get-notifications-webhooks': ['before', 'after', 'limit'],
   'webhooks-get-notifications-webhooks-event-types': [],
   'webhooks-get-notifications-webhooks-by-webhookprofileid': [],
   'webhooks-patch-notifications-webhooks-by-webhookprofileid': [],

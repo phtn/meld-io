@@ -1,5 +1,6 @@
 module "use client";
 import Method from "./Method.btsx";
+import { Icon } from "@/lib/icons";
 import { endpointCategories, meldEndpoints } from "@/lib/meld/endpoints";
 import { cn } from "@/lib/utils";
 import { useLayoutEffect, useRef, useState } from "octane";
@@ -13,6 +14,8 @@ module
     }>;
     selectedEndpoint: string;
     onSelect: (endpointId: string) => void;
+    collapsedCategories: Record<string, boolean>;
+    onToggleCategory: (categoryId: string) => void;
   }
 
   interface EndpointSelectorProps {
@@ -21,13 +24,21 @@ module
   }
 
 component CategoryList
-  props { categories, selectedEndpoint, onSelect }: CategoryListProps
+  props { categories, selectedEndpoint, onSelect, collapsedCategories, onToggleCategory }: CategoryListProps
   each category in categories key category.id
     section
-      div(className="sticky top-0 z-15 mb-2 flex items-center justify-between gap-2 bg-surface p-2 rounded-md")
+      button(
+        ~ type="button"
+        ~ aria-expanded={!collapsedCategories[category.id]}
+        ~ aria-controls={`endpoint-category-${category.id}`}
+        ~ onClick={() => onToggleCategory(category.id)}
+        ~ className="sticky top-0 z-15 mb-2 flex w-full items-center justify-between gap-2 rounded-md bg-surface p-2 text-left transition-colors hover:bg-sidebar-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        ~ )
         span(className="truncate text-[10px] font-normal uppercase tracking-widest text-muted-foreground/70") #{category.name}
-        span(className="shrink-0 font-mono text-2xs tabular-nums text-muted-foreground") #{category.endpoints.length}
-      div(className="space-y-1")
+        span(className="flex shrink-0 items-center gap-2 font-mono text-2xs tabular-nums text-muted-foreground")
+          | #{category.endpoints.length}
+          Icon(name="chevron-down" size={8} className={cn("transition-transform duration-150", collapsedCategories[category.id] && "-rotate-90")})
+      div(id={`endpoint-category-${category.id}`} hidden={collapsedCategories[category.id]} className="space-y-1")
         each endpoint in category.endpoints key endpoint.id
           button(
             ~ onClick={() => onSelect(endpoint.id)}
@@ -50,7 +61,11 @@ component CategoryList
 props { selectedEndpoint, onSelect }: EndpointSelectorProps
 setup
   const [searchQuery, setSearchQuery] = useState("");
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const endpointListRef = useRef<HTMLDivElement | null>(null);
+  const toggleCategory = (categoryId: string) => {
+    setCollapsedCategories((current) => ({ ...current, [categoryId]: !current[categoryId] }));
+  };
   const query = searchQuery.trim().toLowerCase();
   const filteredCategories = endpointCategories.map((category) => ({
     ...category,
@@ -84,12 +99,12 @@ div(className="min-w-0 bg-transparent")
     if activeCategories.length > 0
       section(className="space-y-1")
         h3(className="hidden px-2 pt-1 font-normal text-xs uppercase tracking-widest text-muted-foreground/70") Active endpoints
-        CategoryList(categories={activeCategories} selectedEndpoint={selectedEndpoint} onSelect={onSelect})
+        CategoryList(categories={activeCategories} selectedEndpoint={selectedEndpoint} onSelect={onSelect} collapsedCategories={collapsedCategories} onToggleCategory={toggleCategory})
     if deprecatedCategories.length > 0
       section(className="space-y-2 border-t border-sidebar-border pt-3")
         div(className="px-2")
           h3(className="font-normal text-xs uppercase tracking-widest text-warning-foreground") Deprecated endpoints
           p(className="mt-1 text-[11px] leading-4 text-muted-foreground") Retained for reference; unavailable for new requests.
-        CategoryList(categories={deprecatedCategories} selectedEndpoint={selectedEndpoint} onSelect={onSelect})
+        CategoryList(categories={deprecatedCategories} selectedEndpoint={selectedEndpoint} onSelect={onSelect} collapsedCategories={collapsedCategories} onToggleCategory={toggleCategory})
     if filteredCategories.length === 0
       p(className="px-2 py-6 text-center text-xs text-muted-foreground") No endpoints match this search.

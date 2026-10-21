@@ -3,6 +3,8 @@
 A [Beast](https://www.npmjs.com/package/beast-tsrx) project powered by
 [TSRX](https://tsrx.dev/) and [Octane](https://octanejs.dev/).
 
+![Mural](public/meld-io-ss.png)
+
 ```bash
 bun install
 bun run dev
@@ -66,7 +68,7 @@ pinned to `0.6.3`.
 - Styling: Tailwind CSS v4
 
 ```ts
-import { Button } from "@octanejs/base-ui/button";
+import { Button } from '@octanejs/base-ui/button'
 ```
 
 ## Optional tools
