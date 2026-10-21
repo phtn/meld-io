@@ -1,0 +1,111 @@
+
+import Method from "./Method.btsx";
+import Title from "./Title.btsx";
+import type { ApiResponse, RequestPreview } from "../types";
+import JsonViewer from "./JsonViewer.btsx";
+module
+  interface ResponseDisplayProps {
+    ~ response: ApiResponse | null;
+    ~ requestPreview?: RequestPreview | null;
+    ~ responseWithURL?: string;
+    ~ }
+
+props { response, requestPreview, responseWithURL }: ResponseDisplayProps
+setup
+  // Use response data if available, otherwise use request preview
+  const displayUrl = response?.url || requestPreview?.url;
+
+  const displayMethod = response?.method || requestPreview?.method;
+  const displayHeaders = response?.headers || requestPreview?.headers;
+  const displayBody = response?.body !== undefined ? response.body : requestPreview?.body;
+  const displayParams = response?.params || requestPreview?.params;
+
+  const getResponseURL = (): string | null => {
+    if (!responseWithURL || !response?.data) {
+      return null;
+    }
+    try {
+      const data = response.data;
+      // Support dot notation for nested properties (e.g., "session.url" or "data.widgetUrl")
+      const keys = responseWithURL.split(".");
+      let value: unknown = data;
+      for (const key of keys) {
+        if (value && typeof value === "object" && key in value) {
+          value = (value as Record<string, unknown>)[key];
+        }
+        else {
+          return null;
+        }
+      }
+      if (typeof value === "string" && value.trim()) {
+        return value;
+      }
+    }
+    catch {
+      // If extraction fails, return null
+    }
+    return null;
+  };
+
+  const responseURL = getResponseURL();
+if !response && !requestPreview
+  div(className="dark:bg-zinc-800 py-2 px-4")
+    Title(text="Response")
+    p(className="text-xs text-zinc-500 dark:text-zinc-400") Fill out the form to see the request details.
+else
+  div(className="dark:bg-zinc-800 p-4 space-y-4")
+    div(className="flex items-center justify-between")
+      Title(text="Request & Response")
+      if response
+        div(
+          ~ className={`text-xs font-brk uppercase ${response.success
+          ~ ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-get" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"}`}
+          ~ )
+          if response.success
+            | #{"Success"}
+          else
+            | #{"Error"}
+    if displayUrl
+      div
+        div(className="flex items-center justify-between mb-2")
+          label(className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide") Request URL
+          button(
+            ~ className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
+            ~ onClick={() => {
+            ~ navigator.clipboard.writeText(displayUrl || "");
+            ~ alert("URL copied to clipboard!");
+            ~ }}
+            ~ )
+            | Copy
+        div(className="p-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-mono text-zinc-700 dark:text-zinc-300 break-all")
+          Method(method={displayMethod ?? ""})
+          |
+          | #{displayUrl}
+    if displayParams && Object.keys(displayParams).length > 0
+      div
+        label(className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-2 block") Request Parameters
+        JsonViewer(data={displayParams} maxHeight="max-h-64")
+    if displayHeaders
+      div
+        label(className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-2 block") Request Headers
+        JsonViewer(data={displayHeaders} maxHeight="max-h-64")
+    if displayBody !== undefined && displayBody !== null
+      div
+        label(className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-2 block") Request Body
+        JsonViewer(data={displayBody} maxHeight="max-h-64")
+    if response
+      div
+        div(className="flex items-center justify-between mb-2")
+          label(className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide") Response Data
+          if responseURL
+            a(
+              ~ className="text-xs text-number dark:text-number hover:underline"
+              ~ href={responseURL}
+              ~ target="_blank"
+              ~ rel="noopener noreferrer"
+              ~ )
+              | Open Widget &rarr;
+        JsonViewer(data={response.data || response.error} maxHeight="max-h-96")
+    if !response
+      div
+        p(className="text-xs text-zinc-500 dark:text-zinc-400 italic") No response yet. Send the request to see the result.

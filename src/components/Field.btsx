@@ -1,0 +1,24 @@
+import type { OctaneNode } from "octane";
+module
+  interface FieldProps {
+    ~ label: string;
+    ~ required?: boolean;
+    ~ children: OctaneNode;
+    ~ helperText?: string;
+    ~ }
+
+props { label, required, children, helperText }: FieldProps
+div(className="w-full border-b border-zinc-700 border-dotted pb-2")
+  div(className="flex items-start justify-between")
+    .w-full
+      label(
+        ~ className="flex items-center space-x-1 text-xs font-brk font-medium mb-2 text-zinc-700 dark:text-zinc-300"
+        ~ htmlFor={label}
+        ~ )
+        span #{label}
+        |
+        if required
+          div(className="size-1.5 aspect-square bg-red-400 rounded-full")
+      if helperText
+        p(className="mt-1 text-xs text-zinc-500 dark:text-zinc-500") #{helperText}
+    | #{children}

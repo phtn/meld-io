@@ -1,0 +1,7 @@
+props { type }: { type: string }
+setup const color = type === "string" ? "var(--color-string)" : type === "number" ? "var(--color-number)" : "var(--color-boolean)";
+span(
+  ~ className="text-xs font-brk rounded-sm px-1 py-0.5 bg-zinc-200 dark:bg-zinc-950"
+  ~ style={{ color }}
+  ~ )
+  | #{type}

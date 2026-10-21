@@ -1,0 +1,37 @@
+module "use client";
+import Method from "./Method.btsx";
+import { meldEndpoints } from "@/lib/meld/endpoints";
+import { useState } from "octane";
+module
+  interface EndpointSelectorProps {
+    ~ selectedEndpoint: string;
+    ~ onSelect: (endpointId: string) => void;
+    ~ }
+
+props { selectedEndpoint, onSelect }: EndpointSelectorProps
+setup
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredEndpoints = meldEndpoints.filter((endpoint) => endpoint.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    endpoint.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    endpoint.description.toLowerCase().includes(searchQuery.toLowerCase()));
+div(className="dark:bg-zinc-900")
+  .mb-4
+    input(
+      ~ className="w-full px-1 py-2 border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600"
+      ~ type="text"
+      ~ placeholder="Search endpoints..."
+      ~ value={searchQuery}
+      ~ onInput={(e) => setSearchQuery(e.target.value)}
+      ~ )
+  div(className="space-y-1 h-[calc(100lvh-200px)] overflow-y-auto")
+    each endpoint in filteredEndpoints key endpoint.id
+      button(
+        ~ onClick={() => onSelect(endpoint.id)}
+        ~ className={`w-full text-left p-2 text-sm transition-colors ${selectedEndpoint === endpoint.id
+        ~ ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100" : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-950"}`}
+        ~ )
+        div(className="flex items-center gap-2")
+          Method(method={endpoint.method})
+          span.font-okxs #{endpoint.name}
+        div(className="font-brk text-xs text-zinc-500 dark:text-zinc-500 mt-0.5 truncate") #{endpoint.path}

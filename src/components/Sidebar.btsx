@@ -1,0 +1,159 @@
+import { cn } from "@/lib/utils"
+import {Icon, type IconName} from "@/lib/icons"
+import { navGroups } from "@/lib/navs"
+import { Link } from "@octanejs/tanstack-router"
+import { createElement, useRef, useLayoutEffect } from "octane"
+import FluidTooltip, { FluidTooltipContent, FluidTooltipRoot, FluidTooltipTrigger } from "@/components/ui/FluidTooltip.btsx"
+import { ThemeToggle } from './ThemeProvider.btsx';
+
+module
+  export interface SidebarProps {
+  }
+
+  export interface SidebarItemProps {
+    href: string
+    icon: IconName
+    label: string
+    value?: string | number
+    path?: string
+    onHover?: (event: MouseEvent) => void
+    isCompact?: boolean
+    // onNavigate: (to: string) => (event: MouseEvent) => void
+  }
+
+  const SIDEBAR_CLASS = "hidden md:flex flex-col w-full h-full min-h-0 bg-surface dark:bg-surface/33 overflow-hidden"
+  const SIDEBAR_ITEM_CLASS = "relative z-10 flex w-full items-center gap-1.75 rounded-[10px] border py-1.75 pl-1.75 text-left focus-visible:ring-2 focus-visible:ring-focus"
+  const SIDEBAR_ITEM_SELECTED_CLASS = "bg-[linear-gradient(in_oklab_180deg,oklab(95.2%_0_0)_0%,oklab(91.3%_0_0)_100%)] shadow-[inset_0_1px_0_#FFFFFF54,0_2.5px_3.5px_-1px_#00000026,0_0_0_1px_#D4D4D4] bg-origin-border dark:bg-[linear-gradient(in_oklab_180deg,oklab(32%_0_0)_0%,oklab(25%_0_0)_100%)] dark:shadow-[inset_0_1px_0_#F0F0F010,0_3px_3px_-0.5px_#00000026,0_0_0_1px_#04040460] border-border/0"
+  const SIDEBAR_ITEM_SELECTED_CLASS_DARK = "_bg-[linear-gradient(in_oklab_180deg,oklab(95.2%_0_0)_0%,oklab(91.3%_0_0)_100%)] _shadow-[inset_0_1px_0_#FFFFFF54,0_2.5px_3.5px_-1px_#00000026,0_0_0_1px_#D4D4D4] bg-origin-border bg-[linear-gradient(in_oklab_180deg,oklab(32%_0_0)_0%,oklab(25%_0_0)_100%)] dark:shadow-[inset_0_1px_0_#F0F0F005,0_3px_3px_-0.5px_#00000006,0_0_0_1px_#04040410] border-border/0"
+  const SIDEBAR_ITEM_DEFAULT_CLASS = "border-transparent bg-transparent"
+  const SIDEBAR_ICON_CONTAINER_CLASS = "flex size-7.5 shrink-0 items-center justify-center rounded-[8px] bg-transparent"
+  const SIDEBAR_ICON_SELECTED_CONTAINER_CLASS = "flex size-7.5 shrink-0 items-center justify-center rounded-[8px] light:bg-background"
+  const SIDEBAR_ICON_CLASS = "m-0 text-muted-foreground/90"
+  const SIDEBAR_LABEL_CLASS = "flex-1 font-sans font-medium text-foreground/70 text-base leading-5 tracking-[-0.32px] truncate"
+  const SIDEBAR_VALUE_CLASS = "ml-auto shrink-0 text-right font-mono text-2xs leading-none tabular-nums text-muted-foreground"
+  const SIDEBAR_SELECTED_TEXT_CLASS = "text-foreground"
+  const SIDEBAR_SELECTED_TEXT_CLASS_DARK = "text-sidebar-primary-foreground"
+  const SIDEBAR_ITEM_COMPACT_CLASS = "mx-auto size-10 justify-center gap-0 p-1"
+
+  export { SidebarNav, SidebarNavTooltips }
+
+component SidebarItem
+  props { href, icon, label, path, isCompact = false, onHover }: SidebarItemProps
+  setup
+    const isExternal = href.startsWith("http")
+    const isSelected = path === href || (href !== '/' && path?.startsWith(href + '/'))
+    const itemClassName = cn(SIDEBAR_ITEM_CLASS, isSelected ? SIDEBAR_ITEM_SELECTED_CLASS_DARK : SIDEBAR_ITEM_DEFAULT_CLASS, isCompact && SIDEBAR_ITEM_COMPACT_CLASS)
+    const labelClassName = cn(SIDEBAR_LABEL_CLASS, isSelected && SIDEBAR_SELECTED_TEXT_CLASS_DARK)
+    const iconClassName = cn(SIDEBAR_ICON_CLASS, isSelected && SIDEBAR_SELECTED_TEXT_CLASS_DARK)
+    const iconContainerClassName = isSelected ? cn(SIDEBAR_ICON_SELECTED_CONTAINER_CLASS, isCompact && "bg-transparent dark:bg-transparent shadow-none") : SIDEBAR_ICON_CONTAINER_CLASS
+    const compactLink = isCompact
+      ? isExternal
+        ? createElement("a", { href, className: itemClassName, target: "_blank", rel: "noopener noreferrer", onMouseEnter: onHover })
+        : createElement(Link, { to: href, className: itemClassName, "aria-current": isSelected ? "page" : undefined, onMouseEnter: onHover })
+      : undefined
+
+  if isCompact
+    FluidTooltipRoot(id={href} side="right" sideOffset={12})
+      FluidTooltipTrigger(render={compactLink})
+        fragment
+          div(className={iconContainerClassName})
+            Icon(name={icon} size={18} className={iconClassName})
+          span(className="sr-only") #{label}
+      FluidTooltipContent #{label}
+  else
+    if isExternal
+      a(
+        ~ href={href}
+        ~ className={itemClassName}
+        ~ target="_blank"
+        ~ rel="noopener noreferrer"
+        ~ onMouseEnter={onHover}
+        ~ )
+        div(className={iconContainerClassName})
+          Icon(name={icon} size={18} className={iconClassName})
+        span(className={labelClassName}) #{label}
+    else
+      Link(to={href} className={itemClassName} aria-current={isSelected ? "page" : undefined} onMouseEnter={onHover})
+        div(className={iconContainerClassName})
+          Icon(name={icon} size={18} className={iconClassName})
+        span(className={labelClassName}) #{label}
+
+
+component SidebarNavContent
+  props { path, className, isCompact = false }: { path: string; className?: string; isCompact?: boolean }
+  setup
+    const navlistRef = useRef<HTMLDivElement | null>(null)
+    const hoveredItemRef = useRef<HTMLElement | null>(null)
+
+    const updateIndicator = () => {
+      const navlist = navlistRef.current
+      const item = hoveredItemRef.current
+      if (!navlist || !item) return
+
+      const containerRect = navlist.getBoundingClientRect()
+      const itemRect = item.getBoundingClientRect()
+      navlist.style.setProperty('--hovered-nav-top', `${itemRect.top - containerRect.top + navlist.scrollTop}px`)
+      navlist.style.setProperty('--hovered-nav-left', `${itemRect.left - containerRect.left + navlist.scrollLeft}px`)
+      navlist.style.setProperty('--hovered-nav-height', `${itemRect.height}px`)
+      navlist.style.setProperty('--hovered-nav-width', `${itemRect.width}px`)
+    }
+
+    const handleHover = (event: MouseEvent) => {
+      hoveredItemRef.current = event.currentTarget as HTMLElement
+      updateIndicator()
+      navlistRef.current?.style.setProperty('--hovered-nav-opacity', '1')
+    }
+
+    const clearHover = () => {
+      hoveredItemRef.current = null
+      navlistRef.current?.style.setProperty('--hovered-nav-opacity', '0')
+    }
+
+    useLayoutEffect(() => {
+      const navlist = navlistRef.current
+      if (!navlist) return
+      const resizeObserver = new ResizeObserver(updateIndicator)
+      resizeObserver.observe(navlist)
+      return () => resizeObserver.disconnect()
+    }, [])
+
+  div(ref={navlistRef} className={cn("h-full relative isolate mt-4 py-4 px-1 space-y-6", className)} onMouseLeave={clearHover})
+    each group in navGroups
+      div(key={group.title})
+        if isCompact
+          div(className="mx-auto w-6 text-center text-xs font-bold opacity-40" role="presentation") #{group.title.charAt(0)}
+        else
+          div(className="font-normal text-xs tracking-widest opacity-50 uppercase ps-4 mb-1") #{group.title}
+        nav(className="space-y-1 px-1 py-2 relative " aria-label={group.title})
+          each item in group.items key item.href
+            SidebarItem({...item} path={path} isCompact={isCompact} onHover={handleHover})
+    div(
+      ~ aria-hidden='true'
+      ~ className='pointer-events-none absolute top-0 left-0 z-0 m-0! rounded-[10px] bg-sidebar-border/40 transition-[transform,width,height,opacity] duration-200 ease-out motion-reduce:transition-none shadow-none'
+      ~ style={{ width: 'var(--hovered-nav-width, 0px)', height: 'var(--hovered-nav-height, 0px)', opacity: 'var(--hovered-nav-opacity, 0)', transform: 'translate3d(var(--hovered-nav-left, 0px), var(--hovered-nav-top, 0px), 0)' }}
+      ~ )
+
+component SidebarNavTooltips
+  props { path, className, isCompact = false }: { path: string; className?: string; isCompact?: boolean }
+  if isCompact
+    FluidTooltip(orientation="vertical")
+      SidebarNavContent(path={path} className={className} isCompact)
+  else
+    SidebarNavContent(path={path} className={className})
+
+component SidebarNav
+  props { path, className, isCompact = false }: { path: string; className?: string; isCompact?: boolean }
+  SidebarNavTooltips(path={path} className={cn('mt-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden', className)} isCompact={isCompact})
+
+props { path, isCompact = false, toggleSidebar }: { path: string; isCompact?: boolean; toggleSidebar: VoidFunction }
+aside(className={SIDEBAR_CLASS} data-compact={isCompact || undefined})
+
+  div(className="flex items-center justify-center size-16")
+    button(className={cn('h-[16px] w-[19px] rounded-[4px] bg-muted-foreground flex items-center px-0.75 py-0.75 relative transition-all duration-180 active:scale-97 active:bg-foreground group active:skew-2', {'active:-skew-3': isCompact})} onClick={toggleSidebar})
+      div(className={cn('h-[10px] w-[6.25px] rounded-[2.5px] bg-background absolute transition-all duration-240 ease-out group-active:scale-102 active:shadow-1px', {'translate-x-[6.5px] group-active:scale-85': !isCompact})})
+  SidebarNavTooltips(path={path} isCompact={isCompact} className="mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden")
+  div(className="h-12 shrink-0")
+    div(className="flex items-center h-12 gap-2 px-2-xs")
+      div(className="flex-1 min-w-0")
+        div(className={cn("text-xs font-medium text-foreground leading-none px-4 text-left", {'text-center': isCompact})})
+          ThemeToggle

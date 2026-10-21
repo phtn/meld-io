@@ -1,0 +1,7 @@
+import { type ReactNode } from "octane";
+import ThemeProvider from "@/components/ThemeProvider.btsx";
+
+props {children}: {children: ReactNode}
+ThemeProvider
+  div#shell(className='min-h-screen w-full')
+    | #{children}

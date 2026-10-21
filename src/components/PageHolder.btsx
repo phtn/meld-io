@@ -1,0 +1,36 @@
+import { Icon } from "@/lib/icons"
+import { navGroups, type NavItem } from "@/lib/navs"
+import { Atom, Clock, Leap, Ripple, Trace } from "./loaders";
+
+module
+  export interface PageHolderProps {
+    href: string
+  }
+
+props { href }: PageHolderProps
+setup
+  const item: NavItem | undefined = navGroups.flatMap((group) => group.items).find((navItem) => navItem.href === href)
+  const Loader = () => {
+    switch (href) {
+      case '/':
+        return Atom
+      case '/documents':
+        return Clock
+      case '/projects':
+        return Ripple
+      case '/deck-builder':
+        return Trace
+      default:
+        return null
+    }
+  }
+section(className="flex flex-col h-96 gap-6 p-5 ")
+  header(className="flex items-center gap-2")
+    if item
+      div(className="flex h-10.5 items-start justify-center")
+        Icon(name={item.icon} size={20} className="text-muted-foreground")
+    div(className='-space-y-0.25')
+      h1(className="text-xl font-semibold tracking-tight") #{item?.label ?? href}
+      p(className="text-xs text-muted-foreground") #{item?.description ?? ""}
+  div(className="flex flex-1 items-center justify-center gap-4 rounded-[16px] border border-dashed border-border/20 bg-secondary/40")
+    Loader

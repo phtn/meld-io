@@ -1,0 +1,2 @@
+props { text }: { text: string }
+h3(className="text-sm font-brk font-medium uppercase text-zinc-900 dark:text-zinc-100") #{text}
