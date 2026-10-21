@@ -3,7 +3,7 @@ import {Icon, type IconName} from "@/lib/icons"
 import { navGroups } from "@/lib/navs"
 import { Link } from "@octanejs/tanstack-router"
 import { createElement, useRef, useLayoutEffect } from "octane"
-import FluidTooltip, { FluidTooltipContent, FluidTooltipRoot, FluidTooltipTrigger } from "@/components/ui/FluidTooltip.btsx"
+import FluidTooltip, { FluidTooltipContent, FluidTooltipRoot, FluidTooltipTrigger } from "@/ui/FluidTooltip.btsx"
 import { ThemeToggle } from './ThemeProvider.btsx';
 
 module

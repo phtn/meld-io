@@ -9,6 +9,7 @@ export const icons = {
   close: '<path d="M13.46 12 19 17.54V19h-1.46L12 13.46 6.46 19H5v-1.46L10.54 12 5 6.46V5h1.46L12 10.54 17.54 5H19v1.46z"/>',
   menu: '<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 6h10M4 12h16M7 12h13M7 18h10"/>',
   search: '<path fill-rule="evenodd" d="M2.25 9.75a7.5 7.5 0 1 1 15 0 7.5 7.5 0 0 1-15 0M9.75 0a9.75 9.75 0 1 0 6.06 17.4l5.145 5.145.795.795 1.59-1.59-.795-.795L17.4 15.81A9.75 9.75 0 0 0 9.75 0" clip-rule="evenodd" shape-rendering="geometricprecision"/>',
+  theme: '<path fill-opacity=".85" d="M1.24 12c0 6.04 4.71 10.75 10.74 10.75V1.23A10.6 10.6 0 0 0 1.24 11.99m10.14-9.57h4.2V.9h-4.2Zm0 2.53h8.53v-1.3h-8.53Zm0 2.52h10.2v-1.3h-10.2Zm0 2.52h11.46V8.7H11.38Zm0 2.53h11.46v-1.3H11.38Zm0 2.52h11.46v-1.3H11.38Zm0 2.53h10.2v-1.3h-10.2Zm0 2.75h8.53V18.8h-8.53Zm0 2.76h4.2v-1.54h-4.2Zm.61.9a12 12 0 1 0 .02-24 12 12 0 0 0-.02 24m0-2A9.97 9.97 0 0 1 2 12a10 10 0 1 1 20 0 10 10 0 0 1-10 10"/>',
 }
 
 export type IconName = keyof typeof icons

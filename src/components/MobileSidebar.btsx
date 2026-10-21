@@ -2,7 +2,7 @@ import { createElement, type OctaneNode } from 'octane'
 import { Link } from '@octanejs/tanstack-router'
 import { Icon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import Drawer, { DrawerClose, DrawerTrigger } from './ui/Drawer.btsx'
+import Drawer, { DrawerClose, DrawerTrigger } from '@/ui/Drawer.btsx'
 import Topbar from "./Topbar.btsx";
 
 module
