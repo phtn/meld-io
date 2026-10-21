@@ -1,6 +1,6 @@
 module "use client";
 import { useState } from "octane";
-import { cn } from "@/lib/utils";
+import { Group, Panel, Separator, usePanelRef, type PanelSize } from "@octanejs/resizable-panels";
 import Shell from "./components/Shell.btsx";
 import MeldContent from "./components/MeldContent.btsx";
 import Sidebar from "./components/Sidebar.btsx";
@@ -15,34 +15,63 @@ setup
   const selectedEndpoint = getEndpointById(selectedEndpointId);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
+  const sidebarPanelRef = usePanelRef();
   const handleEndpointChange = (endpointId: string) => {
     setSelectedEndpointId(endpointId);
     setMobileNavOpen(false);
   };
-  const toggleSidebar = () => setIsCompact(!isCompact);
+  const handleSidebarResize = (size: PanelSize) => setIsCompact(size.inPixels <= 80);
+  const toggleSidebar = () => {
+    const panel = sidebarPanelRef.current;
+    if (!panel) return;
+    if (panel.isCollapsed()) panel.expand();
+    else panel.collapse();
+  };
 
 Shell
-  div(className="flex h-dvh min-h-0 w-full overflow-hidden bg-background text-foreground")
-    div(className={cn("hidden h-dvh shrink-0 overflow-hidden border-r border-sidebar-border transition-[width] duration-200 md:block", isCompact ? "w-16" : "w-[17rem]")})
+  Group(id="meld-workspace-layout" className="min-h-0 w-full bg-background text-foreground" style={{ height: "100dvh" }})
+    Panel(
+      ~ id="endpoint-sidebar-panel"
+      ~ panelRef={sidebarPanelRef}
+      ~ defaultSize="17rem"
+      ~ minSize="15rem"
+      ~ maxSize="30rem"
+      ~ collapsedSize="4rem"
+      ~ collapsible={true}
+      ~ onResize={handleSidebarResize}
+      ~ className="h-full min-h-0 min-w-0 overflow-hidden"
+      ~ style={{ overflow: "hidden" }}
+      ~ )
       Sidebar(path="/" isCompact={isCompact} toggleSidebar={toggleSidebar})
         EndpointSelector(selectedEndpoint={selectedEndpointId} onSelect={handleEndpointChange})
-    div(className="flex min-h-0 min-w-0 flex-1 flex-col")
-      div(className="md:hidden")
-        MobileSidebar(open={mobileNavOpen} onOpenChange={(open: boolean) => setMobileNavOpen(open)} title="Meld API Studio" endpointPath={selectedEndpoint?.path})
-          EndpointSelector(selectedEndpoint={selectedEndpointId} onSelect={handleEndpointChange})
-      div(className="hidden md:block")
-        Topbar(endpointPath={selectedEndpoint?.path})
-      main(className="min-h-0 min-w-0 flex-1 overflow-y-auto")
-        div(className="mx-auto w-full max-w-[1800px] space-y-7 px-4 py-7 sm:px-6 sm:py-9 lg:px-8")
-          section(className="hidden _flex flex-col justify-between gap-5 md:flex-row md:items-end")
-            div(className="max-w-2xl")
-              p(className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground") Developer workspace
-              h1(className="text-3xl font-semibold tracking-tight sm:text-4xl") Explore the Meld API
-              p(className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground") Browse all Meld API categories, build a request, and inspect its response in one place.
-            div(className="flex items-center gap-3")
-              span(className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/50 dark:text-emerald-300")
-                span(className="size-1.5 rounded-full bg-emerald-500")
-                | Workspace ready
-              div(className="md:hidden")
-                ThemeToggle
-          MeldContent(selectedEndpointId={selectedEndpointId})
+    Separator(
+      ~ id="sidebar-resize-separator"
+      ~ aria-label="Resize endpoint sidebar"
+      ~ className="group relative z-20 flex w-2 shrink-0 cursor-col-resize touch-none items-center justify-center bg-transparent outline-none before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-sidebar-border before:transition-colors hover:before:bg-foreground/40 focus-visible:before:bg-focus data-[separator=active]:before:bg-foreground"
+      ~ )
+    Panel(
+      ~ id="workspace-content-panel"
+      ~ minSize="0px"
+      ~ className="h-full min-h-0 min-w-0 overflow-hidden"
+      ~ style={{ overflow: "hidden" }}
+      ~ )
+      div(className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background text-foreground")
+        div(className="md:hidden")
+          MobileSidebar(open={mobileNavOpen} onOpenChange={(open: boolean) => setMobileNavOpen(open)} title="Meld API Studio" endpointPath={selectedEndpoint?.path})
+            EndpointSelector(selectedEndpoint={selectedEndpointId} onSelect={handleEndpointChange})
+        div(className="hidden md:block")
+          Topbar(endpointPath={selectedEndpoint?.path})
+        main(className="min-h-0 min-w-0 flex-1 overflow-y-auto")
+          div(className="mx-auto w-full max-w-[1800px] space-y-7 px-4 py-7 sm:px-6 sm:py-9 lg:px-8")
+            section(className="hidden _flex flex-col justify-between gap-5 md:flex-row md:items-end")
+              div(className="max-w-2xl")
+                p(className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground") Developer workspace
+                h1(className="text-3xl font-semibold tracking-tight sm:text-4xl") Explore the Meld API
+                p(className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground") Browse all Meld API categories, build a request, and inspect its response in one place.
+              div(className="flex items-center gap-3")
+                span(className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/50 dark:text-emerald-300")
+                  span(className="size-1.5 rounded-full bg-emerald-500")
+                  | Workspace ready
+                div(className="md:hidden")
+                  ThemeToggle
+            MeldContent(selectedEndpointId={selectedEndpointId})

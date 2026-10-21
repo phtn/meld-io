@@ -77,7 +77,7 @@ else
             ~ }}
             ~ )
             | Copy
-        div(className="p-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-mono text-zinc-700 dark:text-zinc-300 break-all")
+        div(className="flex gap-x-2 p-3 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-mono text-zinc-700 dark:text-zinc-300 break-all")
           Method(method={displayMethod ?? ""})
           |
           | #{displayUrl}

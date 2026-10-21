@@ -16,6 +16,7 @@
   "dependencies": {
     "@octanejs/base-ui": "0.1.66",
     "@octanejs/motion": "0.1.64",
+    "@octanejs/resizable-panels": "^0.0.24",
     "@octanejs/select": "^0.1.17",
     "@octanejs/tanstack-router": "0.2.0",
     "beast-tsrx": "0.13.8",

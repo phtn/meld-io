@@ -218,3 +218,10 @@ a {
 .topbar {
   height: var(--topbar-height);
 }
+
+@media (max-width: 767px) {
+  #endpoint-sidebar-panel,
+  #sidebar-resize-separator {
+    display: none !important;
+  }
+}

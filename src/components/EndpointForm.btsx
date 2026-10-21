@@ -41,8 +41,8 @@ setup
     onSubmit(endpoint.path, apiKey.trim(), environment, endpoint.method, request.body, request.params, request.headers);
   };
 form(className="space-y-6 bg-white p-4 dark:bg-zinc-900/80" onSubmit={handleSubmit})
-  Title(text="Endpoint request")
-  .space-y-4
+  div(className='flex items-center justify-between border-b border-border')
+    Title(text="request")
     Field(label="Environment" required)
       Select(
         ~ className="w-full"
@@ -54,58 +54,58 @@ form(className="space-y-6 bg-white p-4 dark:bg-zinc-900/80" onSubmit={handleSubm
         ~ ]}
         ~ onChange={(value) => setEnvironment(value as MeldEnvironment)}
         ~ )
-    if formParameters.length > 0
-      .space-y-4
-        Title(text="Parameters")
-        each parameter in formParameters key getKey(parameter)
-          scope
-            setup
-              const key = getKey(parameter);
-              const value = paramValues[key] || "";
-              const inputType = getInputType(parameter);
-              const helperText = parameter.description || (parameter.schema.type === "array" ? "Enter multiple values separated by commas." : undefined);
-              const enumOptions = [
-                { value: "", label: "Select a value" },
-                ...(parameter.schema.enum || []).map((optionValue) => ({
-                  value: String(optionValue),
-                  label: String(optionValue),
-                })),
-              ];
-            Field(label={`${parameter.in} · ${parameter.name}`} required={parameter.required} helperText={helperText})
-              if parameter.schema.enum && parameter.schema.enum.length > 0
-                Select(
-                  ~ id={key}
-                  ~ className="w-full"
-                  ~ value={value}
-                  ~ required={parameter.required}
-                  ~ options={enumOptions}
-                  ~ placeholder="Select a value"
-                  ~ onChange={(nextValue) => setParamValue(key, nextValue || null)}
-                  ~ )
-              else
-                input(
-                  ~ id={key}
-                  ~ className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-                  ~ type={inputType}
-                  ~ value={value}
-                  ~ placeholder={parameter.example === undefined ? "" : String(parameter.example)}
-                  ~ required={parameter.required}
-                  ~ step={parameter.schema.type === "integer" ? "1" : "any"}
-                  ~ onInput={(event) => setParamValue(key, event.currentTarget.value || null)}
-                  ~ )
-    if endpoint.requestBody
-      Field(label={`Request body · ${endpoint.requestBody.contentType || "application/json"}`} required={endpoint.requestBody.required} helperText="Edit the JSON request body using the schema shown above.")
-        textarea(
-          ~ id="request-body"
-          ~ className="min-h-64 w-full rounded-lg border border-zinc-300 bg-white p-3 font-mono text-xs leading-5 text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-          ~ value={bodyText}
-          ~ spellCheck={false}
-          ~ onInput={(event) => setBodyValue(event.currentTarget.value)}
-          ~ )
-        if bodyError
-          p(className="mt-2 text-xs font-medium text-red-600 dark:text-red-400") #{bodyError}
-    if endpoint.categoryDeprecated
-      p(className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/50 dark:text-amber-200") This category is deprecated and requests are disabled.
+  if formParameters.length > 0
+    .space-y-4
+      Title(text="Parameters")
+      each parameter in formParameters key getKey(parameter)
+        scope
+          setup
+            const key = getKey(parameter);
+            const value = paramValues[key] || "";
+            const inputType = getInputType(parameter);
+            const helperText = parameter.description || (parameter.schema.type === "array" ? "Enter multiple values separated by commas." : undefined);
+            const enumOptions = [
+              { value: "", label: "Select a value" },
+              ...(parameter.schema.enum || []).map((optionValue) => ({
+                value: String(optionValue),
+                label: String(optionValue),
+              })),
+            ];
+          Field(label={`${parameter.in} · ${parameter.name}`} required={parameter.required} helperText={helperText})
+            if parameter.schema.enum && parameter.schema.enum.length > 0
+              Select(
+                ~ id={key}
+                ~ className="w-full"
+                ~ value={value}
+                ~ required={parameter.required}
+                ~ options={enumOptions}
+                ~ placeholder="Select a value"
+                ~ onChange={(nextValue) => setParamValue(key, nextValue || null)}
+                ~ )
+            else
+              input(
+                ~ id={key}
+                ~ className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+                ~ type={inputType}
+                ~ value={value}
+                ~ placeholder={parameter.example === undefined ? "" : String(parameter.example)}
+                ~ required={parameter.required}
+                ~ step={parameter.schema.type === "integer" ? "1" : "any"}
+                ~ onInput={(event) => setParamValue(key, event.currentTarget.value || null)}
+                ~ )
+  if endpoint.requestBody
+    Field(label={`Request body · ${endpoint.requestBody.contentType || "application/json"}`} required={endpoint.requestBody.required} helperText="Edit the JSON request body using the schema shown above.")
+      textarea(
+        ~ id="request-body"
+        ~ className="min-h-64 w-full rounded-lg border border-zinc-300 bg-white p-3 font-mono text-xs leading-5 text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+        ~ value={bodyText}
+        ~ spellCheck={false}
+        ~ onInput={(event) => setBodyValue(event.currentTarget.value)}
+        ~ )
+      if bodyError
+        p(className="mt-2 text-xs font-medium text-red-600 dark:text-red-400") #{bodyError}
+  if endpoint.categoryDeprecated
+    p(className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/50 dark:text-amber-200") This category is deprecated and requests are disabled.
   button(
     ~ className="w-full rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-45 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
     ~ type="submit"

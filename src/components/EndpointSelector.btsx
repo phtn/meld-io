@@ -65,7 +65,7 @@ setup
   const deprecatedCategories = filteredCategories.filter((category) => category.deprecated);
 
 div(className="min-w-0 bg-transparent")
-  .px-2.py-3
+  .px-2.py-0
     input(
       ~ aria-label="Search endpoints"
       ~ className="w-full rounded-[8px] border border-sidebar-border bg-background/60 px-2.5 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus-visible:ring-2 focus-visible:ring-focus"
@@ -74,7 +74,7 @@ div(className="min-w-0 bg-transparent")
       ~ value={searchQuery}
       ~ onInput={(event) => setSearchQuery(event.currentTarget.value)}
       ~ )
-  div(className="max-h-[calc(100dvh-11rem)] space-y-4 overflow-y-auto px-2 pb-3")
+  div(className="max-h-[calc(100dvh-8rem)] space-y-4 overflow-y-auto px-2 pb-3")
     if activeCategories.length > 0
       section(className="space-y-1")
         h3(className="hidden px-2 pt-1 font-normal text-xs uppercase tracking-widest text-muted-foreground/70") Active endpoints
