@@ -84,7 +84,7 @@
 :root {
   color-scheme: light;
   --surface: oklch(0.971 0.004 286.33);
-  --sunken: oklch(0.97 0.001 286.38);
+  --sunken: oklch(0.971 0.004 286.33);
   --soft: oklch(0.2046 0 0 / 50%);
   --muted: oklch(0.9401 0 0);
   --muted-foreground: oklch(0.5373 0.006 240.53);
@@ -137,7 +137,7 @@
   color-scheme: dark;
   --soft: oklch(0.9461 0 0 / 50%);
   --surface: oklch(0.12 0 0);
-  --sunken: oklch(0.281 0 89.88);
+  --sunken: oklch(0.181 0 89.88);
   --background: oklch(0.1638 0 0);
   --foreground: oklch(0.9547 0.02 222.79);
   --card: oklch(0.205 0 0);

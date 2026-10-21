@@ -1,12 +1,164 @@
 module "use client";
 import Title from "./Title.btsx";
-import { useEndpointForm } from "@/hooks/use-endpoint-form";
-import type { EndpointConfig, EndpointParameter, MeldMethod } from "@/lib/meld/endpoints";
+import { useEffect, useLinkedState } from "octane";
+import { useForm, useSelector } from "@octanejs/tanstack-form";
+import { bodyFieldName, buildRequestInfo, initialBodyText, initialParameterValues, parameterFieldName, parseRequestBody } from "@/hooks/use-endpoint-form";
+import type { EndpointFormValues } from "@/hooks/use-endpoint-form";
+import type { EndpointConfig, EndpointParameter, MeldMethod, OpenApiSchema } from "@/lib/meld/endpoints";
 import type { MeldEnvironment } from "../types";
 import Field from "./Field.btsx";
-import Select from "@/ui/Select.btsx";
+import FieldGroup from "./FieldGroup.btsx";
 import type { FormEvent } from "octane";
 module
+  interface RequestBodyField {
+    path: string[];
+    label: string;
+    schema: OpenApiSchema;
+    required: boolean;
+  }
+
+  interface ParsedJson {
+    valid: boolean;
+    value: unknown;
+  }
+
+  function mergePropertySchemas(left: OpenApiSchema, right: OpenApiSchema): OpenApiSchema {
+    const properties = { ...(left.properties || {}) };
+    Object.entries(right.properties || {}).forEach(([name, schema]) => {
+      properties[name] = properties[name] ? mergePropertySchemas(properties[name], schema) : schema;
+    });
+    const enumValues = [...(left.enum || []), ...(right.enum || [])];
+
+    return {
+      ...left,
+      ...right,
+      type: left.type || right.type,
+      properties: Object.keys(properties).length > 0 ? properties : undefined,
+      required: [...new Set([...(left.required || []), ...(right.required || [])])],
+      enum: enumValues.length > 0 ? [...new Set(enumValues)] : undefined,
+    };
+  }
+
+  function normalizeSchema(schema: OpenApiSchema, depth = 0): OpenApiSchema {
+    if (depth > 8) return schema;
+
+    const properties = { ...(schema.properties || {}) };
+    const required = new Set(schema.required || []);
+    const enumValues = [...(schema.enum || [])];
+    let type = schema.type;
+
+    const addComposition = (part: OpenApiSchema, inheritRequired: boolean) => {
+      const normalized = normalizeSchema(part, depth + 1);
+      type = type || normalized.type;
+      Object.entries(normalized.properties || {}).forEach(([name, property]) => {
+        properties[name] = properties[name] ? mergePropertySchemas(properties[name], property) : property;
+      });
+      if (inheritRequired) normalized.required?.forEach((name) => required.add(name));
+      normalized.enum?.forEach((value) => enumValues.push(value));
+    };
+
+    (schema.allOf || []).forEach((part) => addComposition(part, true));
+    (schema.oneOf || schema.anyOf || []).forEach((part) => addComposition(part, false));
+    if (!type && Object.keys(properties).length > 0) type = "object";
+
+    return {
+      ...schema,
+      type,
+      properties: Object.keys(properties).length > 0 ? properties : schema.properties,
+      required: [...required],
+      enum: enumValues.length > 0 ? [...new Set(enumValues)] : schema.enum,
+    };
+  }
+
+  function schemaTypeLabel(schema: OpenApiSchema): string {
+    const normalized = normalizeSchema(schema);
+    if (normalized.type === "array") {
+      return `array<${normalized.items ? schemaTypeLabel(normalized.items) : "string"}>`;
+    }
+    return normalized.type || (normalized.properties ? "object" : "string");
+  }
+
+  function schemaInputType(schema: OpenApiSchema): string {
+    const normalized = normalizeSchema(schema);
+    if (normalized.type === "integer" || normalized.type === "number") return "number";
+    if (normalized.type !== "string") return "text";
+    if (normalized.format === "date") return "date";
+    if (normalized.format === "time") return "time";
+    if (normalized.format === "email") return "email";
+    if (normalized.format === "uri" || normalized.format === "url") return "url";
+    return "text";
+  }
+
+  function collectBodyFields(schema: OpenApiSchema, path: string[] = [], required = false, depth = 0): RequestBodyField[] {
+    if (depth > 8) return [];
+    const normalized = normalizeSchema(schema);
+    const properties = normalized.properties || {};
+
+    if ((normalized.type === "object" || Object.keys(properties).length > 0) && Object.keys(properties).length > 0) {
+      return Object.entries(properties).flatMap(([name, property]) =>
+        collectBodyFields(property, [...path, name], normalized.required?.includes(name) || false, depth + 1),
+      );
+    }
+
+    if (normalized.type === "object") return [];
+    if (normalized.type === "array" && normalized.items) {
+      const itemSchema = normalizeSchema(normalized.items);
+      if (itemSchema.type === "object" || itemSchema.properties) return [];
+    }
+
+    if (path.length === 0) return [];
+    return [{ path, label: path.join(" · "), schema: normalized, required }];
+  }
+
+  function parseSchemaInput(value: string, schema: OpenApiSchema): unknown {
+    const normalized = normalizeSchema(schema);
+    if (value === "") return null;
+    if (normalized.type === "array") {
+      const itemSchema = normalized.items || { type: "string" };
+      return value.split(",").map((item) => parseSchemaInput(item.trim(), itemSchema));
+    }
+    if (normalized.type === "boolean") return value === "true";
+    if (normalized.type === "number" || normalized.type === "integer") {
+      const number = Number(value);
+      return Number.isNaN(number) ? value : number;
+    }
+    const enumValue = normalized.enum?.find((option) => String(option) === value);
+    return enumValue === undefined ? value : enumValue;
+  }
+
+  function parseJson(text: string): ParsedJson {
+    if (!text.trim()) return { valid: false, value: undefined };
+    try {
+      return { valid: true, value: JSON.parse(text) };
+    } catch {
+      return { valid: false, value: undefined };
+    }
+  }
+
+  function valueAtPath(value: unknown, path: string[]): unknown {
+    return path.reduce<unknown>((current, key) => {
+      if (!current || typeof current !== "object" || Array.isArray(current)) return undefined;
+      return (current as Record<string, unknown>)[key];
+    }, value);
+  }
+
+  function updateAtPath(value: unknown, path: string[], nextValue: unknown): unknown {
+    if (path.length === 0) return nextValue;
+    const [key, ...rest] = path;
+    const result: Record<string, unknown> =
+      value && typeof value === "object" && !Array.isArray(value)
+        ? { ...(value as Record<string, unknown>) }
+        : {};
+
+    if (rest.length === 0) {
+      if (nextValue === null || nextValue === undefined) delete result[key];
+      else result[key] = nextValue;
+    } else {
+      result[key] = updateAtPath(result[key], rest, nextValue);
+    }
+    return result;
+  }
+
   interface EndpointFormProps {
     ~ endpoint: EndpointConfig;
     ~ onSubmit: (endpoint: string, apiKey: string, environment: MeldEnvironment, method: MeldMethod, body?: unknown, params?: Record<string, string | string[]>, headers?: Record<string, string>) => void;
@@ -20,40 +172,85 @@ module
 props { endpoint, onSubmit, onRequestChange, loading, apiKey, apiKeyAvailable, countryCode }: EndpointFormProps
 setup
   const submitLabel = loading ? "Sending request…" : "Send request";
-  const { environment, setEnvironment, paramValues, setParamValue, bodyText, setBodyValue, bodyError, buildSubmitRequest } = useEndpointForm({
-    endpoint,
-    apiKey,
-    apiKeyAvailable,
-    countryCode,
-    onRequestChange
-  });
+  const [preferredEnvironment, setPreferredEnvironment] = useLinkedState("meld-environment", () => "sandbox" as MeldEnvironment);
   const formParameters = endpoint.parameters.filter((parameter) =>
     parameter.in !== "cookie" && parameter.name.toLowerCase() !== "meld-version" && parameter.name.toLowerCase() !== "authorization"
   );
   const getKey = (parameter: EndpointParameter) => `${parameter.in}:${parameter.name}`;
-  const getInputType = (parameter: EndpointParameter) =>
-    parameter.schema.type === "number" || parameter.schema.type === "integer" ? "number" : "text";
+  const requestBodySchema = endpoint.requestBody?.schema;
+  const requestBodyFields = requestBodySchema ? collectBodyFields(requestBodySchema) : [];
+  const initialText = initialBodyText(endpoint, countryCode);
+  const initialBody = parseJson(initialText);
+  const initialBodyValues = Object.fromEntries(requestBodyFields.map((bodyField, index) => {
+    const value = valueAtPath(initialBody.value, bodyField.path);
+    return [bodyFieldName(index), Array.isArray(value) ? value.join(", ") : value === undefined || value === null ? "" : String(value)];
+  }));
+  const form = useForm<EndpointFormValues>({
+    formId: endpoint.id,
+    defaultValues: {
+      environment: preferredEnvironment,
+      paramValues: initialParameterValues(endpoint, countryCode),
+      bodyValues: initialBodyValues,
+      bodyText: initialText,
+    },
+    validators: {
+      onSubmit: ({ value }) => parseRequestBody(value.bodyText, endpoint.requestBody).error,
+    },
+    onSubmit: ({ value }) => {
+      if (endpoint.categoryDeprecated || endpoint.deprecated || (!apiKey.trim() && !apiKeyAvailable)) return;
+      const request = buildRequestInfo(endpoint, value, apiKey, apiKeyAvailable);
+      onSubmit(endpoint.path, apiKey.trim(), value.environment, endpoint.method, request.body, request.params || {}, request.wireHeaders);
+    },
+  });
+  const values = useSelector(form.store, (state) => state.values);
+  const canSubmit = useSelector(form.store, (state) => state.canSubmit);
+  const bodyText = values.bodyText;
+  const parsedBody = parseJson(bodyText);
+  const bodyError = parseRequestBody(bodyText, endpoint.requestBody).error;
 
-  const handleSubmit = (event: FormEvent) => {
+  useEffect(() => {
+    if (!onRequestChange) return;
+    const requestInfo = buildRequestInfo(endpoint, values, apiKey, apiKeyAvailable);
+    onRequestChange(requestInfo.url, requestInfo.method, requestInfo.headers, requestInfo.body, requestInfo.params);
+  }, [endpoint, values, apiKey, apiKeyAvailable, onRequestChange]);
+
+  const setRequestBodyField = (path: string[], value: unknown) => {
+    const parsed = parseJson(form.state.values.bodyText);
+    const currentBody = parsed.valid && parsed.value && typeof parsed.value === "object" && !Array.isArray(parsed.value)
+      ? parsed.value
+      : {};
+    form.setFieldValue("bodyText", JSON.stringify(updateAtPath(currentBody, path, value), null, 2));
+  };
+  const syncBodyFields = (nextBodyText: string) => {
+    const parsed = parseJson(nextBodyText);
+    if (!parsed.valid) return;
+    requestBodyFields.forEach((bodyField, index) => {
+      const value = valueAtPath(parsed.value, bodyField.path);
+      const fieldValue = Array.isArray(value) ? value.join(", ") : value === undefined || value === null ? "" : String(value);
+      form.setFieldValue(`bodyValues.${bodyFieldName(index)}` as never, fieldValue as never);
+    });
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (endpoint.categoryDeprecated || endpoint.deprecated || (!apiKey.trim() && !apiKeyAvailable) || bodyError) return;
-    const request = buildSubmitRequest();
-    onSubmit(endpoint.path, apiKey.trim(), environment, endpoint.method, request.body, request.params, request.headers);
+    void form.handleSubmit();
   };
 form(className="space-y-6 bg-white p-4 dark:bg-zinc-900/80" onSubmit={handleSubmit})
   div(className='flex items-center justify-between border-b border-border')
     Title(text="request")
-    Field(label="Environment" required)
-      Select(
-        ~ className="w-full"
-        ~ value={environment}
-        ~ required={true}
-        ~ options={[
-        ~ { value: "sandbox", label: "Sandbox (api-sb.meld.io)" },
-        ~ { value: "production", label: "Production (api.meld.io)" },
-        ~ ]}
-        ~ onChange={(value) => setEnvironment(value as MeldEnvironment)}
-        ~ )
+    Field(
+      ~ form={form}
+      ~ name="environment"
+      ~ id="environment"
+      ~ label="Environment"
+      ~ required={true}
+      ~ control="select"
+      ~ options={[
+      ~ { value: "sandbox", label: "Sandbox (api-sb.meld.io)" },
+      ~ { value: "production", label: "Production (api.meld.io)" },
+      ~ ]}
+      ~ onValueChange={(value) => setPreferredEnvironment(value as MeldEnvironment)}
+      ~ )
   if formParameters.length > 0
     .space-y-4
       Title(text="Parameters")
@@ -61,47 +258,102 @@ form(className="space-y-6 bg-white p-4 dark:bg-zinc-900/80" onSubmit={handleSubm
         scope
           setup
             const key = getKey(parameter);
-            const value = paramValues[key] || "";
-            const inputType = getInputType(parameter);
-            const helperText = parameter.description || (parameter.schema.type === "array" ? "Enter multiple values separated by commas." : undefined);
+            const schema = normalizeSchema(parameter.schema);
+            const inputType = schemaInputType(schema);
+            const helperText = [parameter.description, schema.type === "array" ? "Enter multiple values separated by commas." : undefined].filter(Boolean).join("\n\n");
             const enumOptions = [
-              { value: "", label: "Select a value" },
-              ...(parameter.schema.enum || []).map((optionValue) => ({
+              { value: "", label: parameter.required ? "Select a value" : "No value" },
+              ...(schema.enum || []).map((optionValue) => ({
                 value: String(optionValue),
                 label: String(optionValue),
               })),
             ];
-          Field(label={`${parameter.in} · ${parameter.name}`} required={parameter.required} helperText={helperText})
-            if parameter.schema.enum && parameter.schema.enum.length > 0
-              Select(
-                ~ id={key}
-                ~ className="w-full"
-                ~ value={value}
-                ~ required={parameter.required}
-                ~ options={enumOptions}
-                ~ placeholder="Select a value"
-                ~ onChange={(nextValue) => setParamValue(key, nextValue || null)}
-                ~ )
-            else
-              input(
-                ~ id={key}
-                ~ className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-                ~ type={inputType}
-                ~ value={value}
-                ~ placeholder={parameter.example === undefined ? "" : String(parameter.example)}
-                ~ required={parameter.required}
-                ~ step={parameter.schema.type === "integer" ? "1" : "any"}
-                ~ onInput={(event) => setParamValue(key, event.currentTarget.value || null)}
-                ~ )
+            const fieldOptions = schema.type === "boolean"
+              ? [
+                  { value: "", label: parameter.required ? "Select true or false" : "No value" },
+                  { value: "true", label: "True" },
+                  { value: "false", label: "False" },
+                ]
+              : enumOptions;
+          Field(
+            ~ form={form}
+            ~ name={`paramValues.${parameterFieldName(endpoint.parameters.indexOf(parameter))}`}
+            ~ id={key}
+            ~ label={`${parameter.in} · ${parameter.name}`}
+            ~ required={parameter.required}
+            ~ type={schemaTypeLabel(schema)}
+            ~ helperText={helperText || undefined}
+            ~ control={schema.type === "boolean" || (schema.enum && schema.enum.length > 0) ? "select" : "input"}
+            ~ inputType={inputType}
+            ~ step={schema.type === "integer" ? "1" : "any"}
+            ~ min={schema.minimum}
+            ~ max={schema.maximum}
+            ~ options={fieldOptions}
+            ~ placeholder={schema.type === "boolean" || (schema.enum && schema.enum.length > 0) ? "Select a value" : undefined}
+            ~ )
   if endpoint.requestBody
-    Field(label={`Request body · ${endpoint.requestBody.contentType || "application/json"}`} required={endpoint.requestBody.required} helperText="Edit the JSON request body using the schema shown above.")
-      textarea(
-        ~ id="request-body"
-        ~ className="min-h-64 w-full rounded-lg border border-zinc-300 bg-white p-3 font-mono text-xs leading-5 text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-        ~ value={bodyText}
-        ~ spellCheck={false}
-        ~ onInput={(event) => setBodyValue(event.currentTarget.value)}
-        ~ )
+    FieldGroup(label={`Request body · ${endpoint.requestBody.contentType || "application/json"}`} required={endpoint.requestBody.required} type={schemaTypeLabel(endpoint.requestBody.schema)} helperText={endpoint.requestBody.description})
+      .space-y-4
+        if requestBodyFields.length > 0 && parsedBody.valid
+          each bodyField in requestBodyFields key bodyField.path.join(".")
+            scope
+              setup
+                const schema = normalizeSchema(bodyField.schema);
+                const inputType = schemaInputType(schema);
+                const fieldHelperText = [schema.description, schema.type === "array" ? "Enter values separated by commas." : undefined].filter(Boolean).join("\n\n");
+                const fieldId = `request-body-${bodyField.path.map(encodeURIComponent).join("-")}`;
+                const bodyIndex = requestBodyFields.indexOf(bodyField);
+                const enumOptions = [
+                  { value: "", label: bodyField.required ? "Select a value" : "No value" },
+                  ...(schema.enum || []).map((optionValue) => ({ value: String(optionValue), label: String(optionValue) })),
+                ];
+                const fieldOptions = schema.type === "boolean"
+                  ? [
+                      { value: "", label: bodyField.required ? "Select true or false" : "No value" },
+                      { value: "true", label: "True" },
+                      { value: "false", label: "False" },
+                    ]
+                  : enumOptions;
+                const handleBodyFieldChange = (nextValue: string) => {
+                  const value = schema.type === "boolean"
+                    ? nextValue === "" ? null : nextValue === "true"
+                    : nextValue === "" ? null : parseSchemaInput(nextValue, schema);
+                  setRequestBodyField(bodyField.path, value);
+                };
+              Field(
+                ~ form={form}
+                ~ name={`bodyValues.${bodyFieldName(bodyIndex)}`}
+                ~ id={fieldId}
+                ~ label={bodyField.label}
+                ~ required={bodyField.required}
+                ~ type={schemaTypeLabel(schema)}
+                ~ helperText={fieldHelperText || undefined}
+                ~ control={schema.type === "boolean" || (schema.enum && schema.enum.length > 0) ? "select" : "input"}
+                ~ inputType={inputType}
+                ~ placeholder={schema.example === undefined && schema.default === undefined ? "" : String(schema.example ?? schema.default)}
+                ~ step={schema.type === "integer" ? "1" : "any"}
+                ~ min={schema.minimum}
+                ~ max={schema.maximum}
+                ~ options={fieldOptions}
+                ~ placeholder={schema.type === "boolean" || (schema.enum && schema.enum.length > 0) ? "Select a value" : undefined}
+                ~ onValueChange={handleBodyFieldChange}
+                ~ )
+        elseif !parsedBody.valid
+          p(className="text-xs text-amber-700 dark:text-amber-300") Fix the raw JSON before editing structured request body fields.
+        else
+          p(className="text-xs text-zinc-500 dark:text-zinc-400") This request body has no directly editable fields. Use Advanced JSON for this schema.
+        p(className="text-xs text-zinc-500 dark:text-zinc-400") Arrays of objects and unresolved schema references are available in Advanced JSON.
+        details(className="rounded-xl border border-zinc-200 dark:border-zinc-800")
+          summary(className="cursor-pointer px-3 py-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300") Advanced · raw JSON
+          div(className="border-t border-zinc-200 p-3 dark:border-zinc-800")
+            Field(
+              ~ form={form}
+              ~ name="bodyText"
+              ~ id="request-body-json"
+              ~ label="Raw JSON"
+              ~ control="textarea"
+              ~ onValueChange={syncBodyFields}
+              ~ )
       if bodyError
         p(className="mt-2 text-xs font-medium text-red-600 dark:text-red-400") #{bodyError}
   if endpoint.categoryDeprecated
@@ -109,6 +361,6 @@ form(className="space-y-6 bg-white p-4 dark:bg-zinc-900/80" onSubmit={handleSubm
   button(
     ~ className="w-full rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-45 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
     ~ type="submit"
-    ~ disabled={loading || endpoint.categoryDeprecated || endpoint.deprecated || (!apiKey.trim() && !apiKeyAvailable) || Boolean(bodyError)}
+    ~ disabled={loading || !canSubmit || endpoint.categoryDeprecated || endpoint.deprecated || (!apiKey.trim() && !apiKeyAvailable) || Boolean(bodyError)}
     ~ )
     span #{submitLabel}

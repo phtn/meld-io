@@ -1,25 +1,113 @@
-import type { OctaneNode } from "octane";
+import { useField } from "@octanejs/tanstack-form";
+import type { AnyFormApi } from "@octanejs/tanstack-form";
+import { useId, useState } from "octane";
+import ParamType from "@/components/ParamType.btsx";
+import { Icon } from "@/lib/icons";
+import Select from "@/ui/Select.btsx";
+import type { Option } from "@/ui/Select.btsx";
 module
   interface FieldProps {
+    ~ form: AnyFormApi;
+    ~ name: string;
     ~ label: string;
+    ~ id: string;
     ~ required?: boolean;
-    ~ children: OctaneNode;
+    ~ type?: string;
     ~ helperText?: string;
+    ~ control?: "input" | "select" | "textarea";
+    ~ inputType?: string;
+    ~ placeholder?: string;
+    ~ step?: string;
+    ~ min?: number;
+    ~ max?: number;
+    ~ options?: Option[];
+    ~ onValueChange?: (value: string) => void;
     ~ }
 
-props { label, required, children, helperText }: FieldProps
-div(className="w-full border-b border-zinc-700 border-dotted pb-2")
-  div(className="flex items-center justify-between")
-    .w-full
-      label(
-        ~ className="flex items-center space-x-1 text-xs font-brk font-medium mb-2 text-zinc-700 dark:text-zinc-300"
-        ~ htmlFor={label}
-        ~ )
-        span #{label}
-        |
-        if required
-          div(className="size-1.5 aspect-square bg-red-400 rounded-full")
+props { form, name, label, id, required, type, helperText, control = "input", inputType = "text", placeholder, step, min, max, options = [], onValueChange }: FieldProps
+setup
+  const field = useField({
+    form,
+    name: name as never,
+    validators: required
+      ? { onChange: ({ value }) => value === "" || value === undefined || value === null ? `${label} is required.` : undefined }
+      : undefined,
+  });
+  const [helperVisible, setHelperVisible] = useState(false);
+  const helperId = useId();
+  const value = field.state.value === undefined || field.state.value === null ? "" : String(field.state.value);
+  const errors = field.state.meta.errors;
+  const error = errors.length > 0 ? String(errors[0]) : undefined;
+  const errorId = `${id}-error`;
+  const describedBy = [helperVisible ? helperId : undefined, error ? errorId : undefined].filter(Boolean).join(" ") || undefined;
+  const updateValue = (nextValue: string) => {
+    field.handleChange(nextValue);
+    onValueChange?.(nextValue);
+  };
 
-    | #{children}
-  if helperText
-    p(className="mt-1 text-xs text-zinc-500 dark:text-zinc-500") #{helperText}
+div(className="w-full pb-2")
+  div(className="mb-2 flex items-center justify-between gap-2")
+    div(className="flex min-w-0 items-center gap-2")
+      label(
+        ~ className="flex min-w-0 items-center text-xs font-brk font-medium text-zinc-700 dark:text-zinc-300"
+        ~ htmlFor={id}
+        ~ ) #{label}
+      if type
+        ParamType(type={type})
+      if required
+        span(className="size-1.5 shrink-0 rounded-full bg-red-400" aria-label="Required")
+    if helperText
+      button(
+        ~ type="button"
+        ~ aria-label={helperVisible ? `Hide help for ${label}` : `Show help for ${label}`}
+        ~ aria-expanded={helperVisible}
+        ~ aria-controls={helperId}
+        ~ onClick={() => setHelperVisible(!helperVisible)}
+        ~ className="grid size-5 shrink-0 place-items-center rounded-full text-zinc-500 transition-colors opacity-40 hover:opacity-100 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus dark:text-zinc-400 dark:hover:bg-zinc-800"
+        ~ )
+        Icon(name="info-circle" className="size-3")
+  if control === "select"
+    Select(
+      ~ id={id}
+      ~ className="w-full"
+      ~ value={value}
+      ~ required={required}
+      ~ options={options}
+      ~ placeholder={placeholder}
+      ~ aria-invalid={Boolean(error)}
+      ~ aria-describedby={describedBy}
+      ~ onBlur={field.handleBlur}
+      ~ onChange={updateValue}
+      ~ )
+  elseif control === "textarea"
+    textarea(
+      ~ id={id}
+      ~ aria-invalid={Boolean(error)}
+      ~ aria-describedby={describedBy}
+      ~ className="min-h-48 w-full rounded-lg border border-zinc-300 bg-white p-3 font-mono text-xs leading-5 text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+      ~ value={value}
+      ~ placeholder={placeholder}
+      ~ spellCheck={false}
+      ~ onBlur={field.handleBlur}
+      ~ onInput={(event) => updateValue(event.currentTarget.value)}
+      ~ )
+  else
+    input(
+      ~ id={id}
+      ~ aria-invalid={Boolean(error)}
+      ~ aria-describedby={describedBy}
+      ~ className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+      ~ type={inputType}
+      ~ value={value}
+      ~ placeholder={placeholder}
+      ~ required={required}
+      ~ step={step}
+      ~ min={min}
+      ~ max={max}
+      ~ onBlur={field.handleBlur}
+      ~ onInput={(event) => updateValue(event.currentTarget.value)}
+      ~ )
+  if helperText && helperVisible
+    p(id={helperId} className="mt-2 whitespace-pre-line text-xs leading-5 text-zinc-500 dark:text-zinc-500") #{helperText}
+  if error
+    p(id={errorId} className="mt-2 text-xs font-medium text-red-600 dark:text-red-400" role="alert") #{error}

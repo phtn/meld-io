@@ -1,24 +1,16 @@
 import { type EndpointConfig, type EndpointParameter, type OpenApiSchema, MELD_API_VERSION } from '@/lib/meld/endpoints'
-import { useCallback, useEffect, useLinkedState } from 'octane'
 import type { MeldEnvironment } from '../types'
 
 type RequestParams = Record<string, string | string[]>
 
-interface UseEndpointFormProps {
-  endpoint: EndpointConfig
-  apiKey: string
-  apiKeyAvailable: boolean
-  countryCode: string
-  onRequestChange?: (
-    url: string,
-    method: EndpointConfig['method'],
-    headers: Record<string, string>,
-    body?: unknown,
-    params?: RequestParams,
-  ) => void
+export interface EndpointFormValues {
+  environment: MeldEnvironment
+  paramValues: Record<string, string>
+  bodyValues: Record<string, string>
+  bodyText: string
 }
 
-interface RequestInfo {
+export interface RequestInfo {
   url: string
   method: EndpointConfig['method']
   headers: Record<string, string>
@@ -28,8 +20,12 @@ interface RequestInfo {
   bodyError?: string
 }
 
-function parameterKey(parameter: EndpointParameter): string {
-  return `${parameter.in}:${parameter.name}`
+export function parameterFieldName(index: number): string {
+  return `p${index}`
+}
+
+export function bodyFieldName(index: number): string {
+  return `b${index}`
 }
 
 function stringifyValue(value: unknown): string {
@@ -46,14 +42,14 @@ function getParameterExample(parameter: EndpointParameter): unknown {
   return parameter.schema.enum?.[0]
 }
 
-function initialParameterValues(endpoint: EndpointConfig, countryCode: string): Record<string, string> {
+export function initialParameterValues(endpoint: EndpointConfig, countryCode: string): Record<string, string> {
   const values: Record<string, string> = {}
-  endpoint.parameters.forEach((parameter) => {
+  endpoint.parameters.forEach((parameter, index) => {
     if (parameter.name.toLowerCase() === 'meld-version' || parameter.name.toLowerCase() === 'authorization') return
     const example = parameter.name === 'countryCode' && !parameter.example
       ? countryCode || getParameterExample(parameter)
       : getParameterExample(parameter)
-    values[parameterKey(parameter)] = stringifyValue(example)
+    values[parameterFieldName(index)] = stringifyValue(example)
   })
   return values
 }
@@ -97,7 +93,7 @@ function applyDetectedCountry(value: unknown, schema: OpenApiSchema | undefined,
   return result
 }
 
-function initialBodyText(endpoint: EndpointConfig, countryCode: string): string {
+export function initialBodyText(endpoint: EndpointConfig, countryCode: string): string {
   if (!endpoint.requestBody) return ''
   const example = endpoint.requestBody.example !== undefined
     ? endpoint.requestBody.example
@@ -106,15 +102,15 @@ function initialBodyText(endpoint: EndpointConfig, countryCode: string): string 
   return JSON.stringify(value, null, 2)
 }
 
-function parseRequestBody(bodyText: string, requestBody: EndpointConfig['requestBody']): { body?: unknown; error?: string } {
-  if (!requestBody) return {};
+export function parseRequestBody(bodyText: string, requestBody: EndpointConfig['requestBody']): { body?: unknown; error?: string } {
+  if (!requestBody) return {}
   if (!bodyText.trim()) {
-    return requestBody.required ? { error: 'A JSON request body is required.' } : {};
+    return requestBody.required ? { error: 'A JSON request body is required.' } : {}
   }
   try {
-    return { body: JSON.parse(bodyText) };
+    return { body: JSON.parse(bodyText) }
   } catch {
-    return { error: 'Request body must be valid JSON.' };
+    return { error: 'Request body must be valid JSON.' }
   }
 }
 
@@ -122,111 +118,73 @@ function shouldRedactHeader(name: string): boolean {
   return /authorization|private|oauth/i.test(name)
 }
 
-export function useEndpointForm({ endpoint, apiKey, apiKeyAvailable, countryCode, onRequestChange }: UseEndpointFormProps) {
-  const [environment, setEnvironment] = useLinkedState('meld-environment', () => 'sandbox' as MeldEnvironment)
-  const [paramValues, setParamValues] = useLinkedState(
-    endpoint.id,
-    () => initialParameterValues(endpoint, countryCode),
-  )
-  const [bodyText, setBodyText] = useLinkedState(endpoint.id, () => initialBodyText(endpoint, countryCode))
+export function buildRequestInfo(
+  endpoint: EndpointConfig,
+  values: EndpointFormValues,
+  apiKey: string,
+  apiKeyAvailable: boolean,
+): RequestInfo {
+  const pathParams: Record<string, string> = {}
+  const queryParams: RequestParams = {}
+  const wireHeaders: Record<string, string> = {}
+  let url = `${values.environment === 'sandbox' ? 'https://api-sb.meld.io' : 'https://api.meld.io'}${endpoint.path}`
 
-  const setParamValue = useCallback((key: string, value: string | null) => {
-    setParamValues((current) => ({ ...current, [key]: value || '' }))
-  }, [setParamValues])
-
-  const setBodyValue = useCallback((value: string) => setBodyText(value), [setBodyText])
-
-  const buildRequestInfo = useCallback((): RequestInfo => {
-    const pathParams: Record<string, string> = {}
-    const queryParams: RequestParams = {}
-    const wireHeaders: Record<string, string> = {}
-    let url = `${environment === 'sandbox' ? 'https://api-sb.meld.io' : 'https://api.meld.io'}${endpoint.path}`
-
-    endpoint.parameters.forEach((parameter) => {
-      const value = paramValues[parameterKey(parameter)] || ''
-      const normalizedLocation = parameter.in.toLowerCase()
-      if (normalizedLocation === 'path') {
-        if (value) pathParams[parameter.name] = value
-      } else if (normalizedLocation === 'query') {
-        if (value) {
-          const isArray = parameter.schema.type === 'array'
-          const arrayValues = isArray ? value.split(',').map((part) => part.trim()).filter(Boolean) : []
-          if (!isArray) {
-            queryParams[parameter.name] = value
-          } else {
-            const delimiter = parameter.style === 'spaceDelimited' ? ' ' : parameter.style === 'pipeDelimited' ? '|' : ','
-            const explode = parameter.explode ?? (parameter.style ?? 'form') === 'form'
-            queryParams[parameter.name] = explode ? arrayValues : arrayValues.join(delimiter)
-          }
+  endpoint.parameters.forEach((parameter, index) => {
+    const value = values.paramValues[parameterFieldName(index)] || ''
+    const normalizedLocation = parameter.in.toLowerCase()
+    if (normalizedLocation === 'path') {
+      if (value) pathParams[parameter.name] = value
+    } else if (normalizedLocation === 'query') {
+      if (value) {
+        const isArray = parameter.schema.type === 'array'
+        const arrayValues = isArray ? value.split(',').map((part) => part.trim()).filter(Boolean) : []
+        if (!isArray) {
+          queryParams[parameter.name] = value
+        } else {
+          const delimiter = parameter.style === 'spaceDelimited' ? ' ' : parameter.style === 'pipeDelimited' ? '|' : ','
+          const explode = parameter.explode ?? (parameter.style ?? 'form') === 'form'
+          queryParams[parameter.name] = explode ? arrayValues : arrayValues.join(delimiter)
         }
-      } else if (normalizedLocation === 'header' && parameter.name.toLowerCase() !== 'meld-version' && parameter.name.toLowerCase() !== 'authorization') {
-        if (value) wireHeaders[parameter.name] = value
       }
-    })
-
-    Object.entries(pathParams).forEach(([name, value]) => {
-      url = url.replace(`{${name}}`, encodeURIComponent(value))
-    })
-    const queryString = new URLSearchParams()
-    Object.entries(queryParams).forEach(([name, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach((item) => queryString.append(name, item))
-      } else {
-        queryString.set(name, value)
-      }
-    })
-    if (queryString.size > 0) url += `?${queryString.toString()}`
-
-    const { body, error: bodyError } = parseRequestBody(bodyText, endpoint.requestBody)
-
-    const headers: Record<string, string> = {
-      Authorization: apiKey.trim()
-        ? 'BASIC [OVERRIDE REDACTED]'
-        : apiKeyAvailable ? 'BASIC [SERVER KEY]' : 'BASIC [NOT CONFIGURED]',
-      Accept: 'application/json',
-      'Meld-Version': MELD_API_VERSION,
+    } else if (normalizedLocation === 'header' && parameter.name.toLowerCase() !== 'meld-version' && parameter.name.toLowerCase() !== 'authorization') {
+      if (value) wireHeaders[parameter.name] = value
     }
-    if (endpoint.requestBody) headers['Content-Type'] = endpoint.requestBody.contentType || 'application/json'
-    Object.entries(wireHeaders).forEach(([name, value]) => {
-      headers[name] = shouldRedactHeader(name) ? '[REDACTED]' : value
-    })
+  })
 
-    const params = { ...pathParams, ...queryParams }
-    return {
-      url,
-      method: endpoint.method,
-      headers,
-      wireHeaders,
-      body,
-      params: Object.keys(params).length > 0 ? params : undefined,
-      bodyError,
+  Object.entries(pathParams).forEach(([name, value]) => {
+    url = url.replace(`{${name}}`, encodeURIComponent(value))
+  })
+  const queryString = new URLSearchParams()
+  Object.entries(queryParams).forEach(([name, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => queryString.append(name, item))
+    } else {
+      queryString.set(name, value)
     }
-  }, [endpoint, environment, paramValues, bodyText, apiKey, apiKeyAvailable])
+  })
+  if (queryString.size > 0) url += `?${queryString.toString()}`
 
-  useEffect(() => {
-    if (!onRequestChange) return
-    const requestInfo = buildRequestInfo()
-    onRequestChange(requestInfo.url, requestInfo.method, requestInfo.headers, requestInfo.body, requestInfo.params)
-  }, [onRequestChange, buildRequestInfo])
+  const { body, error: bodyError } = parseRequestBody(values.bodyText, endpoint.requestBody)
+  const headers: Record<string, string> = {
+    Authorization: apiKey.trim()
+      ? 'BASIC [OVERRIDE REDACTED]'
+      : apiKeyAvailable ? 'BASIC [SERVER KEY]' : 'BASIC [NOT CONFIGURED]',
+    Accept: 'application/json',
+    'Meld-Version': MELD_API_VERSION,
+  }
+  if (endpoint.requestBody) headers['Content-Type'] = endpoint.requestBody.contentType || 'application/json'
+  Object.entries(wireHeaders).forEach(([name, value]) => {
+    headers[name] = shouldRedactHeader(name) ? '[REDACTED]' : value
+  })
 
-  const buildSubmitRequest = useCallback(() => {
-    const requestInfo = buildRequestInfo()
-    return {
-      body: requestInfo.body,
-      params: requestInfo.params || {},
-      headers: requestInfo.wireHeaders,
-      bodyError: requestInfo.bodyError,
-    }
-  }, [buildRequestInfo])
-
+  const params = { ...pathParams, ...queryParams }
   return {
-    environment,
-    setEnvironment,
-    paramValues,
-    setParamValue,
-    bodyText,
-    bodyError: parseRequestBody(bodyText, endpoint.requestBody).error,
-    setBodyValue,
-    buildSubmitRequest,
+    url,
+    method: endpoint.method,
+    headers,
+    wireHeaders,
+    body,
+    params: Object.keys(params).length > 0 ? params : undefined,
+    bodyError,
   }
 }

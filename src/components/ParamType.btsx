@@ -1,7 +1,15 @@
 props { type }: { type: string }
-setup const color = type === "string" ? "#1d4ed8" : type === "number" ? "#7e22ce" : "#b45309";
+setup
+  const colorClass = type === "string"
+    ? "text-orange-500 dark:text-orange-300"
+    : type === "number" || type === "integer"
+      ? "text-sky-600 dark:text-sky-300"
+      : type === "boolean"
+        ? "text-indigo-600 dark:text-indigo-400"
+        : type === "null"
+          ? "text-zinc-500 dark:text-rose-300"
+          : "text-zinc-700 dark:text-zinc-300";
 span(
-  ~ className="inline-flex rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-[10px] dark:border-zinc-700 dark:bg-zinc-950"
-  ~ style={{ color }}
+  ~ className={`inline-flex rounded-md border border-border/50 px-1.5 py-0.5 font-mono text-[10px] dark:bg-zinc-950 ${colorClass}`}
   ~ )
   | #{type}

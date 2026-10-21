@@ -24,7 +24,7 @@ component CategoryList
   props { categories, selectedEndpoint, onSelect }: CategoryListProps
   each category in categories key category.id
     section
-      div(className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-surface px-1 py-2 dark:bg-surface/33")
+      div(className="sticky top-0 z-15 mb-2 flex items-center justify-between gap-2 bg-surface p-2 rounded-md")
         span(className="truncate text-[10px] font-normal uppercase tracking-widest text-muted-foreground/70") #{category.name}
         span(className="shrink-0 font-mono text-2xs tabular-nums text-muted-foreground") #{category.endpoints.length}
       div(className="space-y-1")
@@ -42,7 +42,7 @@ component CategoryList
             ~ )
             div(className="flex min-w-0 flex-1 items-center gap-3")
               Method(method={endpoint.method})
-              span(className="min-w-0 flex-1 truncate font-mono text-xs font-medium leading-tight sm:text-[13px]") #{endpoint.name}
+              span(className="min-w-0 flex-1 truncate font-mono text-xs font-medium leading-tight sm:text-[13px] tracking-tighter") #{endpoint.name}
               if endpoint.deprecated || endpoint.categoryDeprecated
                 span(className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-amber-300 dark:text-amber-800") Deprecated
 
@@ -65,7 +65,7 @@ setup
   const deprecatedCategories = filteredCategories.filter((category) => category.deprecated);
 
 div(className="min-w-0 bg-transparent")
-  .px-2.py-0
+  .px-2.mb-2
     input(
       ~ aria-label="Search endpoints"
       ~ className="w-full rounded-[8px] border border-sidebar-border bg-background/60 px-2.5 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus-visible:ring-2 focus-visible:ring-focus"
