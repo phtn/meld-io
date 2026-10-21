@@ -53,9 +53,9 @@ if !response && !requestPreview
     Title(text="Response")
     p(className="text-xs text-zinc-500 dark:text-zinc-400") Fill out the form to see the request details.
 else
-  div(className="dark:bg-zinc-800 p-4 space-y-4")
+  div(className="dark:bg-zinc-800 p-4 space-y-0")
     div(className="flex items-center justify-between")
-      Title(text="Request & Response")
+      // Title(text="Request & Response")
       if response
         div(
           ~ className={`text-xs font-brk uppercase ${response.success
@@ -86,13 +86,15 @@ else
         label(className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-2 block") Request Parameters
         JsonViewer(data={displayParams} maxHeight="max-h-64")
     if displayHeaders
-      div
-        label(className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-2 block") Request Headers
-        JsonViewer(data={displayHeaders} maxHeight="max-h-64")
+      details(className="rounded-xl border border-zinc-200 dark:border-zinc-800")
+        summary(className="cursor-pointer px-3 py-2.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide") Request Headers
+        div(className="border-t border-zinc-200 p-0 dark:border-zinc-800")
+          JsonViewer(data={displayHeaders} maxHeight="max-h-64" withToolbar={false})
     if displayBody !== undefined && displayBody !== null
-      div
-        label(className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-2 block") Request Body
-        JsonViewer(data={displayBody} maxHeight="max-h-64")
+      details(className="rounded-xl border border-zinc-200 dark:border-zinc-800")
+        summary(className="cursor-pointer px-3 py-2.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide") Request Body
+        div(className="border-t border-zinc-200 p-0 dark:border-zinc-800")
+          JsonViewer(data={displayBody} maxHeight="max-h-64")
     if response
       div
         div(className="flex items-center justify-between mb-2")
@@ -105,7 +107,7 @@ else
               ~ rel="noopener noreferrer"
               ~ )
               | Open Widget &rarr;
-        JsonViewer(data={response.data !== undefined ? response.data : response.error} maxHeight="max-h-96")
+        JsonViewer(data={response.data !== undefined ? response.data : response.error} maxHeight="max-h-180")
     if !response
       div
         p(className="text-xs text-zinc-500 dark:text-zinc-400 italic") No response yet. Send the request to see the result.

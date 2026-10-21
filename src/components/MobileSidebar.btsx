@@ -4,6 +4,7 @@ import { Icon } from '@/lib/icons'
 import { cn } from '@/lib/utils'
 import Drawer, { DrawerClose, DrawerTrigger } from '@/ui/Drawer.btsx'
 import Topbar from "./Topbar.btsx";
+import type { WalletAddressSettings } from "@/lib/meld/request-presets";
 
 module
   export interface MobileSidebarProps {
@@ -13,6 +14,10 @@ module
     title?: string
     className?: string
     endpointPath?: string
+    defaultSetIndex?: number
+    onDefaultSetChange?: (index: number) => void
+    walletAddresses?: WalletAddressSettings
+    onWalletAddressesChange?: (value: WalletAddressSettings) => void
   }
 
 component Wordmark
@@ -20,8 +25,8 @@ component Wordmark
   span(className='inline-flex items-center font-sans font-medium text-base tracking-tight uppercase text-foreground') #{title}
 
 component MobileSidebarTrigger
-  props { title, endpointPath }: { title?: string; endpointPath?: string }
-  Topbar(isMobile endpointPath={endpointPath})
+  props { title, endpointPath, defaultSetIndex, onDefaultSetChange, walletAddresses, onWalletAddressesChange }: { title?: string; endpointPath?: string; defaultSetIndex?: number; onDefaultSetChange?: (index: number) => void; walletAddresses?: WalletAddressSettings; onWalletAddressesChange?: (value: WalletAddressSettings) => void }
+  Topbar(isMobile endpointPath={endpointPath} defaultSetIndex={defaultSetIndex} onDefaultSetChange={onDefaultSetChange} walletAddresses={walletAddresses} onWalletAddressesChange={onWalletAddressesChange})
     DrawerTrigger(type='button' aria-label='Open navigation' className='grid size-9 touch-manipulation place-items-center rounded-lg text-foreground/70 transition-colors hover:bg-sidebar hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring')
       Icon(name='menu' className='size-5 opacity-90')
 
@@ -34,8 +39,8 @@ component MobileSidebarHeader
       DrawerClose(type='button' aria-label='Close navigation' className='grid size-9 touch-manipulation place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring')
         Icon(name='close' className='size-4 opacity-90')
 
-props { children, open, onOpenChange, title = 'Mobile Web', className, endpointPath }: MobileSidebarProps
-setup const trigger = createElement(MobileSidebarTrigger, { endpointPath })
+props { children, open, onOpenChange, title = 'Mobile Web', className, endpointPath, defaultSetIndex, onDefaultSetChange, walletAddresses, onWalletAddressesChange }: MobileSidebarProps
+setup const trigger = createElement(MobileSidebarTrigger, { endpointPath, defaultSetIndex, onDefaultSetChange, walletAddresses, onWalletAddressesChange })
 
 Drawer(
   ~ open={open}
@@ -50,5 +55,5 @@ Drawer(
   ~ )
   div(className='pointer-events-none absolute inset-0 overflow-hidden' aria-hidden='true')
     div(className='absolute -right-48 -top-64 size-152 rounded-full bg-cyan-200/8 blur-3xl dark:bg-lime-200/3')
-  Topbar(isMobile endpointPath={endpointPath})
+  Topbar(isMobile endpointPath={endpointPath} defaultSetIndex={defaultSetIndex} onDefaultSetChange={onDefaultSetChange} walletAddresses={walletAddresses} onWalletAddressesChange={onWalletAddressesChange})
   | #{children}

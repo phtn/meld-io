@@ -8,18 +8,23 @@ import { useCountryDetection } from "@/hooks/use-country-detection";
 import { useMeldApi } from "@/hooks/use-meld-api";
 import type { MeldEnvironment, RequestPreview } from "../types";
 import { useCallback, useEffect, useState } from "octane";
+import { Group, Panel, Separator } from "@octanejs/resizable-panels";
+import type { WalletAddressSettings } from "@/lib/meld/request-presets";
 
 module
   interface MeldContentProps {
     selectedEndpointId: string;
+    defaultSetIndex: number;
+    walletAddresses: WalletAddressSettings;
   }
 
-props { selectedEndpointId }: MeldContentProps
+props { selectedEndpointId, defaultSetIndex, walletAddresses }: MeldContentProps
 setup
   const defaultEndpointId = "crypto-post-payments-crypto-quote";
   const [apiKey, setApiKey] = useState<string>("");
   const [serverApiKeyAvailable, setServerApiKeyAvailable] = useState(false);
   const [requestPreview, setRequestPreview] = useState<RequestPreview | null>(null);
+  const [stackedPanels, setStackedPanels] = useState(false);
   const { loading, response, handleApiCall } = useMeldApi();
   const { countryCode } = useCountryDetection();
 
@@ -36,6 +41,14 @@ setup
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1023px)");
+    const updateLayout = () => setStackedPanels(media.matches);
+    updateLayout();
+    media.addEventListener("change", updateLayout);
+    return () => media.removeEventListener("change", updateLayout);
+  }, []);
+
   const handleApiKeyChange = (value: string) => {
     setApiKey(value);
   };
@@ -49,8 +62,11 @@ setup
   const handleRequestChange = useCallback((url: string, method: MeldMethod, headers: Record<string, string>, body?: unknown, params?: Record<string, string | string[]>) => {
     setRequestPreview({ url, method, headers, body, params });
   }, []);
+  const resizeHandleClassName = stackedPanels
+    ? "group relative z-10 flex h-1 shrink-0 cursor-row-resize touch-none items-center justify-center bg-transparent outline-none before:absolute before:left-0 before:top-1/2 before:h-px before:w-full before:-translate-y-1/2 before:bg-zinc-300 before:transition-colors hover:before:bg-zinc-500 focus-visible:before:bg-focus data-[separator=active]:before:bg-zinc-700 dark:before:bg-zinc-700 dark:hover:before:bg-zinc-500 dark:data-[separator=active]:before:bg-zinc-300"
+    : "group relative z-10 flex w-1 shrink-0 cursor-col-resize touch-none items-center justify-center bg-transparent outline-none before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-zinc-300 before:transition-colors hover:before:bg-zinc-500 focus-visible:before:bg-focus data-[separator=active]:before:bg-zinc-700 dark:before:bg-zinc-700 dark:hover:before:bg-zinc-500 dark:data-[separator=active]:before:bg-zinc-300";
 
-div(className="space-y-5 bg-sunken p-4")
+div(className="flex h-full min-h-0 flex-col bg-sunken")
   section(className="hidden rounded-2xl border border-zinc-200 bg-surface p-4 shadow-sm shadow-zinc-950/[0.025] sm:p-5 dark:border-zinc-800 dark:bg-zinc-900/80")
     div(className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between")
       div(className="max-w-md")
@@ -67,13 +83,23 @@ div(className="space-y-5 bg-sunken p-4")
           ~ value={apiKey}
           ~ onInput={(event) => handleApiKeyChange(event.currentTarget.value)}
           ~ )
-  div(className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(19rem,0.9fr)_minmax(21rem,1.1fr)]")
-    section(className="min-w-0 space-y-4")
+  Group(
+    ~ id="meld-request-response-layout"
+    ~ orientation={stackedPanels ? "vertical" : "horizontal"}
+    ~ defaultLayout={{ "endpoint-form-panel": 55, "response-panel": 45 }}
+    ~ className="min-h-0 min-w-0 flex-1 gap-1"
+    ~ style={{ flex: 1, minHeight: 0 }}
+    ~ )
+    Panel(
+      ~ id="endpoint-form-panel"
+      ~ minSize="25%"
+      ~ className="h-full min-h-0 min-w-0 space-y-4"
+      ~ )
       if selectedEndpoint
         fragment
-          div(className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-950/[0.025] dark:border-zinc-800 dark:bg-zinc-900/80")
+          div(className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-950/[0.025] dark:border-zinc-800 dark:bg-zinc-900/80")
             RequestType(endpoint={selectedEndpoint})
-          div(className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-950/[0.025] dark:border-zinc-800 dark:bg-zinc-900/80")
+          div(className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-950/[0.025] dark:border-zinc-800 dark:bg-zinc-900/80")
             EndpointForm(
               ~ endpoint={selectedEndpoint}
               ~ onSubmit={handleSubmit}
@@ -82,6 +108,17 @@ div(className="space-y-5 bg-sunken p-4")
               ~ apiKey={apiKey}
               ~ apiKeyAvailable={serverApiKeyAvailable}
               ~ countryCode={countryCode}
+              ~ defaultSetIndex={defaultSetIndex}
+              ~ walletAddresses={walletAddresses}
               ~ )
-    section(className="min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm shadow-zinc-950/[0.025] dark:border-zinc-800 dark:bg-zinc-900/80")
+    Separator(
+      ~ id="request-response-resize-separator"
+      ~ aria-label={stackedPanels ? "Resize form and response panels vertically" : "Resize form and response panels"}
+      ~ className={resizeHandleClassName}
+      ~ )
+    Panel(
+      ~ id="response-panel"
+      ~ minSize="25%"
+      ~ className="h-full min-h-0 min-w-0 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-950/[0.025] dark:border-zinc-800 dark:bg-zinc-900/80"
+      ~ )
       Response(response={response} requestPreview={requestPreview} responseWithURL={selectedEndpoint?.responseWithURL})

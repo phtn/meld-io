@@ -2,13 +2,14 @@ module "use client";
 import Title from "./Title.btsx";
 import { useEffect, useLinkedState } from "octane";
 import { useForm, useSelector } from "@octanejs/tanstack-form";
-import { bodyFieldName, buildRequestInfo, initialBodyText, initialParameterValues, parameterFieldName, parseRequestBody } from "@/hooks/use-endpoint-form";
+import { applyRequestBodyPreset, applyWalletAddressesToRequestBody, bodyFieldName, buildRequestInfo, initialBodyText, initialParameterValues, parameterFieldName, parseRequestBody } from "@/hooks/use-endpoint-form";
 import type { EndpointFormValues } from "@/hooks/use-endpoint-form";
 import type { EndpointConfig, EndpointParameter, MeldMethod, OpenApiSchema } from "@/lib/meld/endpoints";
 import type { MeldEnvironment } from "../types";
 import Field from "./Field.btsx";
 import FieldGroup from "./FieldGroup.btsx";
 import type { FormEvent } from "octane";
+import { getConfiguredWalletAddresses, getRequestValuePreset, getWalletAddressForAsset, isWalletAddressFieldName, type WalletAddressSettings } from "@/lib/meld/request-presets";
 module
   interface RequestBodyField {
     path: string[];
@@ -167,9 +168,11 @@ module
     ~ apiKey: string;
     ~ apiKeyAvailable: boolean;
     ~ countryCode: string;
+    ~ defaultSetIndex: number;
+    ~ walletAddresses: WalletAddressSettings;
     ~ }
 
-props { endpoint, onSubmit, onRequestChange, loading, apiKey, apiKeyAvailable, countryCode }: EndpointFormProps
+props { endpoint, onSubmit, onRequestChange, loading, apiKey, apiKeyAvailable, countryCode, defaultSetIndex, walletAddresses }: EndpointFormProps
 setup
   const submitLabel = loading ? "Sending request…" : "Send request";
   const [preferredEnvironment, setPreferredEnvironment] = useLinkedState("meld-environment", () => "sandbox" as MeldEnvironment);
@@ -179,7 +182,7 @@ setup
   const getKey = (parameter: EndpointParameter) => `${parameter.in}:${parameter.name}`;
   const requestBodySchema = endpoint.requestBody?.schema;
   const requestBodyFields = requestBodySchema ? collectBodyFields(requestBodySchema) : [];
-  const initialText = initialBodyText(endpoint, countryCode);
+  const initialText = initialBodyText(endpoint, countryCode, defaultSetIndex, walletAddresses);
   const initialBody = parseJson(initialText);
   const initialBodyValues = Object.fromEntries(requestBodyFields.map((bodyField, index) => {
     const value = valueAtPath(initialBody.value, bodyField.path);
@@ -189,7 +192,7 @@ setup
     formId: endpoint.id,
     defaultValues: {
       environment: preferredEnvironment,
-      paramValues: initialParameterValues(endpoint, countryCode),
+      paramValues: initialParameterValues(endpoint, countryCode, defaultSetIndex, walletAddresses),
       bodyValues: initialBodyValues,
       bodyText: initialText,
     },
@@ -231,6 +234,66 @@ setup
     });
   };
 
+  useEffect(() => {
+    const configuredAddresses = getConfiguredWalletAddresses(walletAddresses).join(", ");
+    const defaultParameterValues = initialParameterValues(endpoint, countryCode, defaultSetIndex, walletAddresses);
+    endpoint.parameters.forEach((parameter, index) => {
+      if (isWalletAddressFieldName(parameter.name)) {
+        const normalizedName = parameter.name.replace(/[^a-z0-9]/gi, "").toLowerCase();
+        const currencyParameter = endpoint.parameters.find((candidate) => {
+          const candidateName = candidate.name.replace(/[^a-z0-9]/gi, "").toLowerCase();
+          return normalizedName.includes("source")
+            ? ["sourcecurrencycode", "sourcecurrency", "sourceassetcode"].includes(candidateName)
+            : ["destinationcurrencycode", "destinationcurrency", "destinationassetcode", "currencycode"].includes(candidateName);
+        });
+        const currencyParameterIndex = currencyParameter ? endpoint.parameters.indexOf(currencyParameter) : -1;
+        const currencyCode = currencyParameterIndex >= 0
+          ? defaultParameterValues[parameterFieldName(currencyParameterIndex)]
+          : getRequestValuePreset(defaultSetIndex).assetCode;
+        const presetAssetCode = getRequestValuePreset(defaultSetIndex).assetCode;
+        const configuredValue = parameter.schema.type === "array"
+          ? configuredAddresses
+          : getWalletAddressForAsset(walletAddresses, currencyCode)
+            || getWalletAddressForAsset(walletAddresses, presetAssetCode);
+        form.setFieldValue(`paramValues.${parameterFieldName(index)}` as never, configuredValue as never);
+      }
+    });
+
+    if (!endpoint.requestBody) return;
+    const currentBody = parseJson(form.state.values.bodyText);
+    if (!currentBody.valid) return;
+    const nextBodyText = JSON.stringify(
+      applyWalletAddressesToRequestBody(currentBody.value, endpoint.requestBody.schema, walletAddresses, defaultSetIndex),
+      null,
+      2,
+    );
+    form.setFieldValue("bodyText", nextBodyText);
+    syncBodyFields(nextBodyText);
+  }, [endpoint, walletAddresses, defaultSetIndex]);
+
+  useEffect(() => {
+    const parameterValues = initialParameterValues(endpoint, countryCode, defaultSetIndex, walletAddresses);
+    endpoint.parameters.forEach((parameter, index) => {
+      if (parameter.in === "cookie" || parameter.name.toLowerCase() === "meld-version" || parameter.name.toLowerCase() === "authorization") return;
+      form.setFieldValue(`paramValues.${parameterFieldName(index)}` as never, parameterValues[parameterFieldName(index)] as never);
+    });
+
+    if (!endpoint.requestBody) return;
+    const bodySource = initialBody;
+    if (!bodySource.valid) return;
+    const nextBodyText = JSON.stringify(
+      applyRequestBodyPreset(bodySource.value, endpoint.requestBody.schema, defaultSetIndex, walletAddresses),
+      null,
+      2,
+    );
+    form.setFieldValue("bodyText", nextBodyText);
+    requestBodyFields.forEach((bodyField, index) => {
+      const value = valueAtPath(JSON.parse(nextBodyText), bodyField.path);
+      const fieldValue = Array.isArray(value) ? value.join(", ") : value === undefined || value === null ? "" : String(value);
+      form.setFieldValue(`bodyValues.${bodyFieldName(index)}` as never, fieldValue as never);
+    });
+  }, [endpoint, countryCode, defaultSetIndex]);
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void form.handleSubmit();
@@ -258,7 +321,9 @@ form(className="space-y-6 bg-white p-4 dark:bg-zinc-900/80" onSubmit={handleSubm
         scope
           setup
             const key = getKey(parameter);
-            const schema = normalizeSchema(parameter.schema);
+            const schema = parameter.name.toLowerCase() === "includeswap"
+              ? { ...normalizeSchema(parameter.schema), type: "string", enum: ["true", "false"] }
+              : normalizeSchema(parameter.schema);
             const inputType = schemaInputType(schema);
             const helperText = [parameter.description, schema.type === "array" ? "Enter multiple values separated by commas." : undefined].filter(Boolean).join("\n\n");
             const enumOptions = [
@@ -292,7 +357,7 @@ form(className="space-y-6 bg-white p-4 dark:bg-zinc-900/80" onSubmit={handleSubm
             ~ placeholder={schema.type === "boolean" || (schema.enum && schema.enum.length > 0) ? "Select a value" : undefined}
             ~ )
   if endpoint.requestBody
-    FieldGroup(label={`Request body · ${endpoint.requestBody.contentType || "application/json"}`} required={endpoint.requestBody.required} type={schemaTypeLabel(endpoint.requestBody.schema)} helperText={endpoint.requestBody.description})
+    FieldGroup(label={`Request body · ${endpoint.requestBody.contentType || "application/json"}`} required={endpoint.requestBody.required} type={schemaTypeLabel(endpoint.requestBody.schema)} helperText={endpoint.requestBody.description} collapsible={false})
       .space-y-4
         if requestBodyFields.length > 0 && parsedBody.valid
           each bodyField in requestBodyFields key bodyField.path.join(".")
@@ -330,7 +395,6 @@ form(className="space-y-6 bg-white p-4 dark:bg-zinc-900/80" onSubmit={handleSubm
                 ~ helperText={fieldHelperText || undefined}
                 ~ control={schema.type === "boolean" || (schema.enum && schema.enum.length > 0) ? "select" : "input"}
                 ~ inputType={inputType}
-                ~ placeholder={schema.example === undefined && schema.default === undefined ? "" : String(schema.example ?? schema.default)}
                 ~ step={schema.type === "integer" ? "1" : "any"}
                 ~ min={schema.minimum}
                 ~ max={schema.maximum}

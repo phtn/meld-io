@@ -9,31 +9,47 @@ module
     ~ type?: string;
     ~ children: OctaneNode;
     ~ helperText?: string;
+    ~ collapsible?: boolean;
     ~ }
 
-props { label, required, type, children, helperText }: FieldGroupProps
+props { label, required, type, children, helperText, collapsible }: FieldGroupProps
 setup
   const [helperVisible, setHelperVisible] = useState(false);
   const helperId = useId();
 
-div(className="w-full pb-2")
-  div(className="mb-2 flex items-center justify-between gap-2")
-    div(className="flex min-w-0 items-center gap-2")
-      div(className="text-xs font-brk font-medium text-zinc-700 dark:text-zinc-300") #{label}
-      if type
-        ParamType(type={type})
-      if required
-        span(className="size-1.5 shrink-0 rounded-full bg-red-400" aria-label="Required")
-    if helperText
-      button(
-        ~ type="button"
-        ~ aria-label={helperVisible ? `Hide help for ${label}` : `Show help for ${label}`}
-        ~ aria-expanded={helperVisible}
-        ~ aria-controls={helperId}
-        ~ onClick={() => setHelperVisible(!helperVisible)}
-        ~ className="grid size-5 shrink-0 place-items-center rounded-full text-zinc-500 transition-colors opacity-40 hover:opacity-100 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus dark:text-zinc-400 dark:hover:bg-zinc-800"
-        ~ )
-        Icon(name="info-circle" className="size-3")
-  div(className="w-full min-w-0") #{children}
-  if helperText && helperVisible
-    p(id={helperId} className="mt-2 whitespace-pre-line text-xs leading-5 text-zinc-500 dark:text-zinc-500") #{helperText}
+if collapsible
+  details(className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800")
+    summary(className="cursor-pointer px-3 py-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300")
+      span(className="flex items-center justify-between gap-2")
+        span(className="flex min-w-0 items-center gap-2")
+          span(className="truncate") #{label}
+          if type
+            ParamType(type={type})
+          if required
+            span(className="size-1.5 shrink-0 rounded-full bg-red-400" aria-label="Required")
+    div(className="space-y-4 border-t border-zinc-200 p-3 dark:border-zinc-800")
+      if helperText
+        p(className="whitespace-pre-line text-xs leading-5 text-zinc-500 dark:text-zinc-500") #{helperText}
+      div(className="w-full min-w-0") #{children}
+else
+  div(className="w-full pb-2")
+    div(className="mb-2 flex items-center justify-between gap-2")
+      div(className="flex min-w-0 items-center gap-2")
+        div(className="text-xs font-brk font-medium text-zinc-700 dark:text-zinc-300") #{label}
+        if type
+          ParamType(type={type})
+        if required
+          span(className="size-1.5 shrink-0 rounded-full bg-red-400" aria-label="Required")
+      if helperText
+        button(
+          ~ type="button"
+          ~ aria-label={helperVisible ? `Hide help for ${label}` : `Show help for ${label}`}
+          ~ aria-expanded={helperVisible}
+          ~ aria-controls={helperId}
+          ~ onClick={() => setHelperVisible(!helperVisible)}
+          ~ className="grid size-5 shrink-0 place-items-center rounded-full text-zinc-500 transition-colors opacity-40 hover:opacity-100 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus dark:text-zinc-400 dark:hover:bg-zinc-800"
+          ~ )
+          Icon(name="info-circle" className="size-3")
+    div(className="w-full min-w-0") #{children}
+    if helperText && helperVisible
+      p(id={helperId} className="mt-2 whitespace-pre-line text-xs leading-5 text-zinc-500 dark:text-zinc-500") #{helperText}

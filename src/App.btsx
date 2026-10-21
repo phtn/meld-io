@@ -1,5 +1,5 @@
 module "use client";
-import { useState } from "octane";
+import { useEffect, useState } from "octane";
 import { Group, Panel, Separator, usePanelRef, type PanelSize } from "@octanejs/resizable-panels";
 import Shell from "./components/Shell.btsx";
 import MeldContent from "./components/MeldContent.btsx";
@@ -9,13 +9,34 @@ import EndpointSelector from "./components/EndpointSelector.btsx";
 import { ThemeToggle } from "./components/ThemeProvider.btsx";
 import { getEndpointById } from "./lib/meld/endpoints";
 import Topbar from "./components/Topbar.btsx";
+import { createEmptyWalletAddressSettings, parseWalletAddressSettings } from "./lib/meld/request-presets";
+import type { WalletAddressSettings } from "./lib/meld/request-presets";
 
 setup
   const [selectedEndpointId, setSelectedEndpointId] = useState("crypto-post-payments-crypto-quote");
+  const [defaultSetIndex, setDefaultSetIndex] = useState(0);
+  const [walletAddresses, setWalletAddresses] = useState<WalletAddressSettings>(createEmptyWalletAddressSettings());
+  const [walletSettingsReady, setWalletSettingsReady] = useState(false);
   const selectedEndpoint = getEndpointById(selectedEndpointId);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
   const sidebarPanelRef = usePanelRef();
+  useEffect(() => {
+    try {
+      setWalletAddresses(parseWalletAddressSettings(window.localStorage.getItem("meld-wallet-addresses")));
+    } catch {
+      setWalletAddresses(createEmptyWalletAddressSettings());
+    }
+    setWalletSettingsReady(true);
+  }, []);
+  useEffect(() => {
+    if (!walletSettingsReady) return;
+    try {
+      window.localStorage.setItem("meld-wallet-addresses", JSON.stringify(walletAddresses));
+    } catch {
+      // Settings remain active for this session if browser storage is unavailable.
+    }
+  }, [walletAddresses, walletSettingsReady]);
   const handleEndpointChange = (endpointId: string) => {
     setSelectedEndpointId(endpointId);
     setMobileNavOpen(false);
@@ -57,12 +78,12 @@ Shell
       ~ )
       div(className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background text-foreground")
         div(className="md:hidden")
-          MobileSidebar(open={mobileNavOpen} onOpenChange={(open: boolean) => setMobileNavOpen(open)} title="Meld API Studio" endpointPath={selectedEndpoint?.path})
+          MobileSidebar(open={mobileNavOpen} onOpenChange={(open: boolean) => setMobileNavOpen(open)} title="Meld API Studio" endpointPath={selectedEndpoint?.path} defaultSetIndex={defaultSetIndex} onDefaultSetChange={setDefaultSetIndex} walletAddresses={walletAddresses} onWalletAddressesChange={setWalletAddresses})
             EndpointSelector(selectedEndpoint={selectedEndpointId} onSelect={handleEndpointChange})
         div(className="hidden md:block")
-          Topbar(endpointPath={selectedEndpoint?.path})
-        main(className="min-h-0 min-w-0 flex-1 overflow-y-auto")
-          div(className="mx-auto w-full max-w-[1800px] space-y-7")
+          Topbar(endpointPath={selectedEndpoint?.path} defaultSetIndex={defaultSetIndex} onDefaultSetChange={setDefaultSetIndex} walletAddresses={walletAddresses} onWalletAddressesChange={setWalletAddresses})
+        main(className="min-h-0 min-w-0 flex-1 overflow-hidden")
+          div(className="mx-auto h-full min-h-0 w-full max-w-[1800px]")
             section(className="hidden _flex flex-col justify-between gap-5 md:flex-row md:items-end")
               div(className="max-w-2xl")
                 p(className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground") Developer workspace
@@ -74,4 +95,4 @@ Shell
                   | Workspace ready
                 div(className="md:hidden")
                   ThemeToggle
-            MeldContent(selectedEndpointId={selectedEndpointId})
+            MeldContent(selectedEndpointId={selectedEndpointId} defaultSetIndex={defaultSetIndex} walletAddresses={walletAddresses})

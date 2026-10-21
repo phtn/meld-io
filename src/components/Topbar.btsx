@@ -1,8 +1,11 @@
 import { cn } from "@/lib/utils"
 import Button from "@/ui/Button.btsx";
 import { Link } from "@octanejs/tanstack-router";
-import { type ReactNode, useState } from "octane";
+import { type ReactNode, useId, useState } from "octane";
 import { AnimatePresence, motion, useReducedMotion } from "@octanejs/motion"
+import { createEmptyWalletAddressSettings, REQUEST_VALUE_PRESETS, WALLET_ADDRESS_ASSETS } from "@/lib/meld/request-presets"
+import type { WalletAddressSettings } from "@/lib/meld/request-presets"
+import {Icon} from "@/lib/icons";
 
 
 module
@@ -13,6 +16,10 @@ module
       isCompact?: boolean
       isMobile?: boolean
       endpointPath?: string
+      defaultSetIndex?: number
+      onDefaultSetChange?: (index: number) => void
+      walletAddresses?: WalletAddressSettings
+      onWalletAddressesChange?: (value: WalletAddressSettings) => void
       children?: ReactNode
     }
   export interface BrandProps {
@@ -41,9 +48,12 @@ component Brand
     div #{children}
 
 
-props { toggleExtra, isCompact = false, endpointPath, children }: TopbarProps
+props { toggleExtra, isCompact = false, endpointPath, defaultSetIndex = 0, onDefaultSetChange, walletAddresses = createEmptyWalletAddressSettings(), onWalletAddressesChange, children }: TopbarProps
 setup
   const reducedMotion = useReducedMotion() === true
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [walletAddressDraft, setWalletAddressDraft] = useState<WalletAddressSettings>(createEmptyWalletAddressSettings())
+  const walletAddressesId = useId()
 header(className="sticky top-0 z-40 backdrop-blur-3xl w-full border-b border-sidebar-border dark:border-surface/33")
   div(className="topbar w-full px-6 flex items-center justify-between gap-4")
     nav(aria-label="Endpoint path" className="min-w-0 flex-1 overflow-x-auto")
@@ -59,8 +69,55 @@ header(className="sticky top-0 z-40 backdrop-blur-3xl w-full border-b border-sid
               span(className="smooth-reveal breadcrumb-reveal")
                 span
                   code(aria-current="page" title={path} className="inline-block max-w-[min(55vw,42rem)] truncate align-bottom font-mono text-xs font-medium text-foreground sm:text-sm") #{path}
-    if toggleExtra || children
-      div(className="flex shrink-0 items-center gap-2")
+    if toggleExtra || onDefaultSetChange || onWalletAddressesChange || children
+      div(className="relative flex shrink-0 items-center gap-2")
         if toggleExtra
           Button(onClick={toggleExtra} className='size-6') T
+        if onDefaultSetChange
+          div(className="flex items-center gap-2")
+            span(className="hidden text-2xs font-mono text-muted-foreground uppercase tracking-[0.12em] sm:inline") Presets
+            div(role="group" aria-label="Default request value sets" className="inline-flex items-center gap-0.5 rounded-full bg-sunken p-0.5")
+              each preset, index in REQUEST_VALUE_PRESETS key preset.id
+                button(
+                  ~ type="button"
+                  ~ className={cn("min-w-8 rounded-full px-2 py-1 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", defaultSetIndex === index ? "bg-background text-mac-blue shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                  ~ aria-label={`Apply ${preset.countryCode} default value set`}
+                  ~ aria-pressed={defaultSetIndex === index}
+                  ~ title={`Apply ${preset.countryCode} default value set`}
+                  ~ onClick={() => onDefaultSetChange(index)}
+                  ~ )
+                  | #{preset.label}
+        if onWalletAddressesChange
+          fragment
+            button(
+              ~ type="button"
+              ~ className="rounded-full p-1.5 text-xs font-medium text-muted-foreground transition-colors bg-sunken hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              ~ aria-expanded={settingsOpen}
+              ~ aria-haspopup="dialog"
+              ~ onClick={() => { setWalletAddressDraft(walletAddresses); setSettingsOpen(!settingsOpen); }}
+              ~ )
+              Icon(name='keys' className='size-4 text-mac-blue')
+            if settingsOpen
+              div(role="dialog" aria-label="Request settings" className="absolute right-0 top-full z-50 mt-2 max-h-[min(75vh,34rem)] w-[min(28rem,calc(100vw-1.5rem))] overflow-y-auto rounded-xl border border-border bg-background p-4 text-foreground shadow-xl")
+                div(className="mb-3 flex items-center justify-between gap-3")
+                  h2(className="text-sm font-semibold") Request settings
+                  button(type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setSettingsOpen(false)}) Close
+                div(className="grid grid-cols-1 gap-3 sm:grid-cols-2")
+                  each asset in WALLET_ADDRESS_ASSETS key asset
+                    div
+                      label(className="mb-1.5 block text-xs font-medium" htmlFor={`${walletAddressesId}-${asset.toLowerCase()}`}) #{asset} address
+                      input(
+                        ~ id={`${walletAddressesId}-${asset.toLowerCase()}`}
+                        ~ className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
+                        ~ type="text"
+                        ~ autoComplete="off"
+                        ~ spellCheck={false}
+                        ~ value={walletAddressDraft[asset]}
+                        ~ placeholder={`${asset} address`}
+                        ~ onInput={(event) => setWalletAddressDraft({ ...walletAddressDraft, [asset]: event.currentTarget.value })}
+                        ~ )
+                p(className="mt-2 text-[11px] leading-4 text-muted-foreground") The matching address fills wallet fields when that crypto asset is selected.
+                div(className="mt-3 flex justify-end gap-2")
+                  button(type="button" className="rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setSettingsOpen(false)}) Cancel
+                  button(type="button" className="rounded-lg bg-foreground px-3 py-1.5 text-xs font-medium text-background hover:opacity-85" onClick={() => { onWalletAddressesChange(walletAddressDraft); setSettingsOpen(false); }}) Save settings
         | #{children}
