@@ -1,0 +1,25 @@
+/* Include nested scroll regions, since popup shells often clip their contents. */
+.popup-content,
+.popup-content * {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground, #888) 55%, transparent) transparent;
+}
+
+.popup-content::-webkit-scrollbar,
+.popup-content *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.popup-content::-webkit-scrollbar-thumb,
+.popup-content *::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted-foreground, #888) 55%, transparent);
+}
+
+.popup-content::-webkit-scrollbar-track,
+.popup-content *::-webkit-scrollbar-track,
+.popup-content::-webkit-scrollbar-corner,
+.popup-content *::-webkit-scrollbar-corner {
+  background: transparent;
+}

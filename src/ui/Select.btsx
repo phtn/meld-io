@@ -1,0 +1,172 @@
+import SelectBase, { mergeStyles } from '@octanejs/select'
+import type { ClassNamesConfig, Props, SingleValue, StylesConfig } from '@octanejs/select'
+import { cn } from '../lib/utils.ts'
+import '../styles/popup-scrollbars.css'
+
+module
+  export type Option = {
+    value: string
+    label: string
+    /** Optional metadata available to custom option renderers. */
+    color?: string
+  }
+
+  /**
+   * A single-select over plain string values: `value` and `onChange` speak
+   * strings, and the underlying option objects stay internal to this wrapper.
+   */
+  export type SelectOctaneProps = Omit<Props<Option, false>, 'onChange' | 'options' | 'value'> & {
+    className?: string
+    chevronClassName?: string
+    /** Lets the user commit typed text that is not among `options`. */
+    controlClassName?: string
+    menuClassName?: string
+    menuItemClassName?: string
+    onChange: (value: string) => void
+    options: readonly Option[]
+    value: string
+  }
+
+  /** The shape the per-part callbacks actually receive; the package types it as `unknown`. */
+  interface PartState {
+    isDisabled?: boolean
+    isFocused?: boolean
+    isSelected?: boolean
+  }
+
+  /**
+   * Rendered with `unstyled`, which strips Emotion's default (light-themed)
+   * chrome but keeps the layout primitives — the flex control, the grid-sized
+   * input, absolute menu positioning — so these classes only supply the theme.
+   */
+  const DEFAULT_CLASS_NAMES: ClassNamesConfig<Option, false> = {
+    container: () => 'relative z-50',
+    control: (props) => {
+      const state = props as PartState
+      return cn(
+        'flex min-h-12 cursor-pointer items-center gap-1 rounded-[4px] border border-zinc-300 bg-white px-2 text-sm text-zinc-950 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-[#111111] dark:text-zinc-100 dark:hover:bg-zinc-900',
+        state.isFocused && 'border-zinc-500 bg-zinc-50 dark:border-zinc-400 dark:bg-zinc-900',
+        state.isDisabled && 'cursor-not-allowed opacity-50'
+      )
+    },
+    valueContainer: () => 'flex min-w-0 flex-1 flex-wrap items-center gap-1',
+    singleValue: () => 'truncate text-zinc-950 dark:text-zinc-100',
+    placeholder: () => 'truncate text-zinc-500 dark:text-zinc-400',
+    input: () => 'text-zinc-950 dark:text-zinc-100',
+    indicatorsContainer: () => 'flex shrink-0 items-center',
+    // Emotion keeps a 1px stretched spacer here even when unstyled.
+    indicatorSeparator: () => 'hidden',
+    dropdownIndicator: () =>
+      'flex items-center px-1 text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 [&_svg]:size-4',
+    clearIndicator: () =>
+      'flex items-center px-1 text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 [&_svg]:size-4',
+    menu: () =>
+      'table-popup-content mt-1 overflow-hidden rounded-[4px] border border-zinc-300 bg-white text-zinc-950 shadow-lg dark:border-zinc-700 dark:bg-[#171717] dark:text-zinc-100',
+    menuList: () => 'max-h-60 overflow-y-auto p-0',
+    option: (props) => {
+      const state = props as PartState
+      return cn(
+        'cursor-pointer select-none px-2 py-1.5 text-sm text-zinc-900 dark:text-zinc-100',
+        state.isFocused && !state.isSelected && 'bg-zinc-100 text-zinc-950 dark:bg-zinc-700 dark:text-white',
+        state.isSelected && 'bg-[#111111]! text-white! dark:bg-[#F7F7F7]! dark:text-[#111111]!',
+        state.isDisabled && 'pointer-events-none opacity-50'
+      )
+    },
+    groupHeading: () => 'px-2 py-1 text-xs uppercase tracking-wide text-muted-foreground',
+    noOptionsMessage: () => 'px-2 py-1.5 text-sm text-muted-foreground',
+    loadingMessage: () => 'px-2 py-1.5 text-sm text-muted-foreground',
+    multiValue: () => 'flex items-center gap-1 rounded-[4px] bg-muted px-1.5 py-0.5 text-xs',
+    multiValueLabel: () => 'truncate',
+    multiValueRemove: () => 'cursor-pointer rounded-[2px] px-0.5 hover:bg-destructive/20 hover:text-destructive'
+  }
+
+  /**
+   * Emotion still emits these three properties under `unstyled`, and a utility
+   * class can't reliably outrank a generated one, so they are set as styles.
+   */
+  const DEFAULT_STYLES: StylesConfig<Option, false> = {
+    menu: (base) => ({ ...base, zIndex: 50 }),
+    menuPortal: (base) => ({ ...base, zIndex: 60 }),
+    option: (base) => ({ ...base, cursor: 'pointer' })
+  }
+
+  /**
+   * Per-part overrides append to the defaults rather than replacing them, so a
+   * call site adds to the theme instead of restating it. `cn` does not resolve
+   * conflicting Tailwind utilities, so an override that fights a default (say a
+   * different `bg-`) is decided by stylesheet order, not by argument order.
+   */
+  const mergeClassNames = (
+    overrides?: ClassNamesConfig<Option, false>,
+    chevronClassName?: string,
+    controlClassName?: string,
+    menuClassName?: string,
+    menuItemClassName?: string
+  ): ClassNamesConfig<Option, false> => {
+    if (!overrides && !chevronClassName && !controlClassName && !menuClassName && !menuItemClassName) return DEFAULT_CLASS_NAMES
+
+    const merged: ClassNamesConfig<Option, false> = { ...DEFAULT_CLASS_NAMES }
+
+    if (overrides) {
+      for (const key of Object.keys(overrides) as (keyof ClassNamesConfig<Option, false>)[]) {
+        const base = DEFAULT_CLASS_NAMES[key]
+        const override = overrides[key]
+        merged[key] = (props) => cn(base?.(props), override?.(props))
+      }
+    }
+
+    if (controlClassName) {
+      const control = merged.control
+      merged.control = (props) => cn(control?.(props), controlClassName)
+    }
+
+    if (chevronClassName) {
+      const dropdownIndicator = merged.dropdownIndicator
+      merged.dropdownIndicator = (props) => cn(dropdownIndicator?.(props), chevronClassName)
+    }
+
+    if (menuClassName) {
+      const menu = merged.menu
+      merged.menu = (props) => cn(menu?.(props), menuClassName)
+    }
+
+    if (menuItemClassName) {
+      const option = merged.option
+      merged.option = (props) => cn(option?.(props), menuItemClassName)
+    }
+
+    return merged
+  }
+
+
+props {
+  ~ className,
+  ~ classNames,
+  ~ chevronClassName,
+  ~ controlClassName,
+  ~ menuClassName,
+  ~ menuItemClassName,
+  ~ onChange,
+  ~ options,
+  ~ styles,
+  ~ unstyled = true,
+  ~ value,
+  ~ ...selectProps}: SelectOctaneProps
+
+setup
+  const selectedOption = options.find((option) => option.value === value) ?? null
+  const handleChange = (option: SingleValue<Option>) => onChange(option?.value ?? '')
+  const resolvedClassNames = mergeClassNames(classNames, chevronClassName, controlClassName, menuClassName, menuItemClassName)
+  const resolvedStyles = styles ? mergeStyles(DEFAULT_STYLES, styles) : DEFAULT_STYLES
+
+
+SelectBase(
+  ~ {...selectProps}
+  ~ className={className}
+  ~ classNames={resolvedClassNames}
+  ~ onChange={handleChange}
+  ~ options={options}
+  ~ styles={resolvedStyles}
+  ~ unstyled={unstyled}
+  ~ value={selectedOption}
+  ~ )
