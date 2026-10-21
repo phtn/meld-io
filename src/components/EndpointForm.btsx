@@ -3,7 +3,6 @@ import Title from "./Title.btsx";
 import { useEffect, useLinkedState } from "octane";
 import { useForm, useSelector } from "@octanejs/tanstack-form";
 import { applyRequestBodyPreset, applyWalletAddressesToRequestBody, bodyFieldName, buildRequestInfo, initialBodyText, initialParameterValues, parameterFieldName, parseRequestBody } from "@/hooks/use-endpoint-form";
-import type { EndpointFormValues } from "@/hooks/use-endpoint-form";
 import type { EndpointConfig, EndpointParameter, MeldMethod, OpenApiSchema } from "@/lib/meld/endpoints";
 import type { MeldEnvironment } from "../types";
 import Field from "./Field.btsx";
@@ -188,7 +187,7 @@ setup
     const value = valueAtPath(initialBody.value, bodyField.path);
     return [bodyFieldName(index), Array.isArray(value) ? value.join(", ") : value === undefined || value === null ? "" : String(value)];
   }));
-  const form = useForm<EndpointFormValues>({
+  const form = useForm({
     formId: endpoint.id,
     defaultValues: {
       environment: preferredEnvironment,

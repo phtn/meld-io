@@ -55,6 +55,7 @@ export interface EndpointConfig {
   operationId?: string;
   name: string;
   description: string;
+  responseWithURL?: string;
   method: MeldMethod;
   path: string;
   deprecated: boolean;
