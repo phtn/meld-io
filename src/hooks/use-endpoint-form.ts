@@ -44,6 +44,15 @@ function stringifyValue(value: unknown): string {
   return String(value)
 }
 
+function normalizeFieldName(name: string): string {
+  return name.replace(/[^a-z0-9]/gi, '').toLowerCase()
+}
+
+function isEmptyField(name: string, emptyFields: readonly string[]): boolean {
+  const normalizedName = normalizeFieldName(name)
+  return emptyFields.some((emptyField) => normalizeFieldName(emptyField) === normalizedName)
+}
+
 function mergePresetSchemas(left: OpenApiSchema, right: OpenApiSchema): OpenApiSchema {
   const properties = { ...(left.properties || {}) }
   Object.entries(right.properties || {}).forEach(([name, property]) => {
@@ -126,11 +135,12 @@ function presetLeafValue(
   schema: OpenApiSchema,
   name: string,
   presetIndex: number,
-  walletAddresses: WalletAddressSettings
+  walletAddresses: WalletAddressSettings,
+  emptyFields: readonly string[]
 ): unknown {
   const normalized = normalizePresetSchema(schema, presetIndex)
   const preset = getRequestValuePreset(presetIndex)
-  const normalizedName = name.replace(/[^a-z0-9]/gi, '').toLowerCase()
+  const normalizedName = normalizeFieldName(name)
   const enumValues = normalized.enum || []
   const hasEnumValue = (value: unknown) => enumValues.some((option) => String(option) === String(value))
   const type =
@@ -174,7 +184,7 @@ function presetLeafValue(
     const count = Math.max(1, normalized.minItems || 0)
     const itemSchema = normalized.items || { type: 'string' }
     return Array.from({ length: count }, (_, index) =>
-      presetSchemaValue(undefined, itemSchema, `${name} item ${index + 1}`, presetIndex, walletAddresses)
+      presetSchemaValue(undefined, itemSchema, `${name} item ${index + 1}`, presetIndex, walletAddresses, emptyFields)
     )
   }
 
@@ -253,6 +263,7 @@ function presetSchemaValue(
   name: string,
   presetIndex: number,
   walletAddresses: WalletAddressSettings,
+  emptyFields: readonly string[] = [],
   depth = 0
 ): unknown {
   if (depth > 8) return currentValue
@@ -265,7 +276,11 @@ function presetSchemaValue(
         : {}
     const result = { ...currentObject }
     Object.entries(properties).forEach(([propertyName, propertySchema]) => {
-      const normalizedName = propertyName.replace(/[^a-z0-9]/gi, '').toLowerCase()
+      if (isEmptyField(propertyName, emptyFields)) {
+        delete result[propertyName]
+        return
+      }
+      const normalizedName = normalizeFieldName(propertyName)
       if (
         normalizedName === 'customerid' ||
         normalizedName === 'paymentmethodtype' ||
@@ -294,22 +309,24 @@ function presetSchemaValue(
         propertyName,
         presetIndex,
         walletAddresses,
+        emptyFields,
         depth + 1
       )
       if (nextValue !== undefined) result[propertyName] = nextValue
     })
     return result
   }
-  return presetLeafValue(currentValue, normalized, name, presetIndex, walletAddresses)
+  return presetLeafValue(currentValue, normalized, name, presetIndex, walletAddresses, emptyFields)
 }
 
 export function applyRequestBodyPreset(
   body: unknown,
   schema: OpenApiSchema,
   presetIndex: number,
-  walletAddresses: WalletAddressSettings = createEmptyWalletAddressSettings()
+  walletAddresses: WalletAddressSettings = createEmptyWalletAddressSettings(),
+  emptyFields: readonly string[] = []
 ): unknown {
-  return presetSchemaValue(body, schema, 'body', presetIndex, walletAddresses)
+  return presetSchemaValue(body, schema, 'body', presetIndex, walletAddresses, emptyFields)
 }
 
 function schemaHasWalletAddresses(schema: OpenApiSchema, presetIndex: number, depth = 0): boolean {
@@ -331,6 +348,7 @@ export function applyWalletAddressesToRequestBody(
   schema: OpenApiSchema,
   walletAddresses: WalletAddressSettings,
   presetIndex = 0,
+  emptyFields: readonly string[] = [],
   depth = 0
 ): unknown {
   if (depth > 8) return body
@@ -338,7 +356,7 @@ export function applyWalletAddressesToRequestBody(
 
   if (normalized.type === 'array' && Array.isArray(body) && normalized.items) {
     return body.map((item) =>
-      applyWalletAddressesToRequestBody(item, normalized.items!, walletAddresses, presetIndex, depth + 1)
+      applyWalletAddressesToRequestBody(item, normalized.items!, walletAddresses, presetIndex, emptyFields, depth + 1)
     )
   }
 
@@ -348,6 +366,10 @@ export function applyWalletAddressesToRequestBody(
   const currentObject = body as Record<string, unknown>
   const result = { ...currentObject }
   Object.entries(properties).forEach(([propertyName, propertySchema]) => {
+    if (isEmptyField(propertyName, emptyFields)) {
+      delete result[propertyName]
+      return
+    }
     if (isWalletAddressFieldName(propertyName)) {
       const walletValue = configuredWalletFieldValue(
         propertyName,
@@ -372,6 +394,7 @@ export function applyWalletAddressesToRequestBody(
         propertySchema,
         walletAddresses,
         presetIndex,
+        emptyFields,
         depth + 1
       )
       if (nextValue !== undefined) result[propertyName] = nextValue
@@ -396,7 +419,11 @@ export function initialParameterValues(
   const values: Record<string, string> = {}
   endpoint.parameters.forEach((parameter, index) => {
     if (parameter.name.toLowerCase() === 'meld-version' || parameter.name.toLowerCase() === 'authorization') return
-    const normalizedName = parameter.name.replace(/[^a-z0-9]/gi, '').toLowerCase()
+    const normalizedName = normalizeFieldName(parameter.name)
+    if (isEmptyField(parameter.name, endpoint.emptyFields)) {
+      values[parameterFieldName(index)] = ''
+      return
+    }
     if (normalizedName === 'customerid' || normalizedName === 'subdivision') {
       values[parameterFieldName(index)] = ''
       return
@@ -413,7 +440,14 @@ export function initialParameterValues(
       parameter.name === 'countryCode' && !parameter.example
         ? countryCode || getParameterExample(parameter)
         : getParameterExample(parameter)
-    const value = presetSchemaValue(example, parameter.schema, parameter.name, presetIndex, walletAddresses)
+    const value = presetSchemaValue(
+      example,
+      parameter.schema,
+      parameter.name,
+      presetIndex,
+      walletAddresses,
+      endpoint.emptyFields
+    )
     values[parameterFieldName(index)] = stringifyValue(value)
   })
   return values
@@ -470,7 +504,13 @@ export function initialBodyText(
       ? endpoint.requestBody.example
       : exampleFromSchema(endpoint.requestBody.schema)
   const detectedCountryValue = applyDetectedCountry(example, endpoint.requestBody.schema, countryCode)
-  const value = applyRequestBodyPreset(detectedCountryValue, endpoint.requestBody.schema, presetIndex, walletAddresses)
+  const value = applyRequestBodyPreset(
+    detectedCountryValue,
+    endpoint.requestBody.schema,
+    presetIndex,
+    walletAddresses,
+    endpoint.emptyFields
+  )
   return JSON.stringify(value, null, 2)
 }
 

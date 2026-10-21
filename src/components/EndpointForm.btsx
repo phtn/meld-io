@@ -237,8 +237,9 @@ setup
     const configuredAddresses = getConfiguredWalletAddresses(walletAddresses).join(", ");
     const defaultParameterValues = initialParameterValues(endpoint, countryCode, defaultSetIndex, walletAddresses);
     endpoint.parameters.forEach((parameter, index) => {
+      const normalizedName = parameter.name.replace(/[^a-z0-9]/gi, "").toLowerCase();
+      if (endpoint.emptyFields.includes(normalizedName)) return;
       if (isWalletAddressFieldName(parameter.name)) {
-        const normalizedName = parameter.name.replace(/[^a-z0-9]/gi, "").toLowerCase();
         const currencyParameter = endpoint.parameters.find((candidate) => {
           const candidateName = candidate.name.replace(/[^a-z0-9]/gi, "").toLowerCase();
           return normalizedName.includes("source")
@@ -262,7 +263,13 @@ setup
     const currentBody = parseJson(form.state.values.bodyText);
     if (!currentBody.valid) return;
     const nextBodyText = JSON.stringify(
-      applyWalletAddressesToRequestBody(currentBody.value, endpoint.requestBody.schema, walletAddresses, defaultSetIndex),
+      applyWalletAddressesToRequestBody(
+        currentBody.value,
+        endpoint.requestBody.schema,
+        walletAddresses,
+        defaultSetIndex,
+        endpoint.emptyFields,
+      ),
       null,
       2,
     );
@@ -281,7 +288,13 @@ setup
     const bodySource = initialBody;
     if (!bodySource.valid) return;
     const nextBodyText = JSON.stringify(
-      applyRequestBodyPreset(bodySource.value, endpoint.requestBody.schema, defaultSetIndex, walletAddresses),
+      applyRequestBodyPreset(
+        bodySource.value,
+        endpoint.requestBody.schema,
+        defaultSetIndex,
+        walletAddresses,
+        endpoint.emptyFields,
+      ),
       null,
       2,
     );

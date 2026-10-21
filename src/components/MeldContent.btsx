@@ -86,7 +86,7 @@ div(className="flex h-full min-h-0 flex-col bg-sunken")
   Group(
     ~ id="meld-request-response-layout"
     ~ orientation={stackedPanels ? "vertical" : "horizontal"}
-    ~ defaultLayout={{ "endpoint-form-panel": 55, "response-panel": 45 }}
+    ~ defaultLayout={{ "endpoint-form-panel": 40, "response-panel": 60 }}
     ~ className="min-h-0 min-w-0 flex-1 gap-1"
     ~ style={{ flex: 1, minHeight: 0 }}
     ~ )

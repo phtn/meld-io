@@ -1,5 +1,6 @@
 module "use client";
 import { useEffect, useState } from "octane";
+import { useRouter, useRouterState } from "@octanejs/tanstack-router";
 import { Group, Panel, Separator, usePanelRef, type PanelSize } from "@octanejs/resizable-panels";
 import Shell from "./components/Shell.btsx";
 import MeldContent from "./components/MeldContent.btsx";
@@ -13,11 +14,15 @@ import { createEmptyWalletAddressSettings, parseWalletAddressSettings } from "./
 import type { WalletAddressSettings } from "./lib/meld/request-presets";
 
 setup
-  const [selectedEndpointId, setSelectedEndpointId] = useState("crypto-post-payments-crypto-quote");
+  const defaultEndpointId = "crypto-post-payments-crypto-quote";
+  const router = useRouter();
+  const search = useRouterState({ select: (state) => state.location.search });
+  const requestedEndpointId = typeof search.endpoint === "string" ? search.endpoint : defaultEndpointId;
+  const selectedEndpoint = getEndpointById(requestedEndpointId) ?? getEndpointById(defaultEndpointId);
+  const selectedEndpointId = selectedEndpoint?.id ?? defaultEndpointId;
   const [defaultSetIndex, setDefaultSetIndex] = useState(0);
   const [walletAddresses, setWalletAddresses] = useState<WalletAddressSettings>(createEmptyWalletAddressSettings());
   const [walletSettingsReady, setWalletSettingsReady] = useState(false);
-  const selectedEndpoint = getEndpointById(selectedEndpointId);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
   const sidebarPanelRef = usePanelRef();
@@ -38,7 +43,12 @@ setup
     }
   }, [walletAddresses, walletSettingsReady]);
   const handleEndpointChange = (endpointId: string) => {
-    setSelectedEndpointId(endpointId);
+    void router.navigate({
+      to: "/",
+      search: (current) => ({ ...current, endpoint: endpointId }),
+      replace: true,
+      resetScroll: false,
+    });
     setMobileNavOpen(false);
   };
   const handleSidebarResize = (size: PanelSize) => setIsCompact(size.inPixels <= 80);

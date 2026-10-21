@@ -2,7 +2,7 @@ module "use client";
 import Method from "./Method.btsx";
 import { endpointCategories, meldEndpoints } from "@/lib/meld/endpoints";
 import { cn } from "@/lib/utils";
-import { useState } from "octane";
+import { useLayoutEffect, useRef, useState } from "octane";
 
 module
   interface CategoryListProps {
@@ -31,6 +31,7 @@ component CategoryList
         each endpoint in category.endpoints key endpoint.id
           button(
             ~ onClick={() => onSelect(endpoint.id)}
+            ~ data-selected-endpoint={selectedEndpoint === endpoint.id ? "true" : undefined}
             ~ disabled={endpoint.categoryDeprecated || endpoint.deprecated}
             ~ className={cn(
             ~ "relative z-10 flex w-full min-w-0 items-center gap-3.5 rounded-[10px] border-0 border-transparent px-2 py-2 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:ring-focus",
@@ -49,6 +50,7 @@ component CategoryList
 props { selectedEndpoint, onSelect }: EndpointSelectorProps
 setup
   const [searchQuery, setSearchQuery] = useState("");
+  const endpointListRef = useRef<HTMLDivElement | null>(null);
   const query = searchQuery.trim().toLowerCase();
   const filteredCategories = endpointCategories.map((category) => ({
     ...category,
@@ -63,6 +65,10 @@ setup
   })).filter((category) => category.endpoints.length > 0);
   const activeCategories = filteredCategories.filter((category) => !category.deprecated);
   const deprecatedCategories = filteredCategories.filter((category) => category.deprecated);
+  useLayoutEffect(() => {
+    const selectedItem = endpointListRef.current?.querySelector<HTMLElement>("[data-selected-endpoint]");
+    selectedItem?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [selectedEndpoint]);
 
 div(className="min-w-0 bg-transparent")
   .px-2.mb-2
@@ -74,7 +80,7 @@ div(className="min-w-0 bg-transparent")
       ~ value={searchQuery}
       ~ onInput={(event) => setSearchQuery(event.currentTarget.value)}
       ~ )
-  div(className="max-h-[calc(100dvh-8rem)] space-y-4 overflow-y-auto px-2 pb-3")
+  div(ref={endpointListRef} className="max-h-[calc(100dvh-8rem)] space-y-4 overflow-y-auto px-2 pb-3")
     if activeCategories.length > 0
       section(className="space-y-1")
         h3(className="hidden px-2 pt-1 font-normal text-xs uppercase tracking-widest text-muted-foreground/70") Active endpoints
