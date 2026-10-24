@@ -1,0 +1,192 @@
+import { useRef, useState } from "octane";
+
+module
+  type AccountVolumePeriod = "1W" | "1M" | "3M" | "1Y"
+  type AccountVolumeSeries = "current" | "baseline"
+
+  interface AccountVolumePoint {
+    timestamp: number
+    current: number
+    baseline: number
+  }
+
+  const ACCOUNT_VOLUME_PERIODS: AccountVolumePeriod[] = ["1W", "1M", "3M", "1Y"]
+  const ACCOUNT_VOLUME_PERIOD_DAYS: Record<AccountVolumePeriod, number> = {
+    "1W": 7,
+    "1M": 30,
+    "3M": 90,
+    "1Y": 365,
+  }
+  const ACCOUNT_VOLUME_TOTALS: Record<AccountVolumePeriod, number> = {
+    "1W": 18_420,
+    "1M": 84_290,
+    "3M": 254_320,
+    "1Y": 982_640,
+  }
+  const ACCOUNT_VOLUME_CHANGES: Record<AccountVolumePeriod, string> = {
+    "1W": "+8.4%",
+    "1M": "+12.8%",
+    "3M": "+10.4%",
+    "1Y": "+18.6%",
+  }
+  const ACCOUNT_VOLUME_DATE_MARKS = [0, 8, 16, 24, 32]
+
+  function getAccountVolumePoints(period: AccountVolumePeriod, end: number): AccountVolumePoint[] {
+    const duration = ACCOUNT_VOLUME_PERIOD_DAYS[period] * 24 * 60 * 60 * 1000
+    const currentTotal = ACCOUNT_VOLUME_TOTALS[period]
+    const baselineTotal = currentTotal / (1 + Number(ACCOUNT_VOLUME_CHANGES[period].replace(/[+%]/g, "")) / 100)
+    const phase = ACCOUNT_VOLUME_PERIODS.indexOf(period) * 0.7
+
+    return Array.from({ length: 33 }, (_, index) => {
+      const progress = index / 32
+      const currentWobble = (Math.sin(progress * Math.PI * 6 + phase) * 0.035 + Math.sin(progress * Math.PI * 13) * 0.012) * progress
+      const baselineWobble = (Math.sin(progress * Math.PI * 5 + phase + 0.5) * 0.022 + Math.sin(progress * Math.PI * 11) * 0.008) * progress
+      const currentProgress = index === 32 ? 1 : Math.max(0, progress + currentWobble)
+      const baselineProgress = index === 32 ? 1 : Math.max(0, progress + baselineWobble)
+
+      return {
+        timestamp: end - duration + duration * progress,
+        current: currentTotal * currentProgress,
+        baseline: baselineTotal * baselineProgress,
+      }
+    })
+  }
+
+  function accountVolumePath(points: readonly AccountVolumePoint[], series: AccountVolumeSeries, maximum: number): string {
+    if (points.length === 0) return ""
+    const y = (value: number) => 174 - (value / Math.max(1, maximum)) * 150
+    let path = `M0 ${y(points[0]![series]).toFixed(2)}`
+
+    for (let index = 1; index < points.length; index++) {
+      const x0 = ((index - 1) / (points.length - 1)) * 660
+      const x1 = (index / (points.length - 1)) * 660
+      const middle = (x0 + x1) / 2
+      const previousY = y(points[index - 1]![series])
+      const currentY = y(points[index]![series])
+      path += ` C${middle.toFixed(2)} ${previousY.toFixed(2)} ${middle.toFixed(2)} ${currentY.toFixed(2)} ${x1.toFixed(2)} ${currentY.toFixed(2)}`
+    }
+
+    return path
+  }
+
+  function formatAccountCurrency(value: number): string {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value)
+  }
+
+  function formatAccountAxisValue(value: number): string {
+    if (value === 0) return "$0"
+    if (value >= 1_000) return `$${Math.round(value / 1_000)}k`
+    return formatAccountCurrency(value)
+  }
+
+  function formatAccountDate(timestamp: number, period: AccountVolumePeriod): string {
+    const options: Intl.DateTimeFormatOptions = period === "1W"
+      ? { weekday: "short" }
+      : { month: "short", day: "numeric" }
+    return new Date(timestamp).toLocaleDateString("en-US", options)
+  }
+
+props {}: {}
+
+setup
+  const [period, setPeriod] = useState<AccountVolumePeriod>("1M");
+  const [hoverIndex, setHoverIndex] = useState<number | undefined>(undefined);
+  const referenceTime = useRef(Date.now());
+  const points = getAccountVolumePoints(period, referenceTime.current);
+  const latest = points[points.length - 1]!;
+  const axisMaximum = Math.max(25_000, Math.ceil(latest.current / 25_000) * 25_000);
+  const axisValues = [axisMaximum, axisMaximum * 0.75, axisMaximum * 0.5, axisMaximum * 0.25, 0];
+  const hoverX = ((hoverIndex ?? 32) / 32) * 660;
+  const hoverPercent = Math.max(18, Math.min(82, ((hoverIndex ?? 32) / 32) * 100));
+  const hovered = hoverIndex === undefined ? undefined : points[hoverIndex];
+  const periodChange = ACCOUNT_VOLUME_CHANGES[period];
+  const moveHover = (event: PointerEvent) => {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setHoverIndex(Math.max(0, Math.min(32, Math.round(((event.clientX - rect.left) / rect.width) * 32))));
+  };
+  const keyboardHover = (event: KeyboardEvent) => {
+    if (["ArrowLeft", "ArrowRight", "Home", "End", "Escape"].includes(event.key)) {
+      event.preventDefault();
+      setHoverIndex(event.key === "Escape" ? undefined : event.key === "Home" ? 0 : event.key === "End" ? 32 : Math.max(0, Math.min(32, (hoverIndex ?? 32) + (event.key === "ArrowLeft" ? -1 : 1))));
+    }
+  };
+
+section.account-panel.account-volume-panel(aria-labelledby="volume-title")
+  div.account-volume-heading
+    div.account-volume-heading-copy
+      h2#volume-title Onramp volume vs baseline
+    div.account-volume-periods(role="group" aria-label="Chart period")
+      each item in ACCOUNT_VOLUME_PERIODS key item
+        button(
+          ~ type="button"
+          ~ className={period === item ? "account-volume-period account-volume-period--active" : "account-volume-period"}
+          ~ aria-pressed={period === item}
+          ~ onClick={() => { setPeriod(item); setHoverIndex(undefined); }}
+          ~ ) #{item}
+
+  div.account-volume-metrics
+    div.account-volume-metric
+      div.account-volume-metric-label
+        i.account-volume-dot
+        span Onramp volume
+      strong #{formatAccountCurrency(latest.current)}
+      small.account-volume-change #{periodChange} vs previous period
+    div.account-volume-metric(className='hidden!')
+      div.account-volume-metric-label
+        i.account-volume-dot.account-volume-dot--baseline
+        span Previous period
+      strong #{formatAccountCurrency(latest.baseline)}
+      small #{formatAccountDate(points[0]!.timestamp, period)} – #{formatAccountDate(latest.timestamp, period)}
+
+  div.account-chart-container
+    div.account-chart-background(aria-hidden="true")
+      each value in axisValues key value
+        span #{formatAccountAxisValue(value)}
+    div.account-chart-interaction(
+      ~ tabIndex={0}
+      ~ role="group"
+      ~ aria-label={`Onramp volume chart for ${period}. Use left and right arrow keys to explore dates.`}
+      ~ onPointerMove={moveHover}
+      ~ onPointerLeave={() => setHoverIndex(undefined)}
+      ~ onFocus={() => setHoverIndex(32)}
+      ~ onBlur={() => setHoverIndex(undefined)}
+      ~ onKeyDown={keyboardHover}
+      ~ )
+      svg.account-volume-chart(viewBox="0 0 660 194" preserveAspectRatio="none" role="img" aria-label={`Onramp volume reached ${formatAccountCurrency(latest.current)}, compared with ${formatAccountCurrency(latest.baseline)} in the previous period.`})
+        path.account-chart-area(d={`${accountVolumePath(points, "current", axisMaximum)} L660 194 L0 194 Z`})
+        path.account-chart-baseline(d={accountVolumePath(points, "baseline", axisMaximum)})
+        path.account-chart-line(d={accountVolumePath(points, "current", axisMaximum)})
+        circle.account-chart-point(cx="660" cy={174 - (latest.baseline / axisMaximum) * 150} r="3.5")
+        circle.account-chart-point.account-chart-point--current(cx="660" cy={174 - (latest.current / axisMaximum) * 150} r="4")
+        if hovered
+          fragment
+            path.account-chart-crosshair(d={`M${hoverX} 12v176`})
+            circle.account-chart-point(cx={hoverX} cy={174 - (hovered.baseline / axisMaximum) * 150} r="4")
+            circle.account-chart-point.account-chart-point--current(cx={hoverX} cy={174 - (hovered.current / axisMaximum) * 150} r="4")
+      if hovered
+        div.account-volume-tooltip(style={{ left: `${hoverPercent}%` }} role="status")
+          strong #{new Date(hovered.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          span
+            i.account-volume-dot
+            | Onramp volume
+            b #{formatAccountCurrency(hovered.current)}
+          span
+            i.account-volume-dot.account-volume-dot--baseline
+            | Previous period
+            b #{formatAccountCurrency(hovered.baseline)}
+    div.account-chart-dates(aria-hidden="true")
+      each index in ACCOUNT_VOLUME_DATE_MARKS key index
+        span #{formatAccountDate(points[index]!.timestamp, period)}
+
+  div.account-chart-footer
+    span.account-legend-item
+      i.account-legend-swatch
+      | Onramp volume
+    span.account-legend-item
+      i.account-legend-swatch.account-legend-swatch--baseline
+      | Previous period
+    span.account-chart-period #{period} · ending #{formatAccountDate(latest.timestamp, period)}

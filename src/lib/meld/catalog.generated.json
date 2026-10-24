@@ -1227,7 +1227,11 @@
                         {
                           "type": "object",
                           "description": "Payout method for offramp",
-                          "required": ["details", "owner", "type"],
+                          "required": [
+                            "details",
+                            "owner",
+                            "type"
+                          ],
                           "properties": {
                             "details": {
                               "description": "Payout method details",
@@ -1236,8 +1240,136 @@
                                   "title": "AchPaymentMethodDetails",
                                   "allOf": [
                                     {
-                                      "type": "object",
-                                      "description": "Recursive schema reference"
+                                      "description": "Payout method details for ACH / PAYOUT_TO_BANK / NG_BANK_TRANSFER / ZA_BANK_TRANSFER",
+                                      "required": [
+                                        "accountNumber",
+                                        "accountType",
+                                        "bankAddress",
+                                        "beneficiaryAddress",
+                                        "routingNumber"
+                                      ],
+                                      "allOf": [
+                                        {
+                                          "description": "Payout method details. The schema depends on fiatPayoutMethod.type."
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "bankName": {
+                                              "type": "string",
+                                              "description": "Bank's name"
+                                            },
+                                            "accountType": {
+                                              "type": "string",
+                                              "description": "Bank account type",
+                                              "example": "CHECKING, SAVINGS",
+                                              "minLength": 1
+                                            },
+                                            "routingNumber": {
+                                              "type": "string",
+                                              "description": "Bank routing number",
+                                              "minLength": 1
+                                            },
+                                            "accountNumber": {
+                                              "type": "string",
+                                              "description": "Bank account number",
+                                              "minLength": 1
+                                            },
+                                            "beneficiaryAddress": {
+                                              "description": "Beneficiary's address",
+                                              "allOf": [
+                                                {
+                                                  "type": "object",
+                                                  "description": "Address information",
+                                                  "required": [
+                                                    "city",
+                                                    "country",
+                                                    "postalCode",
+                                                    "streetLineOne"
+                                                  ],
+                                                  "properties": {
+                                                    "city": {
+                                                      "type": "string",
+                                                      "description": "City",
+                                                      "minLength": 1
+                                                    },
+                                                    "country": {
+                                                      "type": "string",
+                                                      "description": "Two-letter country code (ISO 3166-1 alpha-2)",
+                                                      "example": "US",
+                                                      "minLength": 1
+                                                    },
+                                                    "postalCode": {
+                                                      "type": "string",
+                                                      "description": "Postal code",
+                                                      "minLength": 1
+                                                    },
+                                                    "state": {
+                                                      "type": "string",
+                                                      "description": "State"
+                                                    },
+                                                    "streetLineOne": {
+                                                      "type": "string",
+                                                      "description": "Street line 1",
+                                                      "minLength": 1
+                                                    },
+                                                    "streetLineTwo": {
+                                                      "type": "string",
+                                                      "description": "Street line 2"
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            "bankAddress": {
+                                              "description": "Bank address",
+                                              "allOf": [
+                                                {
+                                                  "type": "object",
+                                                  "description": "Address information",
+                                                  "required": [
+                                                    "city",
+                                                    "country",
+                                                    "postalCode",
+                                                    "streetLineOne"
+                                                  ],
+                                                  "properties": {
+                                                    "city": {
+                                                      "type": "string",
+                                                      "description": "City",
+                                                      "minLength": 1
+                                                    },
+                                                    "country": {
+                                                      "type": "string",
+                                                      "description": "Two-letter country code (ISO 3166-1 alpha-2)",
+                                                      "example": "US",
+                                                      "minLength": 1
+                                                    },
+                                                    "postalCode": {
+                                                      "type": "string",
+                                                      "description": "Postal code",
+                                                      "minLength": 1
+                                                    },
+                                                    "state": {
+                                                      "type": "string",
+                                                      "description": "State"
+                                                    },
+                                                    "streetLineOne": {
+                                                      "type": "string",
+                                                      "description": "Street line 1",
+                                                      "minLength": 1
+                                                    },
+                                                    "streetLineTwo": {
+                                                      "type": "string",
+                                                      "description": "Street line 2"
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      ]
                                     }
                                   ]
                                 },
@@ -1245,8 +1377,25 @@
                                   "title": "MobilePaymentMethodDetails",
                                   "allOf": [
                                     {
-                                      "type": "object",
-                                      "description": "Recursive schema reference"
+                                      "description": "Payout method details for MOBILE_MONEY",
+                                      "required": [
+                                        "phoneNumber"
+                                      ],
+                                      "allOf": [
+                                        {
+                                          "description": "Payout method details. The schema depends on fiatPayoutMethod.type."
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "phoneNumber": {
+                                              "type": "string",
+                                              "description": "Customer phone number",
+                                              "minLength": 1
+                                            }
+                                          }
+                                        }
+                                      ]
                                     }
                                   ]
                                 },
@@ -1254,8 +1403,25 @@
                                   "title": "SepaPaymentMethodDetails",
                                   "allOf": [
                                     {
-                                      "type": "object",
-                                      "description": "Recursive schema reference"
+                                      "description": "Payout method details for SEPA",
+                                      "required": [
+                                        "iban"
+                                      ],
+                                      "allOf": [
+                                        {
+                                          "description": "Payout method details. The schema depends on fiatPayoutMethod.type."
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "iban": {
+                                              "type": "string",
+                                              "description": "IBAN",
+                                              "minLength": 1
+                                            }
+                                          }
+                                        }
+                                      ]
                                     }
                                   ]
                                 }
@@ -1286,7 +1452,12 @@
                       "type": "string",
                       "description": "Service provider to use for this offramp order",
                       "example": "NOAH",
-                      "enum": ["NOAH", "DUENETWORK", "BRALE", "YELLOWCARD"]
+                      "enum": [
+                        "NOAH",
+                        "DUENETWORK",
+                        "BRALE",
+                        "YELLOWCARD"
+                      ]
                     },
                     "sourceAmount": {
                       "type": "number",

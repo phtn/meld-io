@@ -39,6 +39,6 @@ setup
   const methodColor = (methodStyle ?? METHOD_STYLES.DELETE)[selected ? "selected" : "unselected"];
   const letter = methodStyle?.letter ?? "P";
 span(
-  ~ className={cn("grid h-5 shrink-0 place-items-center rounded-[5px] font-mono text-[11px] font-bold leading-none text-[#111111] dark:text-white shadow-xs", showFullMethod ? "w-auto px-1.5 text-[13px]" : "w-5 text-[13px]", methodColor)}
+  ~ className={cn("grid h-5 shrink-0 place-items-center rounded-[5px] font-mono text-[10px] font-bold leading-none text-[#111111] dark:text-white shadow-xs", showFullMethod ? "w-auto px-0.75 rounded-[4px] text-[12px] text-[#14141b]" : "w-5 text-[13px]", methodColor)}
   ~ )
   | #{showFullMethod ? method : letter}

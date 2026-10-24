@@ -1,16 +1,80 @@
 import { Link, useRouter } from "@octanejs/tanstack-router";
-import { useState } from "octane";
+import { useEffect, useState } from "octane";
 import { Group, Panel, Separator, usePanelRef, type PanelSize } from "@octanejs/resizable-panels";
 import { endDemoAccountSession } from "@/lib/account-session";
+import { useMeldApi } from "@/hooks/use-meld-api";
+import AccountVolumeChart from "@/components/AccountVolumeChart.btsx";
 import { Icon } from "@/lib/icons";
 import Sidebar, {ToggleSidebar} from "@/components/Sidebar.btsx";
 import { ThemeToggle } from "@/components/ThemeProvider.btsx";
 import { cn } from "@/lib/utils";
+import type { ApiResponse } from "@/types";
+
+module
+  const EXAMPLE_CUSTOMER_ID = "WmYtQbDgrToZG684RC2bpJ";
+
+  interface MeldCustomer {
+    id: string;
+    externalId?: string;
+    name?: { firstName?: string; lastName?: string };
+    email?: string;
+    status?: string;
+    type?: string;
+  }
+
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
+  function getExampleCustomer(data: unknown): MeldCustomer | null {
+    if (!isRecord(data) || !Array.isArray(data.customers)) return null;
+    const customer = data.customers.find((value) => isRecord(value) && value.id === EXAMPLE_CUSTOMER_ID);
+    if (!isRecord(customer)) return null;
+
+    const name = isRecord(customer.name) ? customer.name : undefined;
+    return {
+      id: typeof customer.id === "string" ? customer.id : EXAMPLE_CUSTOMER_ID,
+      externalId: typeof customer.externalId === "string" ? customer.externalId : undefined,
+      name: name ? {
+        firstName: typeof name.firstName === "string" ? name.firstName : undefined,
+        lastName: typeof name.lastName === "string" ? name.lastName : undefined,
+      } : undefined,
+      email: typeof customer.email === "string" ? customer.email : undefined,
+      status: typeof customer.status === "string" ? customer.status : undefined,
+      type: typeof customer.type === "string" ? customer.type : undefined,
+    };
+  }
+
+  function getRequestError(response: ApiResponse | null): string | null {
+    if (!response || response.success) return null;
+    if (response.error) return response.error;
+    if (isRecord(response.data)) {
+      if (typeof response.data.error === "string") return response.data.error;
+      if (typeof response.data.message === "string") return response.data.message;
+    }
+    return "Meld API request failed.";
+  }
 
 setup
   const router = useRouter();
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { loading: customerLoading, response: customerResponse, handleApiCall } = useMeldApi();
   const sidebarPanelRef = usePanelRef();
+  const customer = customerResponse?.success ? getExampleCustomer(customerResponse.data) : null;
+  const customerError = getRequestError(customerResponse);
+  const customerName = customer
+    ? [customer.name?.firstName, customer.name?.lastName].filter(Boolean).join(" ") || customer.externalId || "Unnamed customer"
+    : "";
+  const customerInitials = customerName.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "XP";
+  const userMenuName = customer
+    ? customerName
+    : customerLoading || !customerResponse
+      ? "Loading customer…"
+      : customerError
+        ? "Demo user"
+        : "Customer not found";
+  const userMenuSubtitle = customer?.email ?? (customerLoading ? "Loading sandbox customer" : "Sandbox customer");
   const handleSidebarResize = (size: PanelSize) => setIsSidebarCompact(size.inPixels <= 90);
   const toggleSidebar = () => {
     const panel = sidebarPanelRef.current;
@@ -23,6 +87,19 @@ setup
     endDemoAccountSession();
     void router.navigate({ to: "/account/sign-in" });
   };
+
+  useEffect(() => {
+    handleApiCall(
+      "/accounts/customers",
+      "",
+      "sandbox",
+      "GET",
+      undefined,
+      { customerIds: EXAMPLE_CUSTOMER_ID },
+      undefined,
+      true,
+    );
+  }, []);
 
 main.account-dashboard-page
   div.account-dashboard-frame
@@ -138,8 +215,51 @@ main.account-dashboard-page
                 span.account-search-icon ⌕
                 span Search
                 span.account-search-shortcut ⌘ K
-              button.account-user-menu(type="button" aria-label="Current demo user")
-                span.account-user-avatar XP
+              div.account-user-menu-wrap
+                button.account-user-menu(
+                  ~ type="button"
+                  ~ aria-label={`Account menu for ${userMenuName}`}
+                  ~ aria-haspopup="dialog"
+                  ~ aria-expanded={isUserMenuOpen}
+                  ~ aria-controls="account-customer-menu"
+                  ~ onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  ~ )
+                  span.account-user-avatar #{customerInitials}
+                  div.account-user-copy
+                    strong #{userMenuName}
+                    small #{userMenuSubtitle}
+                if isUserMenuOpen
+                  div#account-customer-menu.account-user-menu-dropdown(role="dialog" aria-labelledby="account-customer-menu-title")
+                    div.account-user-menu-dropdown-header
+                      div
+                        h2#account-customer-menu-title Account customer
+                        p Sandbox API profile
+                      button.account-user-menu-close(type="button" aria-label="Close account customer menu" onClick={() => setIsUserMenuOpen(false)})
+                        Icon(name='close' className='size-3.5')
+                    if customerLoading || !customerResponse
+                      p.account-user-menu-state(role="status") Loading customer account…
+                    if customerError
+                      p.account-user-menu-state.account-user-menu-state--error(role="alert") #{customerError}
+                    if customerResponse?.success && !customer
+                      p.account-user-menu-state No customer was returned for #{EXAMPLE_CUSTOMER_ID}.
+                    if customer
+                      dl.account-user-detail-list
+                        div.account-user-detail
+                          dt Customer ID
+                          dd #{customer.id}
+                        if customer.externalId
+                          div.account-user-detail
+                            dt External ID
+                            dd #{customer.externalId}
+                        div.account-user-detail
+                          dt Status
+                          dd #{customer.status ?? "Unknown"}
+                        div.account-user-detail
+                          dt Type
+                          dd #{customer.type ?? "Unknown"}
+                        div.account-user-detail
+                          dt Email
+                          dd #{customer.email ?? "Not provided"}
               button.account-notifications(type="button" aria-label="Notifications")
                 Icon(name='bell' className='size-4')
                 i
@@ -156,50 +276,7 @@ main.account-dashboard-page
 
           div.account-dashboard-grid#overview
             div.account-dashboard-main-column
-              section.account-panel.account-volume-panel(aria-labelledby="volume-title")
-                div.account-panel-header
-                  div
-                    h2#volume-title Onramp volume vs baseline
-                    p Transaction volume · last 30 days
-                  div.account-chart-switcher
-                    span.account-chart-switcher-active Volume
-                    span Transactions
-                    span Conversion
-                    span.account-calendar-button ⊞
-                div.account-volume-summary
-                  strong $84,290
-                  span.account-volume-change ↗ 12.8%
-                  span compared with previous period
-                  span.account-demo-pill Sample data
-                div.account-chart-container
-                  div.account-chart-background
-                    span $100k
-                    span $75k
-                    span $50k
-                    span $25k
-                    span $0
-                  svg.account-volume-chart(viewBox="0 0 720 230" preserveAspectRatio="none" role="img" aria-label="Sample onramp volume trend over the last 30 days")
-                    path.account-chart-area(d="M0 146 C32 136 38 125 69 132 S112 155 145 128 S193 92 224 112 S262 146 292 126 S330 95 360 110 S396 138 427 125 S468 104 498 118 S536 161 566 146 S600 115 624 122 S650 78 679 90 S702 72 720 62 L720 230 L0 230 Z")
-                    path.account-chart-baseline(d="M0 116 C50 114 75 116 120 115 S190 116 240 115 S310 116 360 115 S430 116 480 115 S550 116 600 115 S680 116 720 115")
-                    path.account-chart-line(d="M0 146 C32 136 38 125 69 132 S112 155 145 128 S193 92 224 112 S262 146 292 126 S330 95 360 110 S396 138 427 125 S468 104 498 118 S536 161 566 146 S600 115 624 122 S650 78 679 90 S702 72 720 62")
-                    circle.account-chart-point(cx="624" cy="122" r="5")
-                    circle.account-chart-point.account-chart-point--current(cx="720" cy="62" r="5")
-                  div.account-chart-dates
-                    span Oct 1
-                    span Oct 6
-                    span Oct 11
-                    span Oct 16
-                    span Oct 21
-                    span Oct 26
-                    span Oct 30
-                div.account-chart-footer
-                  span.account-legend-item
-                    i.account-legend-swatch
-                    | Onramp volume
-                  span.account-legend-item
-                    i.account-legend-swatch.account-legend-swatch--baseline
-                    | Previous period
-                  span.account-chart-period Last 30 days ⌄
+              AccountVolumeChart
 
               section.account-panel.account-transactions-panel#transactions(aria-labelledby="transactions-title")
                 div.account-panel-header

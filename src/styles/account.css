@@ -293,9 +293,9 @@
   flex: 1;
   min-height: 0;
   flex-direction: column;
-  gap: 3px;
+  gap: 16px;
   overflow-y: auto;
-  padding: 4px 8px 4px;
+  padding: 24px 8px 4px;
 }
 
 .account-nav-label {
@@ -477,7 +477,7 @@
   min-height: 0;
   min-width: 0;
   flex-direction: column;
-  gap: 14px;
+  gap: 6px;
   padding: 0;
 }
 
@@ -488,7 +488,7 @@
   justify-content: space-between;
   gap: 18px;
   padding: 0 12px;
-  background-color: color-mix(in srgb, var(--border), transparent 80%);
+  border-bottom: 1px solid color-mix(in srgb, var(--border), transparent 80%);
 }
 
 .account-heading {
@@ -594,6 +594,7 @@
   min-width: 100px;
   flex-direction: column;
   gap: 0px;
+  padding: 0 6px;
 }
 
 .account-user-copy strong {
@@ -611,6 +612,132 @@
   margin-left: 5px;
   color: #85858d;
   font-size: 12px;
+}
+
+.account-user-menu-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.account-user-menu {
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.account-user-menu:hover,
+.account-user-menu:focus-visible {
+  border-color: var(--account-border);
+  background: var(--account-panel-raised);
+}
+
+.account-user-menu:focus-visible {
+  outline: 2px solid var(--account-blue);
+  outline-offset: 2px;
+}
+
+.account-user-menu-dropdown {
+  position: absolute;
+  z-index: 80;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(340px, calc(100vw - 24px));
+  padding: 15px;
+  border: 1px solid var(--account-border);
+  border-radius: 16px;
+  background: var(--account-panel);
+  box-shadow: 0 16px 50px rgb(0 0 0 / 28%);
+  color: var(--account-text);
+}
+
+.account-user-menu-dropdown-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--account-border);
+}
+
+.account-user-menu-dropdown-header h2 {
+  margin: 0;
+  color: var(--account-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.account-user-menu-dropdown-header p {
+  margin: 4px 0 0;
+  color: var(--account-muted);
+  font-size: 10px;
+}
+
+.account-user-menu-close {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  place-items: center;
+  border: 1px solid var(--account-border);
+  border-radius: 7px;
+  background: var(--account-panel-raised);
+  color: var(--account-muted);
+  cursor: pointer;
+}
+
+.account-user-menu-close:hover {
+  color: var(--account-text);
+}
+
+.account-user-menu-state {
+  margin: 12px 0 0;
+  padding: 10px;
+  border-radius: 9px;
+  background: var(--account-panel-raised);
+  color: var(--account-muted);
+  font-size: 10px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.account-user-menu-state--error {
+  color: #e98989;
+}
+
+.account-user-detail-list {
+  display: grid;
+  gap: 0;
+  margin: 7px 0 0;
+}
+
+.account-user-detail {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--account-border);
+}
+
+.account-user-detail:last-child {
+  border-bottom: 0;
+}
+
+.account-user-detail dt {
+  color: var(--account-muted);
+  font-size: 10px;
+}
+
+.account-user-detail dd {
+  max-width: 70%;
+  margin: 0;
+  color: var(--account-text);
+  font-size: 10px;
+  font-weight: 500;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .account-notifications {
@@ -633,11 +760,11 @@
 
 .account-dashboard-tabs {
   display: flex;
-  min-height: 50px;
+  min-height: 44px;
   align-items: center;
   gap: 4px;
   padding: 0px 4px;
-  margin: 4px 6px 0px;
+  margin: 0px 6px 0px;
   /*border: 1px solid var(--border);*/
   border-radius: 999px;
   /*background: #171719;*/
@@ -741,6 +868,131 @@
   padding: 18px 18px 14px;
 }
 
+.account-volume-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.account-volume-heading-copy {
+  min-width: 0;
+}
+
+.account-volume-heading h2 {
+  margin: 0;
+  color: #e9e9ec;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.account-volume-heading p {
+  margin: 5px 0 0;
+  color: #7d7d85;
+  font-size: 9px;
+}
+
+.account-volume-heading .account-demo-pill {
+  display: inline-flex;
+  margin: 8px 0 0;
+  padding: 4px 7px;
+  border: 1px solid #35353a;
+  border-radius: 999px;
+  color: #8c8c94;
+  font-size: 8px;
+}
+
+.account-volume-periods {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid #2d2d31;
+  border-radius: 999px;
+  background: #1b1b1e;
+}
+
+.account-volume-period {
+  min-width: 34px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #85858d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 8px;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.account-volume-period:hover {
+  color: #f0f0f1;
+}
+
+.account-volume-period:focus-visible {
+  outline: 2px solid var(--account-blue);
+  outline-offset: 2px;
+}
+
+.account-volume-period--active {
+  background: #f0f0f1;
+  color: #202024;
+  font-weight: 600;
+}
+
+.account-volume-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 18px 0 4px;
+}
+
+.account-volume-metric {
+  min-width: 0;
+}
+
+.account-volume-metric-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #8a8a92;
+  font-size: 9px;
+}
+
+.account-volume-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: #78a0ff;
+}
+
+.account-volume-dot--baseline {
+  background: #7b7b82;
+}
+
+.account-volume-metric strong {
+  display: block;
+  margin: 7px 0 3px;
+  color: #f4f4f5;
+  font-size: 28px;
+  font-weight: 450;
+  letter-spacing: -0.02em;
+}
+
+.account-volume-metric small {
+  color: #8a8a92;
+  font-size: 8px;
+}
+
+.account-volume-metric .account-volume-change {
+  color: #6cd99c;
+}
+
 .account-panel-header {
   display: flex;
   align-items: flex-start;
@@ -762,84 +1014,18 @@
   font-size: 9px;
 }
 
-.account-chart-switcher {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid #2d2d31;
-  border-radius: 999px;
-  background: #1b1b1e;
-}
-
-.account-chart-switcher span {
-  padding: 7px 10px;
-  border-radius: 999px;
-  color: #85858d;
-  font-size: 8px;
-  white-space: nowrap;
-}
-
-.account-chart-switcher .account-chart-switcher-active {
-  background: #f0f0f1;
-  color: #202024;
-  font-weight: 600;
-}
-
-.account-chart-switcher .account-calendar-button {
-  display: grid;
-  width: 29px;
-  height: 29px;
-  place-items: center;
-  margin-left: 4px;
-  border: 1px solid #343438;
-  border-radius: 50%;
-  font-size: 13px;
-}
-
-.account-volume-summary {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  margin: 20px 0 6px;
-}
-
-.account-volume-summary > strong {
-  color: #f4f4f5;
-  font-size: 30px;
-  font-weight: 450;
-  letter-spacing: -0.06em;
-}
-
-.account-volume-summary > span {
-  color: #8a8a92;
-  font-size: 9px;
-}
-
-.account-volume-summary .account-volume-change {
-  align-self: center;
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: #173b2a;
-  color: #6cd99c;
-  font-size: 9px;
-  font-weight: 600;
-}
-
-.account-volume-summary .account-demo-pill {
-  margin-left: auto;
-  padding: 5px 7px;
-  border: 1px solid #35353a;
-  border-radius: 999px;
-  color: #8c8c94;
-  font-size: 8px;
-}
-
 .account-chart-container {
   position: relative;
   height: 255px;
   margin-top: 12px;
   padding: 13px 8px 23px 40px;
+}
+
+.account-chart-interaction {
+  position: absolute;
+  inset: 12px 8px 23px 40px;
+  cursor: crosshair;
+  outline-offset: 4px;
 }
 
 .account-chart-background {
@@ -883,9 +1069,9 @@
 
 .account-volume-chart {
   position: absolute;
-  inset: 12px 8px 23px 40px;
-  width: calc(100% - 48px);
-  height: calc(100% - 35px);
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: visible;
 }
 
@@ -904,7 +1090,7 @@
 
 .account-chart-line {
   fill: none;
-  stroke: #78a0ff;
+  stroke: #77777e;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2.8;
@@ -920,6 +1106,54 @@
 
 .account-chart-point--current {
   fill: #78a0ff;
+}
+
+.account-chart-crosshair {
+  fill: none;
+  stroke: #8ca756;
+  stroke-dasharray: 3 4;
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.account-volume-tooltip {
+  position: absolute;
+  z-index: 2;
+  top: 7px;
+  display: grid;
+  min-width: 155px;
+  padding: 10px 12px;
+  transform: translateX(-50%);
+  border: 1px solid var(--account-border);
+  border-radius: 10px;
+  background: var(--account-panel);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 28%);
+  color: var(--account-text);
+  pointer-events: none;
+}
+
+.account-volume-tooltip > strong {
+  margin-bottom: 6px;
+  color: var(--account-muted);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.account-volume-tooltip > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+  color: var(--account-muted);
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.account-volume-tooltip b {
+  margin-left: auto;
+  padding-left: 10px;
+  color: var(--account-text);
+  font-weight: 550;
 }
 
 .account-chart-dates {
@@ -1780,21 +2014,26 @@
     font-size: 8px;
   }
 
-  .account-chart-switcher span:not(.account-chart-switcher-active):not(.account-calendar-button) {
-    display: none;
+  .account-volume-heading {
+    flex-direction: column;
+    gap: 12px;
   }
 
-  .account-volume-summary {
-    flex-wrap: wrap;
-    gap: 7px;
+  .account-volume-periods {
+    width: 100%;
+    justify-content: space-between;
   }
 
-  .account-volume-summary > strong {
-    font-size: 26px;
+  .account-volume-period {
+    flex: 1;
   }
 
-  .account-volume-summary > span:not(.account-volume-change):not(.account-demo-pill) {
-    display: none;
+  .account-volume-metrics {
+    gap: 10px;
+  }
+
+  .account-volume-metric strong {
+    font-size: 21px;
   }
 
   .account-chart-container {
@@ -1884,7 +2123,7 @@ html.light .account-search,
 html.light .account-user-menu,
 html.light .account-notifications,
 /*html.light .account-dashboard-tabs,*/
-html.light .account-chart-switcher,
+html.light .account-volume-periods,
 html.light .account-provider-row {
   border-color: #e1e4e9;
   background-color: #ffffff;
@@ -1906,7 +2145,8 @@ html.light .account-heading-title h1,
 html.light .account-user-menu,
 html.light .account-user-copy strong,
 html.light .account-panel-header h2,
-html.light .account-volume-summary > strong,
+html.light .account-volume-heading h2,
+html.light .account-volume-metric strong,
 html.light .account-transaction-id strong,
 html.light .account-transaction-amount,
 html.light .account-provider-row strong,
@@ -1934,8 +2174,9 @@ html.light .account-user-chevron,
 /*html.light .account-tab,*/
 html.light .account-environment-badge,
 html.light .account-panel-header p,
-html.light .account-chart-switcher span,
-html.light .account-volume-summary > span,
+html.light .account-volume-heading p,
+html.light .account-volume-metric-label,
+html.light .account-volume-metric small,
 html.light .account-chart-background span,
 html.light .account-chart-dates,
 html.light .account-chart-footer,
@@ -1980,7 +2221,7 @@ html.light .account-sidebar-tag {
 }
 
 html.light .account-sidebar-tag,
-html.light .account-volume-summary .account-volume-change,
+html.light .account-volume-metric .account-volume-change,
 html.light .account-transaction-icon,
 html.light .account-status,
 html.light .account-health-status,
@@ -1990,24 +2231,29 @@ html.light .account-setup-step--complete > span {
   color: #26764a;
 }
 
+html.light .account-user-copy small {
+  background-color: transparent;
+  color: var(--account-muted);
+}
+
 html.light .account-panel {
   border-color: var(--account-border);
   background: var(--account-panel);
 }
 
-html.light .account-chart-switcher,
+html.light .account-volume-periods,
 html.light .account-provider-row {
   background: var(--account-panel-raised);
 }
 
-html.light .account-chart-switcher .account-chart-switcher-active,
+html.light .account-volume-period--active,
 html.light .account-open-api {
   background: #edf1f7;
   color: #26334a;
 }
 
 html.light .account-environment-badge,
-html.light .account-volume-summary .account-demo-pill,
+html.light .account-volume-heading .account-demo-pill,
 html.light .account-panel-open,
 html.light .account-setup-step > span {
   border-color: #dfe3e9;

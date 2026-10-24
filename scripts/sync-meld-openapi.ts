@@ -44,7 +44,7 @@ function normalizeSchema(
   if (Array.isArray(value)) return value.map((entry) => normalizeSchema(entry, spec, references, depth + 1));
   const record = value as Record<string, any>;
   if (typeof record.$ref === "string") {
-    if (references.has(record.$ref) || depth > 10) {
+    if (references.has(record.$ref) || depth > 30) {
       return { type: "object", description: record.description || "Recursive schema reference" };
     }
     const ref = record.$ref;

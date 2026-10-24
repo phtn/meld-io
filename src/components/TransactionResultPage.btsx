@@ -1,0 +1,52 @@
+import { Link } from "@octanejs/tanstack-router";
+import SiteHeader from "./SiteHeader.btsx";
+
+module
+  export type TransactionOutcome = "success" | "failed"
+
+  interface TransactionOutcomeContent {
+    eyebrow: string
+    title: string
+    description: string
+    action: string
+    symbol: string
+  }
+
+  const TRANSACTION_OUTCOME_CONTENT = {
+    success: {
+      eyebrow: "Payment flow complete",
+      title: "You're all set.",
+      description: "Your provider flow completed successfully. You can return to the API explorer to continue.",
+      action: "Back to the API explorer",
+      symbol: "✓",
+    },
+    failed: {
+      eyebrow: "Payment flow not completed",
+      title: "This flow didn't finish.",
+      description: "The flow was canceled or couldn't be completed. Return to the API explorer to try again.",
+      action: "Try again in the API explorer",
+      symbol: "!",
+    },
+  } as const satisfies Record<TransactionOutcome, TransactionOutcomeContent>
+
+props { outcome }: { outcome: TransactionOutcome }
+
+setup
+  const content = TRANSACTION_OUTCOME_CONTENT[outcome];
+  const isSuccess = outcome === "success";
+  const statusColor = isSuccess ? "border-emerald-300 bg-emerald-100 text-emerald-800" : "border-rose-300 bg-rose-100 text-rose-800";
+
+main.landing-page
+  SiteHeader(active="home")
+  section(className="mx-auto flex min-h-[calc(100vh-64px)] max-w-7xl items-center justify-center px-5 py-12 sm:px-8" aria-labelledby="transaction-result-title")
+    article(className="w-full max-w-xl rounded-[30px] border border-black/10 bg-[#f8f4e9] px-7 py-10 text-center shadow-xl shadow-black/10 sm:px-12 sm:py-14" role="status" aria-live="polite")
+      div(className={`mx-auto flex size-16 items-center justify-center rounded-full border text-2xl font-semibold ${statusColor}`} aria-hidden={true})
+        span #{content.symbol}
+      p(className="mt-7 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--landing-muted)]") #{content.eyebrow}
+      h1#transaction-result-title(className="mt-3 text-4xl font-semibold tracking-[-0.06em] text-[var(--landing-ink)] sm:text-5xl") #{content.title}
+      p(className="mx-auto mt-4 max-w-md text-sm leading-7 text-[var(--landing-muted)] sm:text-base") #{content.description}
+      div(className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row")
+        Link.landing-primary-cta(to="/api")
+          span #{content.action}
+          span.landing-cta-arrow(aria-hidden="true") →
+        Link(className="inline-flex min-h-[47px] items-center justify-center rounded-full border border-black/15 px-6 text-sm font-medium text-[var(--landing-ink)] transition-colors hover:bg-black/5" to="/") Return home

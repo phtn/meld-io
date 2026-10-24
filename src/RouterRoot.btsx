@@ -4,15 +4,24 @@ import App from "./App.btsx";
 import AccountPage from "./components/AccountPageTheme.btsx";
 import LandingPage from "./components/LandingPage.btsx";
 import SignInPage from "./components/SignInPage.btsx";
+import TransactionResultPage from "./components/TransactionResultPage.btsx";
 import { hasDemoAccountSession } from "./lib/account-session";
 
 component RouteLayout
   Outlet
 
+component SuccessPage
+  TransactionResultPage(outcome="success")
+
+component FailedPage
+  TransactionResultPage(outcome="failed")
+
 setup
   const rootRoute = createRootRoute({ component: RouteLayout });
   const landingRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: LandingPage });
   const apiRoute = createRoute({ getParentRoute: () => rootRoute, path: "/api", component: App });
+  const successRoute = createRoute({ getParentRoute: () => rootRoute, path: "/success", component: SuccessPage });
+  const failedRoute = createRoute({ getParentRoute: () => rootRoute, path: "/failed", component: FailedPage });
   const accountSignInRoute = createRoute({ getParentRoute: () => rootRoute, path: "/account/sign-in", component: SignInPage });
   const accountRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -22,7 +31,7 @@ setup
     },
     component: AccountPage,
   });
-  const routeTree = rootRoute.addChildren([landingRoute, apiRoute, accountSignInRoute, accountRoute]);
+  const routeTree = rootRoute.addChildren([landingRoute, apiRoute, successRoute, failedRoute, accountSignInRoute, accountRoute]);
   const router = createRouter({ routeTree });
 
 RouterProvider(router={router})

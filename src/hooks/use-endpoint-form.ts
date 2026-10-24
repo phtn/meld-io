@@ -53,6 +53,15 @@ function isEmptyField(name: string, emptyFields: readonly string[]): boolean {
   return emptyFields.some((emptyField) => normalizeFieldName(emptyField) === normalizedName)
 }
 
+function getDefaultFieldValue(
+  name: string,
+  defaultFieldValues: Readonly<Record<string, unknown>>
+): { found: boolean; value?: unknown } {
+  const normalizedName = normalizeFieldName(name)
+  const entry = Object.entries(defaultFieldValues).find(([fieldName]) => normalizeFieldName(fieldName) === normalizedName)
+  return entry && entry[1] !== undefined ? { found: true, value: entry[1] } : { found: false }
+}
+
 function mergePresetSchemas(left: OpenApiSchema, right: OpenApiSchema): OpenApiSchema {
   const properties = { ...(left.properties || {}) }
   Object.entries(right.properties || {}).forEach(([name, property]) => {
@@ -136,7 +145,8 @@ function presetLeafValue(
   name: string,
   presetIndex: number,
   walletAddresses: WalletAddressSettings,
-  emptyFields: readonly string[]
+  emptyFields: readonly string[],
+  defaultFieldValues: Readonly<Record<string, unknown>>
 ): unknown {
   const normalized = normalizePresetSchema(schema, presetIndex)
   const preset = getRequestValuePreset(presetIndex)
@@ -184,7 +194,15 @@ function presetLeafValue(
     const count = Math.max(1, normalized.minItems || 0)
     const itemSchema = normalized.items || { type: 'string' }
     return Array.from({ length: count }, (_, index) =>
-      presetSchemaValue(undefined, itemSchema, `${name} item ${index + 1}`, presetIndex, walletAddresses, emptyFields)
+      presetSchemaValue(
+        undefined,
+        itemSchema,
+        `${name} item ${index + 1}`,
+        presetIndex,
+        walletAddresses,
+        emptyFields,
+        defaultFieldValues
+      )
     )
   }
 
@@ -264,6 +282,7 @@ function presetSchemaValue(
   presetIndex: number,
   walletAddresses: WalletAddressSettings,
   emptyFields: readonly string[] = [],
+  defaultFieldValues: Readonly<Record<string, unknown>> = {},
   depth = 0
 ): unknown {
   if (depth > 8) return currentValue
@@ -278,6 +297,11 @@ function presetSchemaValue(
     Object.entries(properties).forEach(([propertyName, propertySchema]) => {
       if (isEmptyField(propertyName, emptyFields)) {
         delete result[propertyName]
+        return
+      }
+      const defaultFieldValue = getDefaultFieldValue(propertyName, defaultFieldValues)
+      if (defaultFieldValue.found) {
+        result[propertyName] = defaultFieldValue.value
         return
       }
       const normalizedName = normalizeFieldName(propertyName)
@@ -310,13 +334,14 @@ function presetSchemaValue(
         presetIndex,
         walletAddresses,
         emptyFields,
+        defaultFieldValues,
         depth + 1
       )
       if (nextValue !== undefined) result[propertyName] = nextValue
     })
     return result
   }
-  return presetLeafValue(currentValue, normalized, name, presetIndex, walletAddresses, emptyFields)
+  return presetLeafValue(currentValue, normalized, name, presetIndex, walletAddresses, emptyFields, defaultFieldValues)
 }
 
 export function applyRequestBodyPreset(
@@ -324,9 +349,10 @@ export function applyRequestBodyPreset(
   schema: OpenApiSchema,
   presetIndex: number,
   walletAddresses: WalletAddressSettings = createEmptyWalletAddressSettings(),
-  emptyFields: readonly string[] = []
+  emptyFields: readonly string[] = [],
+  defaultFieldValues: Readonly<Record<string, unknown>> = {}
 ): unknown {
-  return presetSchemaValue(body, schema, 'body', presetIndex, walletAddresses, emptyFields)
+  return presetSchemaValue(body, schema, 'body', presetIndex, walletAddresses, emptyFields, defaultFieldValues)
 }
 
 function schemaHasWalletAddresses(schema: OpenApiSchema, presetIndex: number, depth = 0): boolean {
@@ -349,6 +375,7 @@ export function applyWalletAddressesToRequestBody(
   walletAddresses: WalletAddressSettings,
   presetIndex = 0,
   emptyFields: readonly string[] = [],
+  defaultFieldValues: Readonly<Record<string, unknown>> = {},
   depth = 0
 ): unknown {
   if (depth > 8) return body
@@ -356,7 +383,15 @@ export function applyWalletAddressesToRequestBody(
 
   if (normalized.type === 'array' && Array.isArray(body) && normalized.items) {
     return body.map((item) =>
-      applyWalletAddressesToRequestBody(item, normalized.items!, walletAddresses, presetIndex, emptyFields, depth + 1)
+      applyWalletAddressesToRequestBody(
+        item,
+        normalized.items!,
+        walletAddresses,
+        presetIndex,
+        emptyFields,
+        defaultFieldValues,
+        depth + 1
+      )
     )
   }
 
@@ -368,6 +403,11 @@ export function applyWalletAddressesToRequestBody(
   Object.entries(properties).forEach(([propertyName, propertySchema]) => {
     if (isEmptyField(propertyName, emptyFields)) {
       delete result[propertyName]
+      return
+    }
+    const defaultFieldValue = getDefaultFieldValue(propertyName, defaultFieldValues)
+    if (defaultFieldValue.found) {
+      result[propertyName] = defaultFieldValue.value
       return
     }
     if (isWalletAddressFieldName(propertyName)) {
@@ -395,6 +435,7 @@ export function applyWalletAddressesToRequestBody(
         walletAddresses,
         presetIndex,
         emptyFields,
+        defaultFieldValues,
         depth + 1
       )
       if (nextValue !== undefined) result[propertyName] = nextValue
@@ -424,6 +465,11 @@ export function initialParameterValues(
       values[parameterFieldName(index)] = ''
       return
     }
+    const defaultFieldValue = getDefaultFieldValue(parameter.name, endpoint.defaultFieldValues)
+    if (defaultFieldValue.found) {
+      values[parameterFieldName(index)] = stringifyValue(defaultFieldValue.value)
+      return
+    }
     if (normalizedName === 'customerid' || normalizedName === 'subdivision') {
       values[parameterFieldName(index)] = ''
       return
@@ -446,7 +492,8 @@ export function initialParameterValues(
       parameter.name,
       presetIndex,
       walletAddresses,
-      endpoint.emptyFields
+      endpoint.emptyFields,
+      endpoint.defaultFieldValues
     )
     values[parameterFieldName(index)] = stringifyValue(value)
   })
@@ -509,7 +556,8 @@ export function initialBodyText(
     endpoint.requestBody.schema,
     presetIndex,
     walletAddresses,
-    endpoint.emptyFields
+    endpoint.emptyFields,
+    endpoint.defaultFieldValues
   )
   return JSON.stringify(value, null, 2)
 }

@@ -89,7 +89,7 @@ div(className="min-w-0 bg-transparent")
   .px-2.mb-2
     input(
       ~ aria-label="Search endpoints"
-      ~ className="w-full rounded-[8px] border border-sidebar-border bg-background/60 px-2.5 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus-visible:ring-2 focus-visible:ring-focus"
+      ~ className="w-full rounded-[8px] mt-1 border-0 border-sidebar-border bg-background/60 px-2.5 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus-visible:ring-2 focus-visible:ring-focus"
       ~ type="text"
       ~ placeholder="Search API"
       ~ value={searchQuery}
