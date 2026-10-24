@@ -36,9 +36,9 @@ setup
 div.account-dashboard-grid.account-route-record-grid
   section.account-panel.account-route-panel(aria-labelledby="logs-title")
     div.account-route-panel-header
-      div
-        h2#logs-title Activity log
-        p Search activity log · #{formatAccountDate(dateRange.start)} – #{formatAccountDate(dateRange.end)}
+      div(className='flex items-center gap-3')
+        h2#logs-title Activity Logs
+        span(className='size-6 rounded-full bg-sunken font-sans font-[450] text-sm flex items-center justify-center') #{activities.length}
       span.account-route-date-pill Last 31 days
     if loading || !response
       p.account-route-state(role="status") Loading activity…
