@@ -1,0 +1,37 @@
+import { useRouter } from "@octanejs/tanstack-router";
+import { Link } from "@octanejs/tanstack-router";
+import SiteHeader from "./SiteHeader.btsx";
+import { startDemoAccountSession } from "@/lib/account-session";
+import { Icon } from '@/lib/icons'
+
+setup
+  const router = useRouter();
+  const handleGoogleSignIn = () => {
+    startDemoAccountSession();
+    void router.navigate({ to: "/account" });
+  };
+
+main.landing-page.signin-page
+  SiteHeader(active="account")
+  section.signin-layout(aria-labelledby="signin-title")
+    div.signin-card
+      div.signin-card-brand
+        Icon(name='logo')
+        span cex
+      p.landing-eyebrow Account access
+      h1#signin-title Welcome back.
+      p.signin-description Sign in to manage your accounts and integrations.
+      button.signin-google-button(type="button" onClick={handleGoogleSignIn})
+        Icon.signin-google-mark(name='google')
+        span Sign in with Google
+        span.signin-button-arrow(aria-hidden="true") →
+      p.signin-demo-note Demo access for now. Google authentication will be connected later.
+      div.signin-card-divider
+        span
+        | or
+        span
+      Link.signin-api-link(to="/api") Explore the Cex API →
+    div.signin-orbit.signin-orbit--one(aria-hidden="true")
+    div.signin-orbit.signin-orbit--two(aria-hidden="true")
+    // div.signin-floating-token.signin-floating-token--btc(aria-hidden="true") ₿
+    // div.signin-floating-token.signin-floating-token--eth(aria-hidden="true") ◈

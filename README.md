@@ -33,6 +33,10 @@ The dashboard composition starts in `src/App.btsx`; endpoint forms and category
 navigation live in `src/components/`. `src/lib/meld/catalog.generated.json` is
 generated from Meld's OpenAPI specs by `scripts/sync-meld-openapi.ts`.
 
+TanStack Router defines the landing page at `/`, Meld API Studio at `/api`,
+account sign-in at `/account/sign-in`, and the gated account dashboard at
+`/account` in `src/RouterRoot.btsx`.
+
 The project pins the `octane@0.13.8` toolchain and compatible adapters. Run the
 complete local verification before shipping:
 

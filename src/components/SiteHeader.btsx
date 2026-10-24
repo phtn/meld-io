@@ -1,0 +1,22 @@
+import { Link } from "@octanejs/tanstack-router";
+import { Icon } from '@/lib/icons'
+
+module
+  export type SiteHeaderPage = "home" | "account";
+
+props { active }: { active: SiteHeaderPage }
+
+header.landing-header
+  Link.landing-brand(to="/" aria-label="exch home")
+    Icon(name='logo')
+    span.landing-brand-name cex
+  nav.landing-nav(aria-label="Main navigation")
+    Link(
+      ~ to="/account"
+      ~ className={active === "account" ? "landing-nav-cta" : "landing-nav-link"}
+      ~ aria-current={active === "account" ? "page" : undefined}
+      ~ ) Account
+    Link(
+      ~ to="/api"
+      ~ className={active === "home" ? "landing-nav-cta" : "landing-nav-link"}
+      ~ ) Meld API

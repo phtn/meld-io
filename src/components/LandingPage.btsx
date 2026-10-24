@@ -1,0 +1,152 @@
+import { Link } from "@octanejs/tanstack-router";
+import SiteHeader from "./SiteHeader.btsx";
+
+main.landing-page
+  SiteHeader(active="home")
+
+  section.landing-hero(aria-labelledby="landing-title")
+    div.landing-hero-glow(aria-hidden="true")
+    div.landing-hero-copy
+      div.landing-proof
+        span.landing-proof-token ₿
+        span.landing-proof-token ₮
+        span.landing-proof-token Ξ
+        span.landing-proof-divider(aria-hidden="true")
+        span One connection for global crypto access
+      h1#landing-title
+        span Crypto onramps.
+        span Offramps, made easy.
+      p.landing-hero-description Connect your product to local payment methods and digital assets through one integration, so users can move in and out of crypto with less friction.
+      Link.landing-primary-cta(to="/api")
+        span Explore the Cex API
+        span.landing-cta-arrow(aria-hidden="true") →
+
+    div.landing-ramp-stage(aria-hidden="true")
+      div.landing-stage-orbit.landing-stage-orbit--outer
+      div.landing-stage-orbit.landing-stage-orbit--inner
+      div.landing-float-card.landing-float-card--left
+        div.landing-float-icon.landing-float-icon--fiat $
+        div
+          span.landing-card-label Start with fiat
+          strong Bank or card
+      div.landing-quote-card
+        div.landing-quote-header
+          div.landing-quote-brand
+            span.landing-mini-mark
+            span Cex ramp
+          span.landing-live-indicator Live quotes
+        div.landing-quote-field
+          div.landing-field-copy
+            span.landing-field-label You pay
+            strong 500.00
+          span.landing-currency-pill
+            span.landing-currency-symbol $
+            span USD
+            span.landing-field-chevron ⌄
+        div.landing-flow-marker
+          span ↓
+        div.landing-quote-field.landing-quote-field--receive
+          div.landing-field-copy
+            span.landing-field-label You receive
+            strong Choose an asset
+          span.landing-currency-pill.landing-currency-pill--asset BTC
+        div.landing-asset-row
+          span.landing-asset-chip.landing-asset-chip--selected ₿ Bitcoin
+          span.landing-asset-chip ◈ Ethereum
+          span.landing-asset-chip ◉ USDC
+        div.landing-quote-footer
+          span.landing-route-dots
+            i
+            i
+            i
+          span Multiple routes. One smooth flow.
+      div.landing-float-card.landing-float-card--right
+        div.landing-float-icon.landing-float-icon--crypto ◈
+        div
+          span.landing-card-label Cash out, simply
+          strong Crypto to local currency
+      div.landing-stage-caption
+        span.landing-caption-line
+        span Fiat in
+        span.landing-caption-dot
+        span Crypto out
+        span.landing-caption-line
+
+  section.landing-network(aria-label="Supported payment and digital asset types")
+    span.landing-network-label One integration connects the pieces
+    div.landing-network-items
+      span.landing-network-item
+        span.landing-network-icon.landing-network-icon--bank ▤
+        | Bank transfers
+      span.landing-network-separator ×
+      span.landing-network-item
+        span.landing-network-icon.landing-network-icon--card ▰
+        | Cards and local methods
+      span.landing-network-separator ×
+      span.landing-network-item
+        span.landing-network-icon.landing-network-icon--crypto ₿
+        | Digital assets
+      span.landing-network-separator ×
+      span.landing-network-item
+        span.landing-network-icon.landing-network-icon--global ◎
+        | Global routes
+
+  section.landing-capabilities(aria-labelledby="capabilities-title")
+    div.landing-section-intro
+      div
+        p.landing-eyebrow The CEX network
+        h2#capabilities-title Move between fiat and crypto with confidence.
+      p.landing-section-summary One API brings onramps, offramps, payment options, and digital assets into a single experience for your customers.
+
+    div.landing-capability-layout
+      div.landing-capability-copy
+        div.landing-capability-tabs(aria-label="Platform capabilities")
+          span.landing-capability-tab.landing-capability-tab--active Onramps
+          span.landing-capability-tab Offramps
+          span.landing-capability-tab Routing
+          span.landing-capability-tab Integrations
+        h3 A clearer path in and out.
+        p Give people a familiar way to buy digital assets, then make it just as easy to turn crypto back into local currency.
+        div.landing-feature-grid
+          div.landing-feature
+            span.landing-feature-mark ↗
+            div
+              strong Onramps
+              p Help customers buy crypto with the payment methods they know.
+          div.landing-feature
+            span.landing-feature-mark ↙
+            div
+              strong Offramps
+              p Let customers sell digital assets and receive local currency.
+          div.landing-feature
+            span.landing-feature-mark ◌
+            div
+              strong Smarter routing
+              p Connect to a network of providers through one integration.
+          div.landing-feature
+            span.landing-feature-mark ⌘
+            div
+              strong Built for builders
+              p Use a flexible API and a ready-to-integrate user experience.
+      div.landing-network-visual(aria-hidden="true")
+        div.landing-network-visual-glow
+        div.landing-network-node.landing-network-node--fiat
+          span.landing-node-icon $
+          span Fiat
+        div.landing-network-node.landing-network-node--meld
+          span.landing-node-mark
+          span Meld
+          small One API
+        div.landing-network-node.landing-network-node--crypto
+          span.landing-node-icon ◈
+          span Crypto
+        div.landing-network-connector.landing-network-connector--left
+        div.landing-network-connector.landing-network-connector--right
+        div.landing-network-visual-caption
+          span From local payment methods
+          span To digital assets and back
+
+  footer.landing-footer
+    Link.landing-footer-brand(to="/") cex
+    span Built to make moving between money and crypto secure and feel simple.
+    Link.landing-footer-link(to="/api") Explore the API →

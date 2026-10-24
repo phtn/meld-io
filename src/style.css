@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 @import './styles/reveal.css';
+@import './styles/landing.css';
+@import './styles/account.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -88,7 +90,7 @@
   --soft: oklch(0.2046 0 0 / 50%);
   --muted: oklch(0.9401 0 0);
   --muted-foreground: oklch(0.5373 0.006 240.53);
-  --border: oklch(0.65 0 0);
+  --border: oklch(0.85 0 0);
   --primary: oklch(0.2046 0 0);
   --positive: oklch(0.72 0.17 155.61);
   --ring: oklch(0.708 0 0);

@@ -26,12 +26,12 @@ module
   }
 
   const SIDEBAR_CLASS = "hidden md:flex flex-col w-full h-full min-h-0 bg-background dark:bg-surface/33 overflow-hidden"
-  const SIDEBAR_ITEM_CLASS = "relative z-10 flex w-full items-center gap-1.75 rounded-[10px] border-0 py-1.75 pl-1.75 text-left focus-visible:ring-2 focus-visible:ring-focus"
+  const SIDEBAR_ITEM_CLASS = "relative z-10 flex w-full items-center gap-1.75 rounded-[10px] border-0 py-1.75 pl-1.75 text-left transition-colors focus-visible:ring-2 focus-visible:ring-focus"
   // const SIDEBAR_ITEM_SELECTED_CLASS = "bg-[linear-gradient(in_oklab_180deg,oklab(95.2%_0_0)_0%,oklab(91.3%_0_0)_100%)] shadow-[inset_0_1px_0_#FFFFFF54,0_2.5px_3.5px_-1px_#00000026,0_0_0_1px_#D4D4D4] bg-origin-border dark:bg-[linear-gradient(in_oklab_180deg,oklab(32%_0_0)_0%,oklab(25%_0_0)_100%)] dark:shadow-[inset_0_1px_0_#F0F0F010,0_3px_3px_-0.5px_#00000026,0_0_0_1px_#04040460] border-border/0"
   const SIDEBAR_ITEM_SELECTED_CLASS_DARK = "_bg-[linear-gradient(in_oklab_180deg,oklab(95.2%_0_0)_0%,oklab(91.3%_0_0)_100%)] _shadow-[inset_0_1px_0_#FFFFFF54,0_2.5px_3.5px_-1px_#00000026,0_0_0_1px_#D4D4D4] bg-origin-border bg-[linear-gradient(in_oklab_180deg,oklab(32%_0_0)_0%,oklab(25%_0_0)_100%)] border-border/0"
   const SIDEBAR_ITEM_DEFAULT_CLASS = "border-transparent bg-transparent"
   const SIDEBAR_ICON_CONTAINER_CLASS = "flex size-7.5 shrink-0 items-center justify-center rounded-[8px] bg-transparent"
-  const SIDEBAR_ICON_SELECTED_CONTAINER_CLASS = "flex size-7.5 shrink-0 items-center justify-center rounded-[8px] light:bg-background"
+  const SIDEBAR_ICON_SELECTED_CONTAINER_CLASS = "flex size-7.5 shrink-0 items-center justify-center rounded-[8px]"
   const SIDEBAR_ICON_CLASS = "m-0 text-muted-foreground/90"
   const SIDEBAR_LABEL_CLASS = "flex-1 font-sans font-medium text-foreground/70 text-sm leading-5 tracking-[-0.48px] truncate"
   // const SIDEBAR_VALUE_CLASS = "ml-auto shrink-0 text-right font-mono text-2xs leading-none tabular-nums text-muted-foreground"
@@ -46,7 +46,7 @@ component SidebarItem
   setup
     const isExternal = href.startsWith("http")
     const isSelected = path === href || (href !== '/' && path?.startsWith(href + '/'))
-    const itemClassName = cn(SIDEBAR_ITEM_CLASS, isSelected ? SIDEBAR_ITEM_SELECTED_CLASS_DARK : SIDEBAR_ITEM_DEFAULT_CLASS, isCompact && SIDEBAR_ITEM_COMPACT_CLASS)
+    const itemClassName = cn(SIDEBAR_ITEM_CLASS, isSelected ? cn(SIDEBAR_ITEM_SELECTED_CLASS_DARK, "hover:brightness-110") : cn(SIDEBAR_ITEM_DEFAULT_CLASS, "hover:bg-foreground/10"), isCompact && SIDEBAR_ITEM_COMPACT_CLASS)
     const labelClassName = cn(SIDEBAR_LABEL_CLASS, isSelected && SIDEBAR_SELECTED_TEXT_CLASS_DARK)
     const iconClassName = cn(SIDEBAR_ICON_CLASS, isSelected && SIDEBAR_SELECTED_TEXT_CLASS_DARK)
     const iconContainerClassName = isSelected ? cn(SIDEBAR_ICON_SELECTED_CONTAINER_CLASS, isCompact && "bg-transparent dark:bg-transparent shadow-none") : SIDEBAR_ICON_CONTAINER_CLASS
@@ -133,7 +133,7 @@ component SidebarNavContent
             SidebarItem({...item} path={path} isCompact={isCompact} onHover={handleHover})
     div(
       ~ aria-hidden='true'
-      ~ className='pointer-events-none absolute top-0 left-0 z-0 m-0! rounded-[10px] bg-sidebar-border/40 transition-[transform,width,height,opacity] duration-200 ease-out motion-reduce:transition-none shadow-none'
+      ~ className='pointer-events-none absolute top-0 left-0 z-0 m-0! rounded-[10px] transition-[transform,width,height,opacity] duration-180 ease-out motion-reduce:transition-none shadow-none'
       ~ style={{ width: 'var(--hovered-nav-width, 0px)', height: 'var(--hovered-nav-height, 0px)', opacity: 'var(--hovered-nav-opacity, 0)', transform: 'translate3d(var(--hovered-nav-left, 0px), var(--hovered-nav-top, 0px), 0)' }}
       ~ )
 
@@ -150,14 +150,64 @@ component SidebarNav
   SidebarNavTooltips(path={path} className={cn('mt-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden', className)} isCompact={isCompact})
 
 props { path, isCompact = false, toggleSidebar, children }: SidebarProps
+setup
+  const childNavRef = useRef<HTMLDivElement | null>(null)
+  const hoveredChildItemRef = useRef<HTMLElement | null>(null)
+
+  const updateChildIndicator = () => {
+    const navlist = childNavRef.current
+    const item = hoveredChildItemRef.current
+    if (!navlist || !item) return
+
+    const containerRect = navlist.getBoundingClientRect()
+    const itemRect = item.getBoundingClientRect()
+    navlist.style.setProperty('--hovered-nav-top', `${itemRect.top - containerRect.top + navlist.scrollTop}px`)
+    navlist.style.setProperty('--hovered-nav-left', `${itemRect.left - containerRect.left + navlist.scrollLeft}px`)
+    navlist.style.setProperty('--hovered-nav-height', `${itemRect.height}px`)
+    navlist.style.setProperty('--hovered-nav-width', `${itemRect.width}px`)
+  }
+
+  const handleChildMouseOver = (event: MouseEvent) => {
+    const navlist = childNavRef.current
+    if (!navlist) return
+    const item = (event.target as HTMLElement).closest<HTMLElement>('button, a')
+    if (!item || !navlist.contains(item)) {
+      hoveredChildItemRef.current = null
+      navlist.style.setProperty('--hovered-nav-opacity', '0')
+      return
+    }
+    if (hoveredChildItemRef.current === item) return
+    hoveredChildItemRef.current = item
+    updateChildIndicator()
+    navlist.style.setProperty('--hovered-nav-opacity', '1')
+  }
+
+  const clearChildHover = () => {
+    hoveredChildItemRef.current = null
+    childNavRef.current?.style.setProperty('--hovered-nav-opacity', '0')
+  }
+
+  useLayoutEffect(() => {
+    const navlist = childNavRef.current
+    if (!navlist) return
+    const resizeObserver = new ResizeObserver(updateChildIndicator)
+    resizeObserver.observe(navlist)
+    return () => resizeObserver.disconnect()
+  }, [children, isCompact])
+
 aside(className={SIDEBAR_CLASS} data-compact={isCompact || undefined})
 
   div(className="flex items-center justify-center size-16")
     button(className={cn('h-[16px] w-[19px] rounded-[4px] bg-muted-foreground flex items-center px-0.75 py-0.75 relative transition-all duration-180 active:scale-97 active:bg-foreground group active:skew-2', {'active:-skew-3': isCompact})} onClick={toggleSidebar})
       div(className={cn('h-[10px] w-[6.25px] rounded-[2.5px] bg-background absolute transition-all duration-240 ease-out group-active:scale-102 active:shadow-1px', {'translate-x-[6.5px] group-active:scale-85': !isCompact})})
   if children && !isCompact
-    div(className="mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden")
+    div(ref={childNavRef} className="relative isolate mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden" onMouseOver={handleChildMouseOver} onMouseLeave={clearChildHover})
       | #{children}
+      div(
+        ~ aria-hidden='true'
+        ~ className='pointer-events-none absolute top-0 left-0 z-0 m-0! rounded-[10px] bg-muted transition-[transform,width,height,opacity] duration-200 ease-out motion-reduce:transition-none shadow-none'
+        ~ style={{ width: 'var(--hovered-nav-width, 0px)', height: 'var(--hovered-nav-height, 0px)', opacity: 'var(--hovered-nav-opacity, 0)', transform: 'translate3d(var(--hovered-nav-left, 0px), var(--hovered-nav-top, 0px), 0)' }}
+        ~ )
   else
     SidebarNavTooltips(path={path} isCompact={isCompact} className="mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden")
   div(className="h-12 shrink-0")

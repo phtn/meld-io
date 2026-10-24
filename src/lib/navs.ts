@@ -21,7 +21,7 @@ export const navGroups: NavGroup[] = [
     title: 'Meld API',
     items: [
       {
-        href: '/',
+        href: '/api',
         value: 'launcher',
         icon: 'search',
         label: 'Endpoint explorer',

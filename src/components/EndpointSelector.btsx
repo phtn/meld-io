@@ -34,7 +34,7 @@ component CategoryList
         ~ onClick={() => onToggleCategory(category.id)}
         ~ className="sticky top-0 z-15 mb-2 flex w-full items-center justify-between gap-2 rounded-md bg-surface p-2 text-left transition-colors hover:bg-sidebar-border/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         ~ )
-        span(className="truncate text-[10px] font-normal uppercase tracking-widest text-muted-foreground/70") #{category.name}
+        span(className="truncate text-[10px] font-normal uppercase tracking-widest text-muted-foreground") #{category.name}
         span(className="flex shrink-0 items-center gap-2 font-mono text-2xs tabular-nums text-muted-foreground")
           | #{category.endpoints.length}
           Icon(name="chevron-down" size={8} className={cn("transition-transform duration-150", collapsedCategories[category.id] && "-rotate-90")})
@@ -47,7 +47,7 @@ component CategoryList
             ~ className={cn(
             ~ "relative z-10 flex w-full min-w-0 items-center gap-3.5 rounded-[10px] border-0 border-transparent px-2 py-2 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:ring-focus",
             ~ selectedEndpoint === endpoint.id
-            ~ ? "bg-[#111111] text-[#F8F8F8] shadow-[0_0_0_0px_#777] dark:bg-[#F7F7F7] dark:text-[#111111] dark:shadow-[0_0_0_0px_#888]"
+            ~ ? "bg-[#111111] text-[#F8F8F8] dark:bg-[#F7F7F7] dark:text-[#111111]"
             ~ : "bg-transparent text-foreground/70 hover:text-foreground",
             ~ "disabled:cursor-not-allowed disabled:opacity-45",
             ~ )}
@@ -91,7 +91,7 @@ div(className="min-w-0 bg-transparent")
       ~ aria-label="Search endpoints"
       ~ className="w-full rounded-[8px] border border-sidebar-border bg-background/60 px-2.5 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus-visible:ring-2 focus-visible:ring-focus"
       ~ type="text"
-      ~ placeholder="Search all API categories..."
+      ~ placeholder="Search API"
       ~ value={searchQuery}
       ~ onInput={(event) => setSearchQuery(event.currentTarget.value)}
       ~ )

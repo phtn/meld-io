@@ -44,7 +44,7 @@ setup
   }, [walletAddresses, walletSettingsReady]);
   const handleEndpointChange = (endpointId: string) => {
     void router.navigate({
-      to: "/",
+      to: "/api",
       search: (current) => ({ ...current, endpoint: endpointId }),
       replace: true,
       resetScroll: false,
@@ -64,7 +64,7 @@ Shell
     Panel(
       ~ id="endpoint-sidebar-panel"
       ~ panelRef={sidebarPanelRef}
-      ~ defaultSize="17rem"
+      ~ defaultSize="19rem"
       ~ minSize="15rem"
       ~ maxSize="30rem"
       ~ collapsedSize="4rem"
@@ -73,7 +73,7 @@ Shell
       ~ className="h-full min-h-0 min-w-0 overflow-hidden"
       ~ style={{ overflow: "hidden" }}
       ~ )
-      Sidebar(path="/" isCompact={isCompact} toggleSidebar={toggleSidebar})
+      Sidebar(path="/api" isCompact={isCompact} toggleSidebar={toggleSidebar})
         EndpointSelector(selectedEndpoint={selectedEndpointId} onSelect={handleEndpointChange})
     Separator(
       ~ id="sidebar-resize-separator"

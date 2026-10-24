@@ -1,0 +1,296 @@
+import { Link, useRouter } from "@octanejs/tanstack-router";
+import { endDemoAccountSession } from "@/lib/account-session";
+import {Icon} from "@/lib/icons";
+
+setup
+  const router = useRouter();
+  const handleSignOut = () => {
+    endDemoAccountSession();
+    void router.navigate({ to: "/account/sign-in" });
+  };
+
+main.account-dashboard-page
+  div.account-dashboard-frame
+    aside.account-sidebar(aria-label="Account navigation")
+      div.account-brand
+        Icon(name='logo')
+        span exch
+        button.account-sidebar-collapse(type="button" aria-label="Collapse sidebar") ◫
+      div.account-workspace
+        span.account-workspace-icon ◈
+        div.account-workspace-copy
+          strong Northstar Wallet
+          span Sandbox workspace
+        span.account-workspace-chevron ⌄
+      nav.account-sidebar-navigation
+        p.account-nav-label Workspace
+        Link.account-sidebar-link.account-sidebar-link--active(to="/account" aria-current="page")
+          span.account-sidebar-icon ▦
+          span Overview
+        a.account-sidebar-link(href="#transactions")
+          span.account-sidebar-icon ▤
+          span Transactions
+          span.account-sidebar-count 8
+        a.account-sidebar-link(href="#payment-routes")
+          span.account-sidebar-icon ⇄
+          span Payment routes
+        a.account-sidebar-link(href="#developers")
+          span.account-sidebar-icon ⌘
+          span Developers
+          span.account-sidebar-tag Live
+        p.account-nav-label.account-nav-label--spaced In flight
+        div.account-flight-item
+          span.account-flight-dot.account-flight-dot--blue
+          span Meridian Wallet
+          small Day 12
+        div.account-flight-item
+          span.account-flight-dot.account-flight-dot--orange
+          span Eastbank Pay
+          small Day 28
+        div.account-flight-item
+          span.account-flight-dot.account-flight-dot--yellow
+          span Northstar Wallet
+          small Day 47
+      div.account-sidebar-bottom
+        div.account-sidebar-gate
+          span.account-sidebar-gate-icon ⚑
+          div
+            strong Next milestone
+            span Production review · 3 steps
+        a.account-sidebar-link(href="#settings")
+          span.account-sidebar-icon ⚙
+          span Settings
+        button.account-sidebar-link(type="button" onClick={handleSignOut})
+          span.account-sidebar-icon ↪
+          span Sign out
+
+    section.account-dashboard-content
+      header.account-dashboard-header
+        div.account-heading
+          p.account-breadcrumb Exch · Account · Overview
+          div.account-heading-title
+            h1 Northstar Wallet
+            span.account-day-badge Demo workspace
+        div.account-header-actions
+          div.account-search
+            span.account-search-icon ⌕
+            span Search
+            span.account-search-shortcut ⌘ K
+          button.account-user-menu(type="button" aria-label="Current demo user")
+            span.account-user-avatar JD
+            span.account-user-copy
+              strong Jordan Davis
+              small jordan.davis@example.com
+            span.account-user-chevron ⌄
+          button.account-notifications(type="button" aria-label="Notifications")
+            span ♧
+            i
+      nav.account-dashboard-tabs(aria-label="Account sections")
+        a.account-tab.account-tab--active(href="#overview") Overview
+        a.account-tab(href="#transactions") Transactions
+        a.account-tab(href="#payment-routes") Payment routes
+        Link.account-tab(to="/api") Meld API
+        div.account-tab-actions
+          span.account-environment-badge
+            i
+            | Sandbox
+          Link.account-open-api(to="/api") Open API Studio →
+
+      div.account-dashboard-grid#overview
+        div.account-dashboard-main-column
+          section.account-panel.account-volume-panel(aria-labelledby="volume-title")
+            div.account-panel-header
+              div
+                h2#volume-title Onramp volume vs baseline
+                p Transaction volume · last 30 days
+              div.account-chart-switcher
+                span.account-chart-switcher-active Volume
+                span Transactions
+                span Conversion
+                span.account-calendar-button ⊞
+            div.account-volume-summary
+              strong $84,290
+              span.account-volume-change ↗ 12.8%
+              span compared with previous period
+              span.account-demo-pill Sample data
+            div.account-chart-container
+              div.account-chart-background
+                span $100k
+                span $75k
+                span $50k
+                span $25k
+                span $0
+              svg.account-volume-chart(viewBox="0 0 720 230" preserveAspectRatio="none" role="img" aria-label="Sample onramp volume trend over the last 30 days")
+                path.account-chart-area(d="M0 146 C32 136 38 125 69 132 S112 155 145 128 S193 92 224 112 S262 146 292 126 S330 95 360 110 S396 138 427 125 S468 104 498 118 S536 161 566 146 S600 115 624 122 S650 78 679 90 S702 72 720 62 L720 230 L0 230 Z")
+                path.account-chart-baseline(d="M0 116 C50 114 75 116 120 115 S190 116 240 115 S310 116 360 115 S430 116 480 115 S550 116 600 115 S680 116 720 115")
+                path.account-chart-line(d="M0 146 C32 136 38 125 69 132 S112 155 145 128 S193 92 224 112 S262 146 292 126 S330 95 360 110 S396 138 427 125 S468 104 498 118 S536 161 566 146 S600 115 624 122 S650 78 679 90 S702 72 720 62")
+                circle.account-chart-point(cx="624" cy="122" r="5")
+                circle.account-chart-point.account-chart-point--current(cx="720" cy="62" r="5")
+              div.account-chart-dates
+                span Oct 1
+                span Oct 6
+                span Oct 11
+                span Oct 16
+                span Oct 21
+                span Oct 26
+                span Oct 30
+            div.account-chart-footer
+              span.account-legend-item
+                i.account-legend-swatch
+                | Onramp volume
+              span.account-legend-item
+                i.account-legend-swatch.account-legend-swatch--baseline
+                | Previous period
+              span.account-chart-period Last 30 days ⌄
+
+          section.account-panel.account-transactions-panel#transactions(aria-labelledby="transactions-title")
+            div.account-panel-header
+              div
+                h2#transactions-title Recent transactions
+                p Latest activity across your onramp and offramp flows
+              a.account-inline-link(href="#transactions") View all →
+            div.account-transactions-table
+              div.account-table-head
+                span Transaction
+                span Direction
+                span Amount
+                span Status
+                span Time
+              div.account-transaction-row
+                div.account-transaction-id
+                  span.account-transaction-icon.account-transaction-icon--green ↗
+                  div
+                    strong EX-20418
+                    small Customer · cst_84f2
+                span.account-transaction-direction
+                  | USD
+                  span →
+                  | ETH
+                strong.account-transaction-amount $1,250.00
+                span.account-status.account-status--complete Completed
+                span.account-transaction-time Today, 10:42
+              div.account-transaction-row
+                div.account-transaction-id
+                  span.account-transaction-icon.account-transaction-icon--blue ↙
+                  div
+                    strong EX-20417
+                    small Customer · cst_719a
+                span.account-transaction-direction
+                  | USDC
+                  span →
+                  | EUR
+                strong.account-transaction-amount $840.00
+                span.account-status.account-status--pending Processing
+                span.account-transaction-time Today, 09:16
+              div.account-transaction-row
+                div.account-transaction-id
+                  span.account-transaction-icon.account-transaction-icon--purple ↗
+                  div
+                    strong EX-20412
+                    small Customer · cst_5d31
+                span.account-transaction-direction
+                  | USD
+                  span →
+                  | BTC
+                strong.account-transaction-amount $320.00
+                span.account-status.account-status--complete Completed
+                span.account-transaction-time Yesterday
+
+        aside.account-dashboard-side-column
+          section.account-panel.account-health-panel#payment-routes(aria-labelledby="health-title")
+            div.account-panel-header
+              div.account-health-heading
+                span.account-sparkle ✧
+                h2#health-title Network health
+              span.account-health-status Steady
+            p.account-health-copy Your payment routes are healthy and ready to serve customers.
+            div.account-provider-list
+              div.account-provider-row
+                span.account-provider-icon.account-provider-icon--card ▰
+                div
+                  strong Card payments
+                  small 14 providers available
+                span.account-provider-state Active
+              div.account-provider-row
+                span.account-provider-icon.account-provider-icon--bank ▤
+                div
+                  strong Bank transfer
+                  small 9 providers available
+                span.account-provider-state Active
+              div.account-provider-row
+                span.account-provider-icon.account-provider-icon--crypto ◈
+                div
+                  strong Crypto payouts
+                  small 6 networks connected
+                span.account-provider-state Active
+            a.account-inline-link.account-health-link(href="#payment-routes") Manage payment routes ↗
+
+          section.account-panel.account-api-activity-panel#developers(aria-labelledby="activity-title")
+            div.account-panel-header
+              div
+                h2#activity-title API activity
+                p Requests · last 7 days
+              Link.account-panel-open(to="/api" aria-label="Open Meld API Studio") ↗
+            div.account-api-metric
+              strong 24,861
+              span.account-api-metric-change +8.4%
+            div.account-api-bars(aria-label="Sample API requests by day")
+              div.account-api-bar-item
+                span.account-api-bar-value 2.8k
+                i(style={{ height: "47%" }})
+                small Mon
+              div.account-api-bar-item
+                span.account-api-bar-value 3.4k
+                i(style={{ height: "58%" }})
+                small Tue
+              div.account-api-bar-item
+                span.account-api-bar-value 3.1k
+                i(style={{ height: "52%" }})
+                small Wed
+              div.account-api-bar-item
+                span.account-api-bar-value 4.1k
+                i(style={{ height: "70%" }})
+                small Thu
+              div.account-api-bar-item
+                span.account-api-bar-value 3.7k
+                i(style={{ height: "63%" }})
+                small Fri
+              div.account-api-bar-item
+                span.account-api-bar-value 4.5k
+                i.account-api-bar--today(style={{ height: "78%" }})
+                small Sat
+              div.account-api-bar-item
+                span.account-api-bar-value 3.3k
+                i(style={{ height: "56%" }})
+                small Sun
+            p.account-api-footnote Sample data from your sandbox workspace.
+
+          section.account-panel.account-setup-panel(aria-labelledby="setup-title")
+            div.account-panel-header
+              div
+                h2#setup-title Go live checklist
+                p 3 of 4 steps complete
+              span.account-setup-progress 75%
+            div.account-setup-progress-track
+              span
+            div.account-setup-steps
+              div.account-setup-step.account-setup-step--complete
+                span ✓
+                div
+                  strong Create your account
+                  small Complete
+              div.account-setup-step.account-setup-step--complete
+                span ✓
+                div
+                  strong Configure API keys
+                  small Sandbox connected
+              div.account-setup-step.account-setup-step--complete
+                span ✓
+                div
+                  strong Test a transaction
+                  small 4 successful tests
+              div.account-setup-step
+                span 4
+                div
+                  strong Request production access
+                  small Ready when you are

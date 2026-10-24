@@ -1,9 +1,28 @@
 module "use client";
-import { createRootRoute, createRouter, RouterProvider } from "@octanejs/tanstack-router";
+import { createRootRoute, createRoute, createRouter, Outlet, redirect, RouterProvider } from "@octanejs/tanstack-router";
 import App from "./App.btsx";
+import AccountPage from "./components/AccountPage.btsx";
+import LandingPage from "./components/LandingPage.btsx";
+import SignInPage from "./components/SignInPage.btsx";
+import { hasDemoAccountSession } from "./lib/account-session";
+
+component RouteLayout
+  Outlet
 
 setup
-  const rootRoute = createRootRoute({ component: App });
-  const router = createRouter({ routeTree: rootRoute });
+  const rootRoute = createRootRoute({ component: RouteLayout });
+  const landingRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: LandingPage });
+  const apiRoute = createRoute({ getParentRoute: () => rootRoute, path: "/api", component: App });
+  const accountSignInRoute = createRoute({ getParentRoute: () => rootRoute, path: "/account/sign-in", component: SignInPage });
+  const accountRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/account",
+    beforeLoad: () => {
+      if (!hasDemoAccountSession()) throw redirect({ to: "/account/sign-in" });
+    },
+    component: AccountPage,
+  });
+  const routeTree = rootRoute.addChildren([landingRoute, apiRoute, accountSignInRoute, accountRoute]);
+  const router = createRouter({ routeTree });
 
 RouterProvider(router={router})
