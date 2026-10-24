@@ -4,6 +4,7 @@ import { Group, Panel, Separator, usePanelRef, type PanelSize } from "@octanejs/
 import { endDemoAccountSession } from "@/lib/account-session";
 import { useMeldApi } from "@/hooks/use-meld-api";
 import AccountVolumeChart from "@/components/AccountVolumeChart.btsx";
+import Tabs, { type TabItem } from "@/ui/Tabs.btsx";
 import { Icon } from "@/lib/icons";
 import Sidebar, {ToggleSidebar} from "@/components/Sidebar.btsx";
 import { ThemeToggle } from "@/components/ThemeProvider.btsx";
@@ -12,6 +13,13 @@ import type { ApiResponse } from "@/types";
 
 module
   const EXAMPLE_CUSTOMER_ID = "WmYtQbDgrToZG684RC2bpJ";
+
+  const ACCOUNT_DASHBOARD_TABS: readonly TabItem[] = [
+    { href: "#overview", id: "on-ramp", label: "On-ramp", shortLabel: "On-ramp", icon: "on-ramp" },
+    { href: "#transactions", id: "off-ramp", label: "Off-ramp", shortLabel: "Off-ramp", icon: "off-ramp" },
+    { href: "#transfers", id: "transfers", label: "Transfers", shortLabel: "Transfers", icon: "arrow-right" },
+    { href: "#swaps", id: "swaps", label: "Swaps", shortLabel: "Swaps", icon: "swap" },
+  ];
 
   interface MeldCustomer {
     id: string;
@@ -143,18 +151,18 @@ main.account-dashboard-page
           nav.account-sidebar-navigation
             p.account-nav-label Workspace
             Link.account-sidebar-link.account-sidebar-link--active(to="/account" aria-current="page")
-              span.account-sidebar-icon ▦
+              Icon.account-sidebar-icon(name='bar-chart' className='size-2')
               span Overview
             a.account-sidebar-link(href="#transactions")
-              span.account-sidebar-icon ▤
+              Icon.account-sidebar-icon(name='transaction' className='-rotate-90')
               span Transactions
               span.account-sidebar-count 8
-            a.account-sidebar-link(href="#payment-routes")
-              span.account-sidebar-icon ⇄
-              span Payment Routes
-            a.account-sidebar-link(href="#developers")
-              span.account-sidebar-icon ⌘
-              span Developers
+            a.account-sidebar-link(href="#bank-accounts")
+              Icon.account-sidebar-icon(name='bank')
+              span Bank Accounts
+            a.account-sidebar-link(href="#logs")
+              Icon.account-sidebar-icon(name='list')
+              span Logs
               span.account-sidebar-tag Live
             p.account-nav-label.account-nav-label--spaced In flight
             div.account-flight-item
@@ -180,15 +188,15 @@ main.account-dashboard-page
               span.account-sidebar-icon ⌘
           div.account-sidebar-bottom
             div.account-sidebar-gate
-              span.account-sidebar-gate-icon ⚑
+              Icon.account-sidebar-gate-icon(name='flag')
               div
                 strong Next milestone
                 span Production review · 3 steps
             a.account-sidebar-link(href="#settings")
-              span.account-sidebar-icon ⚙
+              Icon.account-sidebar-icon(name='settings')
               span Settings
             button.account-sidebar-link(type="button" onClick={handleSignOut})
-              span.account-sidebar-icon ↪
+              Icon.account-sidebar-icon(name='sign-out')
               span Sign out
             div.account-sidebar-theme-toggle
               ThemeToggle
@@ -263,11 +271,13 @@ main.account-dashboard-page
               button.account-notifications(type="button" aria-label="Notifications")
                 Icon(name='bell' className='size-4')
                 i
-          nav.account-dashboard-tabs(aria-label="Account sections")
-            Link.account-tab.account-tab--active(to="#overview") Balance
-            Link.account-tab(to="#transactions") Transactions
-            Link.account-tab(to="#payment-routes") Payment routes
-            Link.account-tab(to="/api") Meld API
+          div.account-dashboard-tabs
+            Tabs(
+              ~ activeId="on-ramp"
+              ~ className="account-dashboard-tab-list"
+              ~ items={ACCOUNT_DASHBOARD_TABS}
+              ~ label="Account sections"
+              ~ )
             div.account-tab-actions
               span.account-environment-badge
                 i

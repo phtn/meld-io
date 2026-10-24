@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef } from 'octane'
 import { Icon } from '@/lib/icons'
 import type { IconName } from '@/lib/icons'
 import { cn } from '@/lib/utils'
-import { createLink } from '@octanejs/tanstack-router'
+import { Link } from '@octanejs/tanstack-router'
 
 module
   export interface TabItem {
@@ -24,14 +24,6 @@ module
   }
 
   const baseClassName = 'relative inline-flex items-center justify-self-end gap-5 md:gap-7 lg:gap-8 border-b border-sidebar-border dark:border-surface/33 min-w-lg'
-
-component TabAnchor
-  props { selected, children, ...anchorProps }: JSX.IntrinsicElements['a'] & { selected: boolean }
-  a({...anchorProps} aria-current={selected ? 'page' : undefined} data-tab-active={selected ? '' : undefined})
-    | #{children}
-
-module
-  const TabLink = createLink(TabAnchor)
 
 props { activeId, className, items, label = 'Tabs', ref, ...navProps }: Props
 
@@ -75,20 +67,21 @@ nav(
   ~ aria-label={label}
   ~ )
   each item in items key item.id
-    TabLink(
+    Link(
       ~ to={item.href.startsWith('#') ? '.' : item.href}
       ~ hash={item.href.startsWith('#') ? item.href.slice(1) : undefined}
-      ~ selected={activeId === item.id}
       ~ aria-label={item.label}
+      ~ aria-current={activeId === item.id ? 'page' : undefined}
+      ~ data-tab-active={activeId === item.id ? '' : undefined}
       ~ activeProps={{}}
-      ~ className={cn('relative z-10 flex items-center justify-center gap-2.5 cursor-pointer font-sans hover:text-foreground px-4 sm:ps-3 sm:pe-5 md:px-3 py-2.5 capitalize whitespace-nowrap rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', items.length >= 5 && 'min-w-0 flex-1', activeId === item.id ? 'text-foreground' : 'text-muted-foreground')}
+      ~ className={cn('relative z-10 flex items-center justify-center gap-2 cursor-pointer font-sans hover:text-foreground px-1 py-2.5 capitalize whitespace-nowrap rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', items.length >= 5 && 'min-w-0 flex-1', activeId === item.id ? 'text-foreground' : 'text-muted-foreground')}
       ~ )
-      Icon(name={item.icon} className='md:size-4 size-5 md:opacity-80')
-      span(className='hidden lg:inline font-sans font-medium text-sm -tracking-[0.014em]') #{item.label}
+      Icon(name={item.icon} className='md:size-3 size-5 md:opacity-80')
+      span(className='hidden lg:inline font-sans font-[450] text-xs -tracking-[0.01em]') #{item.label}
       span(className={`${items.length >= 3 ? 'hidden md:flex' : 'flex'}  scale-95 lg:hidden font-sans font-medium sm:text-base text-sm -tracking-[0.014em]`}) #{item.shortLabel}
   div(
     ~ // Line Indicator
     ~ aria-hidden='true'
-    ~ className='pointer-events-none absolute -bottom-0.75 left-0 z-0 h-[2.5px] rounded-full bg-mac-blue shadow-sm transition-[width,transform] duration-180 ease-out motion-reduce:transition-none'
+    ~ className='pointer-events-none absolute -bottom-0.75 left-0 z-0 h-[2.5px] rounded-full bg-foreground/90 shadow-sm transition-[width,transform] duration-180 ease-out motion-reduce:transition-none'
     ~ style={{ width: 'var(--active-tab-width, 0px)', transform: 'translateX(var(--active-tab-left, 0px)) translateY(-50%)' }}
     ~ )
