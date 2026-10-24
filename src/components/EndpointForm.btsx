@@ -310,7 +310,7 @@ setup
     event.preventDefault();
     void form.handleSubmit();
   };
-form(className="space-y-6 bg-white p-4 dark:bg-zinc-900/80" onSubmit={handleSubmit})
+form(className="space-y-6 bg-white p-4 dark:bg-zinc-800" onSubmit={handleSubmit})
   div(className='flex items-center justify-between border-b border-border')
     Title(text="request")
     Field(
