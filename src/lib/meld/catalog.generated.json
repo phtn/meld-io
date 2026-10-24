@@ -10,7 +10,7 @@
         {
           "id": "crypto-post-payments-crypto-quote",
           "operationId": "/crypto-quote-get",
-          "name": "Create a crypto quote",
+          "name": "Get crypto quote",
           "description": "Use this endpoint to request the current exchange rate of the selected fiat currency-cryptocurrency pair, and the required fees. Enter a fiat currency as the sourceCurrencyCode to buy crypto and enter a crypto currency in that field to sell crypto.",
           "method": "POST",
           "path": "/payments/crypto/quote",
@@ -44,12 +44,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "countryCode",
-                "destinationCurrencyCode",
-                "sourceAmount",
-                "sourceCurrencyCode"
-              ],
+              "required": ["countryCode", "destinationCurrencyCode", "sourceAmount", "sourceCurrencyCode"],
               "properties": {
                 "countryCode": {
                   "type": "string",
@@ -190,7 +185,7 @@
         {
           "id": "crypto-post-crypto-session-widget",
           "operationId": "/crypto-session-widget-create",
-          "name": "Create a crypto widget",
+          "name": "Create a widget",
           "description": "Use this endpoint to create a crypto widget for a session to buy or sell crypto.",
           "method": "POST",
           "path": "/crypto/session/widget",
@@ -213,10 +208,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "sessionData",
-                "sessionType"
-              ],
+              "required": ["sessionData", "sessionType"],
               "properties": {
                 "bypassKyc": {
                   "type": "boolean",
@@ -245,9 +237,7 @@
                     {
                       "type": "object",
                       "description": "Data related to the session",
-                      "required": [
-                        "serviceProvider"
-                      ],
+                      "required": ["serviceProvider"],
                       "oneOf": [
                         {
                           "title": "CryptoBuySessionData",
@@ -593,11 +583,7 @@
                             {
                               "title": "Transfer Crypto",
                               "type": "object",
-                              "required": [
-                                "countryCode",
-                                "serviceProvider",
-                                "sourceCurrencyCodes"
-                              ],
+                              "required": ["countryCode", "serviceProvider", "sourceCurrencyCodes"],
                               "properties": {
                                 "clientIpAddress": {
                                   "type": "string",
@@ -756,9 +742,7 @@
                                   "type": "string",
                                   "description": "The KYC provider that issued the token",
                                   "example": "SUMSUB",
-                                  "enum": [
-                                    "SUMSUB"
-                                  ]
+                                  "enum": ["SUMSUB"]
                                 },
                                 "kycShareToken": {
                                   "type": "string",
@@ -839,11 +823,7 @@
                 "sessionType": {
                   "type": "string",
                   "description": "The type of widget session to create",
-                  "enum": [
-                    "BUY",
-                    "SELL",
-                    "TRANSFER"
-                  ]
+                  "enum": ["BUY", "SELL", "TRANSFER"]
                 },
                 "subaccountCustomerId": {
                   "type": "string",
@@ -1144,8 +1124,8 @@
         {
           "id": "crypto-get-payments-transactions-sessions-by-sessionid",
           "operationId": "/payments-transactions-sessions-get",
-          "name": "Fetch a transaction from the provider (for offramp use)",
-          "description": "Fetch a transaction from the service provider using the session ID. This endpoint is primarily used for offramp scenarios where the transaction needs to be retrieved from the provider after the user completes their action in the widget.",
+          "name": "Fetch a transaction",
+          "description": "Fetch a transaction from the service provider (for offramp use) using the session ID. This endpoint is primarily used for offramp scenarios where the transaction needs to be retrieved from the provider after the user completes their action in the widget.",
           "method": "GET",
           "path": "/payments/transactions/sessions/{sessionId}",
           "deprecated": false,
@@ -1177,7 +1157,7 @@
         {
           "id": "crypto-post-crypto-order-headless-offramp",
           "operationId": "/crypto-order-headless-offramp-create",
-          "name": "Create a headless offramp order",
+          "name": "Create headless offramp order",
           "description": "Creates a headless offramp order. Caller passes customer + provider + source crypto + fiat payout method and receives a provider-issued wallet address to send cryptocurrency to.",
           "method": "POST",
           "path": "/crypto/order/headless/offramp",
@@ -1247,11 +1227,7 @@
                         {
                           "type": "object",
                           "description": "Payout method for offramp",
-                          "required": [
-                            "details",
-                            "owner",
-                            "type"
-                          ],
+                          "required": ["details", "owner", "type"],
                           "properties": {
                             "details": {
                               "description": "Payout method details",
@@ -1310,12 +1286,7 @@
                       "type": "string",
                       "description": "Service provider to use for this offramp order",
                       "example": "NOAH",
-                      "enum": [
-                        "NOAH",
-                        "DUENETWORK",
-                        "BRALE",
-                        "YELLOWCARD"
-                      ]
+                      "enum": ["NOAH", "DUENETWORK", "BRALE", "YELLOWCARD"]
                     },
                     "sourceAmount": {
                       "type": "number",
@@ -1378,112 +1349,9 @@
           }
         },
         {
-          "id": "crypto-post-payments-virtual-account-deposit-instructions",
-          "operationId": "/payments-virtual-account-deposit-instructions-create",
-          "name": "Create or retrieve standing virtual-account onramp deposit instructions",
-          "description": "Provisions a standing virtual bank account for recurring onramp deposits, or returns the existing instructions when the same customer, provider, payment method, currency pair, and destination wallet were already set up.",
-          "method": "POST",
-          "path": "/payments/virtual-account/deposit-instructions",
-          "deprecated": false,
-          "parameters": [
-            {
-              "name": "Meld-Version",
-              "in": "header",
-              "required": false,
-              "description": "Dated API version to use for this request, e.g. `2026-02-03`.",
-              "schema": {
-                "type": "string",
-                "example": "2026-02-03"
-              },
-              "example": "2026-02-03"
-            },
-            {
-              "name": "X-Idempotency-Key",
-              "in": "header",
-              "required": false,
-              "schema": {
-                "type": "string",
-                "format": "uuid"
-              }
-            }
-          ],
-          "requestBody": {
-            "required": true,
-            "contentType": "application/json",
-            "schema": {
-              "type": "object",
-              "description": "Request to provision or retrieve standing virtual-account deposit instructions",
-              "required": [
-                "customerId",
-                "destinationCurrencyCode",
-                "destinationWalletAddress",
-                "paymentMethodType",
-                "serviceProvider",
-                "sourceCurrencyCode"
-              ],
-              "properties": {
-                "customerId": {
-                  "type": "string",
-                  "description": "Meld customer id",
-                  "minLength": 1
-                },
-                "customerPhoneNumber": {
-                  "type": "string",
-                  "description": "Customer phone number — required when paymentMethodType is MOBILE_MONEY and the provider requires it"
-                },
-                "destinationCurrencyCode": {
-                  "type": "string",
-                  "description": "Destination cryptocurrency code",
-                  "example": "USDC",
-                  "minLength": 1
-                },
-                "destinationWalletAddress": {
-                  "type": "string",
-                  "description": "Wallet address that will receive the purchased cryptocurrency",
-                  "example": "0x000000000000000000000000000000000000dEaD",
-                  "minLength": 1
-                },
-                "paymentMethodType": {
-                  "type": "string",
-                  "description": "Desired type of virtual account to create for sending the fiat currency to",
-                  "enum": [
-                    "ACH",
-                    "SEPA",
-                    "PIX",
-                    "MOBILE_MONEY"
-                  ]
-                },
-                "serviceProvider": {
-                  "type": "string",
-                  "description": "Service provider used for creating the virtual deposit account",
-                  "example": "NOAH",
-                  "enum": [
-                    "NOAH",
-                    "DUENETWORK"
-                  ]
-                },
-                "sourceCurrencyCode": {
-                  "type": "string",
-                  "description": "Source fiat currency code",
-                  "example": "USD",
-                  "minLength": 1
-                }
-              }
-            },
-            "example": {
-              "customerId": "<string>",
-              "destinationCurrencyCode": "USDC",
-              "destinationWalletAddress": "0x000000000000000000000000000000000000dEaD",
-              "paymentMethodType": "ACH",
-              "serviceProvider": "NOAH",
-              "sourceCurrencyCode": "USD"
-            }
-          }
-        },
-        {
           "id": "crypto-post-crypto-order-headless-onramp",
           "operationId": "/crypto-order-headless-onramp-create",
-          "name": "Create a headless onramp order",
+          "name": "Create headless onramp order",
           "description": "Creates a headless onramp order. Caller passes customer + provider + payment method and receives a method-specific payload in paymentMethodResponseDetails:\n\n- ACH/SEPA/PIX → bank-transfer details to display.\n- CREDIT_DEBIT_CARD → a provider-hosted widget, or `NativeSdkOrder` when renderMode=SDK_NATIVE.\n- STRIPE + CREDIT_DEBIT_CARD/APPLE_PAY → one `NativeSdkOrder` shape; `paymentMethodType` selects the method. `destinationNetworkCode` and `X-Idempotency-Key` are required. Stripe remains disabled until rollout gates clear.\n- MERCURYO + APPLE_PAY → native (non-widget) flow: a `sessionToken` (JWT) + `merchantTransactionId`. No redirect URL. The caller renders the Apple Pay sheet itself (Safari/WebView via ApplePaySession) and drives these endpoints, authenticated with header `X-Crypto-Session-Token: <sessionToken>`: on `onvalidatemerchant` call POST /crypto/session/mercuryo/apple-pay/validate-merchant with the event's validationURL; on `onpaymentauthorized` call POST /crypto/session/mercuryo/apple-pay/process with the Apple payToken + the `merchantTransactionId` from this response. The Mercuryo buy_token is fetched and stored server-side, so the caller never handles it. If native Apple Pay is unavailable for the route the call fails with INVALID_PAYMENT_METHOD (no redirect fallback).",
           "method": "POST",
           "path": "/crypto/order/headless/onramp",
@@ -1566,14 +1434,7 @@
                 "paymentMethodType": {
                   "type": "string",
                   "description": "Payment method type",
-                  "enum": [
-                    "CREDIT_DEBIT_CARD",
-                    "APPLE_PAY",
-                    "ACH",
-                    "SEPA",
-                    "PIX",
-                    "MOBILE_MONEY"
-                  ]
+                  "enum": ["CREDIT_DEBIT_CARD", "APPLE_PAY", "ACH", "SEPA", "PIX", "MOBILE_MONEY"]
                 },
                 "providerData": {
                   "description": "Provider-specific extension; subtype keyed by serviceProvider",
@@ -1586,9 +1447,7 @@
                           "allOf": [
                             {
                               "description": "Provider-specific extension keyed by serviceProvider",
-                              "required": [
-                                "serviceProvider"
-                              ],
+                              "required": ["serviceProvider"],
                               "properties": {
                                 "serviceProvider": {
                                   "type": "string"
@@ -1622,13 +1481,7 @@
                   "type": "string",
                   "description": "Service provider to use for the order",
                   "example": "NOAH",
-                  "enum": [
-                    "NOAH",
-                    "DUENETWORK",
-                    "BRALE",
-                    "YELLOWCARD",
-                    "MERCURYO"
-                  ]
+                  "enum": ["NOAH", "DUENETWORK", "BRALE", "YELLOWCARD", "MERCURYO"]
                 },
                 "sourceAmount": {
                   "type": "number",
@@ -1656,9 +1509,105 @@
           }
         },
         {
+          "id": "crypto-post-payments-virtual-account-deposit-instructions",
+          "operationId": "/payments-virtual-account-deposit-instructions-create",
+          "name": "Create virtual-account",
+          "description": "Provisions a standing virtual bank account for recurring onramp deposits, or returns the existing instructions when the same customer, provider, payment method, currency pair, and destination wallet were already set up.",
+          "method": "POST",
+          "path": "/payments/virtual-account/deposit-instructions",
+          "deprecated": false,
+          "parameters": [
+            {
+              "name": "Meld-Version",
+              "in": "header",
+              "required": false,
+              "description": "Dated API version to use for this request, e.g. `2026-02-03`.",
+              "schema": {
+                "type": "string",
+                "example": "2026-02-03"
+              },
+              "example": "2026-02-03"
+            },
+            {
+              "name": "X-Idempotency-Key",
+              "in": "header",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "contentType": "application/json",
+            "schema": {
+              "type": "object",
+              "description": "Request to provision or retrieve standing virtual-account deposit instructions",
+              "required": [
+                "customerId",
+                "destinationCurrencyCode",
+                "destinationWalletAddress",
+                "paymentMethodType",
+                "serviceProvider",
+                "sourceCurrencyCode"
+              ],
+              "properties": {
+                "customerId": {
+                  "type": "string",
+                  "description": "Meld customer id",
+                  "minLength": 1
+                },
+                "customerPhoneNumber": {
+                  "type": "string",
+                  "description": "Customer phone number — required when paymentMethodType is MOBILE_MONEY and the provider requires it"
+                },
+                "destinationCurrencyCode": {
+                  "type": "string",
+                  "description": "Destination cryptocurrency code",
+                  "example": "USDC",
+                  "minLength": 1
+                },
+                "destinationWalletAddress": {
+                  "type": "string",
+                  "description": "Wallet address that will receive the purchased cryptocurrency",
+                  "example": "0x000000000000000000000000000000000000dEaD",
+                  "minLength": 1
+                },
+                "paymentMethodType": {
+                  "type": "string",
+                  "description": "Desired type of virtual account to create for sending the fiat currency to",
+                  "enum": ["ACH", "SEPA", "PIX", "MOBILE_MONEY"]
+                },
+                "serviceProvider": {
+                  "type": "string",
+                  "description": "Service provider used for creating the virtual deposit account",
+                  "example": "NOAH",
+                  "enum": ["NOAH", "DUENETWORK"]
+                },
+                "sourceCurrencyCode": {
+                  "type": "string",
+                  "description": "Source fiat currency code",
+                  "example": "USD",
+                  "minLength": 1
+                }
+              }
+            },
+            "example": {
+              "customerId": "<string>",
+              "destinationCurrencyCode": "USDC",
+              "destinationWalletAddress": "0x000000000000000000000000000000000000dEaD",
+              "paymentMethodType": "ACH",
+              "serviceProvider": "NOAH",
+              "sourceCurrencyCode": "USD"
+            }
+          }
+        },
+
+        {
           "id": "crypto-get-crypto-onramp-by-serviceprovider-requirements",
           "operationId": "/crypto-onramp-verification-requirements-get",
-          "name": "Get a provider's verification requirements",
+          "name": "Get verification requirements",
           "description": "Returns the provider's customer-verification requirements and legal agreements. Pass customerId to additionally get the customer's current (advisory) per-field verification status. Pass the order you intend to create — payment method, amount and corridor — to additionally get the provider's own outstanding KYC details: those are jurisdiction-, amount- and method-dependent, so they can only be reported against a concrete intent.",
           "method": "GET",
           "path": "/crypto/onramp/{serviceProvider}/requirements",
@@ -1857,14 +1806,7 @@
               "schema": {
                 "type": "string",
                 "description": "Enumeration of payment method types supported by the platform",
-                "enum": [
-                  "BANK_TRANSFER",
-                  "CARD",
-                  "CASH",
-                  "EXCHANGE",
-                  "LOCAL",
-                  "MOBILE_WALLET"
-                ]
+                "enum": ["BANK_TRANSFER", "CARD", "CASH", "EXCHANGE", "LOCAL", "MOBILE_WALLET"]
               },
               "example": "CARD"
             },
@@ -1960,14 +1902,7 @@
               "schema": {
                 "type": "string",
                 "description": "Enumeration of payment method types supported by the platform",
-                "enum": [
-                  "BANK_TRANSFER",
-                  "CARD",
-                  "CASH",
-                  "EXCHANGE",
-                  "LOCAL",
-                  "MOBILE_WALLET"
-                ]
+                "enum": ["BANK_TRANSFER", "CARD", "CASH", "EXCHANGE", "LOCAL", "MOBILE_WALLET"]
               },
               "example": "CARD"
             },
@@ -2001,10 +1936,7 @@
                   {
                     "type": "string",
                     "description": "Identifies whether a currency is fiat or crypto",
-                    "enum": [
-                      "FIAT",
-                      "CRYPTO"
-                    ]
+                    "enum": ["FIAT", "CRYPTO"]
                   },
                   {
                     "default": "CRYPTO"
@@ -2027,7 +1959,7 @@
         {
           "id": "network-partners-get-network-partner-supported-fiat-limits",
           "operationId": "list-supported-fiat-limits",
-          "name": "Search supported provider fiat limits",
+          "name": "Search provider fiat limits",
           "description": "Searches provider-supplied fiat amount limits across live providers. Returns only loaded provider fiat limit rows; default currency fallback limits are not included. When both `paymentMethod` and `paymentType` are provided, `paymentMethod` takes precedence. Provider scope rules:\n- No Basic Auth and no `Meld-Account-Id`: results come from the global dataset.\n- Basic Auth only: results are restricted to the authenticated identity's `providers` claim.\n- `Meld-Account-Id` only: results are restricted to providers configured for that account.\n- Both Basic Auth and `Meld-Account-Id`: results are restricted to the intersection of both provider sets.\n- Explicit partner filters are intersected with the resolved provider scope.\n\nExplicit `partners` filtering is intersected with the resolved provider scope.\nIf the effective provider scope contains no providers, this collection endpoint returns `200` with an empty result.",
           "method": "GET",
           "path": "/network-partner/supported/fiat-limits",
@@ -2115,14 +2047,7 @@
               "schema": {
                 "type": "string",
                 "description": "Enumeration of payment method types supported by the platform",
-                "enum": [
-                  "BANK_TRANSFER",
-                  "CARD",
-                  "CASH",
-                  "EXCHANGE",
-                  "LOCAL",
-                  "MOBILE_WALLET"
-                ]
+                "enum": ["BANK_TRANSFER", "CARD", "CASH", "EXCHANGE", "LOCAL", "MOBILE_WALLET"]
               },
               "example": "CARD"
             },
@@ -2150,7 +2075,7 @@
         {
           "id": "network-partners-get-network-partner-supported-kyc-limits",
           "operationId": "list-supported-kyc-limits",
-          "name": "Search supported provider KYC limits",
+          "name": "Search provider KYC limits",
           "description": "Searches admin-curated provider KYC limits across live providers. Provider scope rules:\n- No Basic Auth and no `Meld-Account-Id`: results come from the global dataset.\n- Basic Auth only: results are restricted to the authenticated identity's `providers` claim.\n- `Meld-Account-Id` only: results are restricted to providers configured for that account.\n- Both Basic Auth and `Meld-Account-Id`: results are restricted to the intersection of both provider sets.\n- Explicit partner filters are intersected with the resolved provider scope.\n\nExplicit `partners` filtering is intersected with the resolved provider scope.\nIf the effective provider scope contains no providers, this collection endpoint returns `200` with an empty result.",
           "method": "GET",
           "path": "/network-partner/supported/kyc-limits",
@@ -2218,13 +2143,7 @@
               "schema": {
                 "type": "string",
                 "description": "Limit windows applied to transaction limits",
-                "enum": [
-                  "TRANSACTION",
-                  "DAILY",
-                  "WEEKLY",
-                  "MONTHLY",
-                  "YEARLY"
-                ]
+                "enum": ["TRANSACTION", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
               },
               "example": "DAILY"
             },
@@ -2252,7 +2171,7 @@
         {
           "id": "network-partners-get-network-partner-supported-partners",
           "operationId": "list-supported-partners",
-          "name": "List live partners supporting a route",
+          "name": "List live partners route",
           "description": "Searches live partners by category, country, optional subdivision, fiat currency, crypto currency, and payment method or payment type. All filters are optional and can be combined freely; a request without filters returns every live partner. When category, country, fiat currency, and crypto currency are all provided (for swap and CRYPTO_TRANSFER categories: category, country, and crypto currency), partners are matched against actual provider routes; partial filter combinations match partners that support each provided value independently. When both `paymentMethod` and `paymentType` are provided, `paymentMethod` takes precedence. Provider scope rules:\n- No Basic Auth and no `Meld-Account-Id`: results come from the global dataset.\n- Basic Auth only: results are restricted to the authenticated identity's `providers` claim.\n- `Meld-Account-Id` only: results are restricted to providers configured for that account.\n- Both Basic Auth and `Meld-Account-Id`: results are restricted to the intersection of both provider sets.\n- Explicit partner filters are intersected with the resolved provider scope.\n\nExplicit `partner` filtering is intersected with the resolved provider scope.\nIf the effective provider scope contains no providers, this collection endpoint returns `200` with an empty result.",
           "method": "GET",
           "path": "/network-partner/supported/partners",
@@ -2350,14 +2269,7 @@
               "schema": {
                 "type": "string",
                 "description": "Enumeration of payment method types supported by the platform",
-                "enum": [
-                  "BANK_TRANSFER",
-                  "CARD",
-                  "CASH",
-                  "EXCHANGE",
-                  "LOCAL",
-                  "MOBILE_WALLET"
-                ]
+                "enum": ["BANK_TRANSFER", "CARD", "CASH", "EXCHANGE", "LOCAL", "MOBILE_WALLET"]
               },
               "example": "CARD"
             },
@@ -2385,7 +2297,7 @@
         {
           "id": "network-partners-get-network-partner-supported-payment-methods",
           "operationId": "list-supported-payment-methods",
-          "name": "Search supported payment methods",
+          "name": "Search payment methods",
           "description": "Searches payment methods supported across providers. Results are deduplicated across providers and returned as canonical payment-method entries with logo URLs for the requested filters. Provider scope rules:\n- No Basic Auth and no `Meld-Account-Id`: results come from the global dataset.\n- Basic Auth only: results are restricted to the authenticated identity's `providers` claim.\n- `Meld-Account-Id` only: results are restricted to providers configured for that account.\n- Both Basic Auth and `Meld-Account-Id`: results are restricted to the intersection of both provider sets.\n- Explicit partner filters are intersected with the resolved provider scope.\n\nExplicit `partners` filtering is intersected with the resolved provider scope.\nIf the effective provider scope contains no providers, this collection endpoint returns `200` with an empty result.",
           "method": "GET",
           "path": "/network-partner/supported/payment-methods",
@@ -2463,14 +2375,7 @@
               "schema": {
                 "type": "string",
                 "description": "Enumeration of payment method types supported by the platform",
-                "enum": [
-                  "BANK_TRANSFER",
-                  "CARD",
-                  "CASH",
-                  "EXCHANGE",
-                  "LOCAL",
-                  "MOBILE_WALLET"
-                ]
+                "enum": ["BANK_TRANSFER", "CARD", "CASH", "EXCHANGE", "LOCAL", "MOBILE_WALLET"]
               },
               "example": "CARD"
             },
@@ -2498,7 +2403,7 @@
         {
           "id": "network-partners-get-network-partner-supported-payment-methods-requirements",
           "operationId": "search-payment-method-field-requirements",
-          "name": "Search payment method field requirements",
+          "name": "Search payment method fields",
           "description": "Returns per-provider field requirements and provider API path mappings for a payment method. Nested field `key` values are the leaf JSON property (`city`), not the catalog PK (`beneficiaryAddress.city`); nest them under `parentKey`. When `serviceProvider` is omitted, returns the union of required fields across providers (one block per category + payment method + country + accountHolderType; `providerPath` is omitted). `allowedValues` is returned only when all providers contributing that field publish the same non-empty, case-sensitive set (order and exact duplicates do not matter). Missing or differing sets omit options; omission does not mean unrestricted. Validate against provider-scoped requirements. A field is `required` if any matching provider requires it. The response is the account-facing contract for the requested category. Offramp keys with `derived=false` are what the account sends in payout details; onramp keys are the receiving-bank fields on the deposit instruction. `derived=true` fields (`accountHolderType`, `firstName`, `lastName`, `fullName`) are still required by the provider; Meld fills them from the customer. Omit `accountHolderType` to return both the INDIVIDUAL and BUSINESS slices. All filters are optional and can be combined; providing no filters returns the union across all stored requirements. Provider scope rules:\n- No Basic Auth and no `Meld-Account-Id`: results come from the global dataset.\n- Basic Auth only: results are restricted to the authenticated identity's `providers` claim.\n- `Meld-Account-Id` only: results are restricted to providers configured for that account.\n- Both Basic Auth and `Meld-Account-Id`: results are restricted to the intersection of both provider sets.\n- Explicit partner filters are intersected with the resolved provider scope.\n\nExplicit `serviceProvider` filtering is intersected with the resolved provider scope.\nIf the effective provider scope contains no providers, this collection endpoint returns `200` with an empty result.",
           "method": "GET",
           "path": "/network-partner/supported/payment-methods/requirements",
@@ -2523,10 +2428,7 @@
               "schema": {
                 "type": "string",
                 "description": "Customer type for a payment method field requirement slice",
-                "enum": [
-                  "INDIVIDUAL",
-                  "BUSINESS"
-                ]
+                "enum": ["INDIVIDUAL", "BUSINESS"]
               }
             },
             {
@@ -2694,14 +2596,7 @@
               "schema": {
                 "type": "string",
                 "description": "Enumeration of payment method types supported by the platform",
-                "enum": [
-                  "BANK_TRANSFER",
-                  "CARD",
-                  "CASH",
-                  "EXCHANGE",
-                  "LOCAL",
-                  "MOBILE_WALLET"
-                ]
+                "enum": ["BANK_TRANSFER", "CARD", "CASH", "EXCHANGE", "LOCAL", "MOBILE_WALLET"]
               },
               "example": "CARD"
             },
@@ -2890,9 +2785,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "externalCustomerId"
-              ],
+              "required": ["externalCustomerId"],
               "properties": {
                 "accountPreferenceOverride": {
                   "description": "The account preference overrides for this connection",
@@ -2935,10 +2828,7 @@
                         "selectionStyle": {
                           "type": "string",
                           "description": "The style in which the bank picker displays the institutions",
-                          "enum": [
-                            "LIST",
-                            "TILE"
-                          ]
+                          "enum": ["LIST", "TILE"]
                         },
                         "showBorder": {
                           "type": "boolean",
@@ -3087,7 +2977,7 @@
         {
           "id": "bank-linking-delete-bank-linking-connections-by-connectionid",
           "operationId": "bank-linking-connections-delete",
-          "name": "Delete an institution connection",
+          "name": "Delete institution connection",
           "description": "Use this endpoint to delete a connection and all of its financial accounts. This will also delete the connection with the service provider used to make the connection, thus stopping any updates for the connection and its financial accounts. Listen for the associated [BANK_LINKING_CONNECTION_DELETED](https://docs.meld.io/docs/webhook-events-bank-linking#bank_linking_connection_deleted)\n\n webhook for acknowledgement that the connection was deleted.\n\n*Note:* Financial accounts may belong to multiple connections. This can occur if a customer connects to their institution multiple times in separate sessions, either through the same or a different service provider. If a connection is deleted but its financial accounts still belong to another active connection, then they won't be deleted yet. Not until all the connections that a financial account is associated with are deleted, will the financial account then be deleted.\n\n*Note:* In some cases, connections will be deleted before ever calling this endpoint. The aforementioned webhook will notify when this occurs, and calling this endpoint for the connection will no longer be necessary. This can occur if a customer stops granting access to the service provider directly through their institution.\n\n*Note:* Duplicate provider connections occur when the same customer connects to the same institution using the same login credentials through the *same* service provider. In such cases, only the most recently refreshed of these duplicates is actively maintained and the rest are considered inactive. When deleting duplicate connections, all of the inactive duplicates must be deleted prior to deleting the main duplicate. If an attempt is made to delete the active duplicate prior to the inactive duplicates being deleted, then the next most recently aggregated duplicate will become the active one. Only once all duplicates are deleted will this sever the connection with the service provider and cease billing. Duplicate connections made through *different* service providers do not have this restriction, however.",
           "method": "DELETE",
           "path": "/bank-linking/connections/{connectionId}",
@@ -3120,7 +3010,7 @@
         {
           "id": "bank-linking-get-bank-linking-connections",
           "operationId": "bank-linking-connections-search",
-          "name": "Search institution connections",
+          "name": "Search institution connection",
           "description": "Retrieve institution connections filtered by various parameters.",
           "method": "GET",
           "path": "/bank-linking/connections",
@@ -3297,9 +3187,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "products"
-              ],
+              "required": ["products"],
               "properties": {
                 "products": {
                   "type": "array",
@@ -3327,7 +3215,7 @@
         {
           "id": "bank-linking-post-bank-linking-connections-by-connectionid-refresh",
           "operationId": "bank-linking-connections-refresh",
-          "name": "Refresh accounts belonging to a connection",
+          "name": "Refresh accounts",
           "description": "Trigger a refresh of all financial accounts for a given institution connection with the latest information from the service provider. This is a premium service for most service providers and should be used sparingly for requesting up-to-date data as of the time of the call to this endpoint. Transaction and balance data is updated daily by service providers, and Meld's webhooks will notify of these updates so that product data does not become stale.\n\n*Note:* By default, historical transactions are loaded upon initial connection for all providers. This is a premium service for Finicity and MX, so if this is not desired please reach out to Meld support to disable this feature. After doing so, then historical transactions will only be loaded after the first time a refresh is requested for a Finicity/MX connection that has transactions as an available product.\n\n*Note:* Duplicate provider connections occur when the same customer connects to the same institution using the same login credentials through the *same* service provider. In such cases, only the most recently refreshed of these duplicates is actively maintained and the rest are considered inactive. Choosing to refresh an inactive duplicate will cause it to become the new active duplicate and it will assume the same connection status as the previous active duplicate. The previous active duplicate will now be considered inactive.",
           "method": "POST",
           "path": "/bank-linking/connections/{connectionId}/refresh",
@@ -3384,7 +3272,7 @@
         {
           "id": "bank-linking-post-bank-linking-connections-import",
           "operationId": "bank-linking-connections-import",
-          "name": "Import existing connections with a service provider",
+          "name": "Import existing connections",
           "description": "Importing is done asynchronously. Webhooks will be sent for each connection as they are imported, the same as if the connection was added via the connect widget.",
           "method": "POST",
           "path": "/bank-linking/connections/import",
@@ -3407,9 +3295,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "connections"
-              ],
+              "required": ["connections"],
               "properties": {
                 "connections": {
                   "type": "array",
@@ -3420,10 +3306,7 @@
                         "title": "ImportAkoyaDetails",
                         "allOf": [
                           {
-                            "required": [
-                              "providerId",
-                              "refreshToken"
-                            ],
+                            "required": ["providerId", "refreshToken"],
                             "allOf": [
                               {
                                 "type": "object",
@@ -3486,10 +3369,7 @@
                         "title": "ImportFinicityDetails",
                         "allOf": [
                           {
-                            "required": [
-                              "customerId",
-                              "institutionLoginId"
-                            ],
+                            "required": ["customerId", "institutionLoginId"],
                             "allOf": [
                               {
                                 "type": "object",
@@ -3552,9 +3432,7 @@
                         "title": "ImportMeshDetails",
                         "allOf": [
                           {
-                            "required": [
-                              "importType"
-                            ],
+                            "required": ["importType"],
                             "allOf": [
                               {
                                 "type": "object",
@@ -3585,9 +3463,7 @@
                                   "importType": {
                                     "type": "string",
                                     "description": "The type of import being performed.",
-                                    "enum": [
-                                      "MELD_AUTHENTICATED"
-                                    ]
+                                    "enum": ["MELD_AUTHENTICATED"]
                                   },
                                   "products": {
                                     "type": "array",
@@ -3624,9 +3500,7 @@
                         "title": "ImportPlaidDetails",
                         "allOf": [
                           {
-                            "required": [
-                              "accessToken"
-                            ],
+                            "required": ["accessToken"],
                             "allOf": [
                               {
                                 "type": "object",
@@ -3845,9 +3719,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "processor"
-              ],
+              "required": ["processor"],
               "properties": {
                 "processor": {
                   "type": "string",
@@ -3905,15 +3777,7 @@
                 "serviceProvider": {
                   "type": "string",
                   "description": "Service provider through which access to the account will be provided. If the account is only connected via one service provider, this field can be omitted and it will use that connected service provider.",
-                  "enum": [
-                    "AKOYA",
-                    "FINICITY",
-                    "MX",
-                    "PLAID",
-                    "SALTEDGE",
-                    "SALTEDGEPARTNERS",
-                    "YODLEE"
-                  ]
+                  "enum": ["AKOYA", "FINICITY", "MX", "PLAID", "SALTEDGE", "SALTEDGEPARTNERS", "YODLEE"]
                 }
               }
             },
@@ -3925,7 +3789,7 @@
         {
           "id": "bank-linking-get-bank-linking-transactions-by-transactionid",
           "operationId": "bank-linking-transactions-get",
-          "name": "Get a financial account transaction",
+          "name": "Get account transaction",
           "description": "Use this endpoint to retrieve transaction information of a specific financial account transaction.",
           "method": "GET",
           "path": "/bank-linking/transactions/{transactionId}",
@@ -3958,7 +3822,7 @@
         {
           "id": "bank-linking-get-bank-linking-transactions",
           "operationId": "bank-linking-transactions-search",
-          "name": "Search financial account transactions",
+          "name": "Search account transactions",
           "description": "Use this endpoint to filter financial account transactions by various parameters.",
           "method": "GET",
           "path": "/bank-linking/transactions",
@@ -4016,10 +3880,7 @@
               "schema": {
                 "type": "string",
                 "default": "",
-                "enum": [
-                  "PENDING",
-                  "POSTED"
-                ]
+                "enum": ["PENDING", "POSTED"]
               },
               "example": ""
             },
@@ -4105,7 +3966,7 @@
         {
           "id": "bank-linking-get-bank-linking-investments-holdings-by-investmentholdingid",
           "operationId": "bank-linking-investment-holdings-get",
-          "name": "Get a financial account investment holding",
+          "name": "Get a account investment holding",
           "description": "Use this endpoint to retrieve investment holding information of a specific financial account investment holding.",
           "method": "GET",
           "path": "/bank-linking/investments/holdings/{investmentHoldingId}",
@@ -4138,7 +3999,7 @@
         {
           "id": "bank-linking-get-bank-linking-investments-holdings",
           "operationId": "bank-linking-investment-holdings-search",
-          "name": "Search financial account investment holdings",
+          "name": "Search investment holdings",
           "description": "Use this endpoint to filter financial account investment holdings by various parameters.",
           "method": "GET",
           "path": "/bank-linking/investments/holdings",
@@ -4237,7 +4098,7 @@
         {
           "id": "bank-linking-get-bank-linking-investments-transactions-by-investmenttransactionid",
           "operationId": "bank-linking-investment-transactions-get",
-          "name": "Get a financial account investment transaction",
+          "name": "Get investment transaction",
           "description": "Use this endpoint to retrieve investment transaction information of a specific financial account investment transaction.",
           "method": "GET",
           "path": "/bank-linking/investments/transactions/{investmentTransactionId}",
@@ -4270,7 +4131,7 @@
         {
           "id": "bank-linking-get-bank-linking-investments-transactions",
           "operationId": "bank-linking-investment-transactions-search",
-          "name": "Search financial account investment transactions",
+          "name": "Search investment transactions",
           "description": "Use this endpoint to filter financial account investment transactions by various parameters.",
           "method": "GET",
           "path": "/bank-linking/investments/transactions",
@@ -4328,10 +4189,7 @@
               "schema": {
                 "type": "string",
                 "default": "",
-                "enum": [
-                  "PENDING",
-                  "POSTED"
-                ]
+                "enum": ["PENDING", "POSTED"]
               },
               "example": ""
             },
@@ -4593,11 +4451,7 @@
                               "type": {
                                 "type": "string",
                                 "description": "Address type such as BILLING, SHIPPING, RESIDENCE, etc.",
-                                "enum": [
-                                  "BILLING",
-                                  "SHIPPING",
-                                  "RESIDENCE"
-                                ]
+                                "enum": ["BILLING", "SHIPPING", "RESIDENCE"]
                               }
                             }
                           }
@@ -4654,11 +4508,7 @@
                             "type": {
                               "type": "string",
                               "description": "Address type such as BILLING, SHIPPING, RESIDENCE, etc.",
-                              "enum": [
-                                "BILLING",
-                                "SHIPPING",
-                                "RESIDENCE"
-                              ]
+                              "enum": ["BILLING", "SHIPPING", "RESIDENCE"]
                             }
                           }
                         },
@@ -4800,11 +4650,7 @@
                             "type": {
                               "type": "string",
                               "description": "Address type such as BILLING, SHIPPING, RESIDENCE, etc.",
-                              "enum": [
-                                "BILLING",
-                                "SHIPPING",
-                                "RESIDENCE"
-                              ]
+                              "enum": ["BILLING", "SHIPPING", "RESIDENCE"]
                             }
                           }
                         },
@@ -4901,11 +4747,7 @@
                             "type": {
                               "type": "string",
                               "description": "Address type such as BILLING, SHIPPING, RESIDENCE, etc.",
-                              "enum": [
-                                "BILLING",
-                                "SHIPPING",
-                                "RESIDENCE"
-                              ]
+                              "enum": ["BILLING", "SHIPPING", "RESIDENCE"]
                             }
                           }
                         },
@@ -4957,10 +4799,7 @@
                 "paymentMethod": {
                   "type": "object",
                   "description": "PaymentMethod objects represent your customer's payment instruments",
-                  "required": [
-                    "details",
-                    "type"
-                  ],
+                  "required": ["details", "type"],
                   "properties": {
                     "details": {
                       "description": "[Details of the payment method used for this transaction](https://docs.meld.io/docs/payment-methods-and-tokenization)",
@@ -4971,10 +4810,7 @@
                             {
                               "type": "object",
                               "description": "Credit card details",
-                              "required": [
-                                "cvc",
-                                "number"
-                              ],
+                              "required": ["cvc", "number"],
                               "properties": {
                                 "cvc": {
                                   "type": "string",
@@ -5011,11 +4847,7 @@
                             {
                               "type": "object",
                               "description": "ACH details",
-                              "required": [
-                                "accountNumber",
-                                "accountType",
-                                "routingNumber"
-                              ],
+                              "required": ["accountNumber", "accountType", "routingNumber"],
                               "properties": {
                                 "accountNumber": {
                                   "type": "string",
@@ -5025,11 +4857,7 @@
                                 "accountType": {
                                   "type": "string",
                                   "description": "Bank account type",
-                                  "enum": [
-                                    "BUSINESS_CHECKING",
-                                    "CHECKING",
-                                    "SAVINGS"
-                                  ]
+                                  "enum": ["BUSINESS_CHECKING", "CHECKING", "SAVINGS"]
                                 },
                                 "name": {
                                   "description": "Account name",
@@ -5055,9 +4883,7 @@
                             {
                               "type": "object",
                               "description": "Meld payment token details",
-                              "required": [
-                                "meldPaymentToken"
-                              ],
+                              "required": ["meldPaymentToken"],
                               "properties": {
                                 "meldPaymentToken": {
                                   "type": "string",
@@ -5073,12 +4899,7 @@
                     "type": {
                       "type": "string",
                       "description": "Payment method type used for this transaction, some methods may only apply for some providers, e.g. PLAID_TRANSFER_AUTHORIZATION for PLAID",
-                      "enum": [
-                        "ACH",
-                        "CARD",
-                        "MELD_PAYMENT_TOKEN",
-                        "PLAID_TRANSFER_AUTHORIZATION"
-                      ],
+                      "enum": ["ACH", "CARD", "MELD_PAYMENT_TOKEN", "PLAID_TRANSFER_AUTHORIZATION"],
                       "minLength": 1
                     }
                   }
@@ -5088,14 +4909,7 @@
                   "description": "The service provider(s) to attempt to create tokens with. If successful, the returned Meld payment token will be compatible with each of these providers.",
                   "items": {
                     "type": "string",
-                    "enum": [
-                      "AUTHORIZENET",
-                      "BRAINTREE",
-                      "CHECKOUT",
-                      "CIRCLE",
-                      "NMI",
-                      "STRIPE"
-                    ]
+                    "enum": ["AUTHORIZENET", "BRAINTREE", "CHECKOUT", "CIRCLE", "NMI", "STRIPE"]
                   }
                 }
               }
@@ -5177,10 +4991,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "sourceAmount",
-                "sourceCurrencyCode"
-              ],
+              "required": ["sourceAmount", "sourceCurrencyCode"],
               "properties": {
                 "3ds": {
                   "description": "3ds settings",
@@ -5223,11 +5034,7 @@
                               "type": {
                                 "type": "string",
                                 "description": "Address type such as BILLING, SHIPPING, RESIDENCE, etc.",
-                                "enum": [
-                                  "BILLING",
-                                  "SHIPPING",
-                                  "RESIDENCE"
-                                ]
+                                "enum": ["BILLING", "SHIPPING", "RESIDENCE"]
                               }
                             }
                           }
@@ -5284,11 +5091,7 @@
                             "type": {
                               "type": "string",
                               "description": "Address type such as BILLING, SHIPPING, RESIDENCE, etc.",
-                              "enum": [
-                                "BILLING",
-                                "SHIPPING",
-                                "RESIDENCE"
-                              ]
+                              "enum": ["BILLING", "SHIPPING", "RESIDENCE"]
                             }
                           }
                         },
@@ -5430,11 +5233,7 @@
                             "type": {
                               "type": "string",
                               "description": "Address type such as BILLING, SHIPPING, RESIDENCE, etc.",
-                              "enum": [
-                                "BILLING",
-                                "SHIPPING",
-                                "RESIDENCE"
-                              ]
+                              "enum": ["BILLING", "SHIPPING", "RESIDENCE"]
                             }
                           }
                         },
@@ -5531,11 +5330,7 @@
                             "type": {
                               "type": "string",
                               "description": "Address type such as BILLING, SHIPPING, RESIDENCE, etc.",
-                              "enum": [
-                                "BILLING",
-                                "SHIPPING",
-                                "RESIDENCE"
-                              ]
+                              "enum": ["BILLING", "SHIPPING", "RESIDENCE"]
                             }
                           }
                         },
@@ -5606,10 +5401,7 @@
                     {
                       "type": "object",
                       "description": "PaymentMethod objects represent your customer's payment instruments",
-                      "required": [
-                        "details",
-                        "type"
-                      ],
+                      "required": ["details", "type"],
                       "properties": {
                         "details": {
                           "description": "[Details of the payment method used for this transaction](https://docs.meld.io/docs/payment-methods-and-tokenization)",
@@ -5646,12 +5438,7 @@
                         "type": {
                           "type": "string",
                           "description": "Payment method type used for this transaction, some methods may only apply for some providers, e.g. PLAID_TRANSFER_AUTHORIZATION for PLAID",
-                          "enum": [
-                            "ACH",
-                            "CARD",
-                            "MELD_PAYMENT_TOKEN",
-                            "PLAID_TRANSFER_AUTHORIZATION"
-                          ],
+                          "enum": ["ACH", "CARD", "MELD_PAYMENT_TOKEN", "PLAID_TRANSFER_AUTHORIZATION"],
                           "minLength": 1
                         }
                       }
@@ -5661,14 +5448,7 @@
                 "serviceProvider": {
                   "type": "string",
                   "description": "The service provider used for this transaction. Required when using a nonce or passthrough credentials, as they are tied to a specific service provider. Do not pass this in if you would like to use [routing](https://docs.meld.io/docs/routing-overview#payments-routing) to select a service provider.",
-                  "enum": [
-                    "AUTHORIZENET",
-                    "BRAINTREE",
-                    "CHECKOUT",
-                    "CIRCLE",
-                    "NMI",
-                    "STRIPE"
-                  ]
+                  "enum": ["AUTHORIZENET", "BRAINTREE", "CHECKOUT", "CIRCLE", "NMI", "STRIPE"]
                 },
                 "serviceProviderDetails": {
                   "type": "object",
@@ -6112,9 +5892,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "sourceAmount"
-              ],
+              "required": ["sourceAmount"],
               "properties": {
                 "description": {
                   "type": "string",
@@ -6171,10 +5949,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "sourceAmount",
-                "sourceCurrencyCode"
-              ],
+              "required": ["sourceAmount", "sourceCurrencyCode"],
               "properties": {
                 "customerId": {
                   "type": "string",
@@ -6194,10 +5969,7 @@
                     {
                       "type": "object",
                       "description": "PaymentMethod objects represent your customer's payment instruments",
-                      "required": [
-                        "details",
-                        "type"
-                      ],
+                      "required": ["details", "type"],
                       "properties": {
                         "details": {
                           "description": "[Details of the payment method used for this transaction](https://docs.meld.io/docs/payment-methods-and-tokenization)",
@@ -6234,12 +6006,7 @@
                         "type": {
                           "type": "string",
                           "description": "Payment method type used for this transaction, some methods may only apply for some providers, e.g. PLAID_TRANSFER_AUTHORIZATION for PLAID",
-                          "enum": [
-                            "ACH",
-                            "CARD",
-                            "MELD_PAYMENT_TOKEN",
-                            "PLAID_TRANSFER_AUTHORIZATION"
-                          ],
+                          "enum": ["ACH", "CARD", "MELD_PAYMENT_TOKEN", "PLAID_TRANSFER_AUTHORIZATION"],
                           "minLength": 1
                         }
                       }
@@ -6348,7 +6115,7 @@
         {
           "id": "payments-post-payments-external-import",
           "operationId": "/payments-external-transactions-import",
-          "name": "Import an external payment transaction",
+          "name": "Import external transaction",
           "description": "This is the endpoint to import a transaction on any of the supported providers. Use this endpoint if you have performed transactions on one or more providers outside of Meld, and want to import those transactions into Meld's system. Note that when performing an [external refund](https://docs.meld.io/docs/crypto-supported-service-providers-assets), the initial transaction is automatically imported into Meld's system.",
           "method": "POST",
           "path": "/payments/external/import",
@@ -6420,22 +6187,12 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "serviceProvider",
-                "serviceTransactionId"
-              ],
+              "required": ["serviceProvider", "serviceTransactionId"],
               "properties": {
                 "serviceProvider": {
                   "type": "string",
                   "description": "The service provider from where the transaction will be imported",
-                  "enum": [
-                    "AUTHORIZENET",
-                    "BRAINTREE",
-                    "CHECKOUT",
-                    "CIRCLE",
-                    "NMI",
-                    "STRIPE"
-                  ]
+                  "enum": ["AUTHORIZENET", "BRAINTREE", "CHECKOUT", "CIRCLE", "NMI", "STRIPE"]
                 },
                 "serviceTransactionId": {
                   "type": "string",
@@ -6452,7 +6209,7 @@
         {
           "id": "payments-post-payments-external-refund",
           "operationId": "/payments-external-transactions-refund",
-          "name": "Refund an external payment transaction",
+          "name": "Refund a payment transaction",
           "description": "This is the endpoint to refund an external transaction on any of the supported providers. Use this endpoint if you have created a transaction with any of these providers outside of Meld's system, but want to perform the refund using Meld. Note that this will also cause the original transaction to be imported into Meld's system. Both partial and full refunds are supported.",
           "method": "POST",
           "path": "/payments/external/refund",
@@ -6524,23 +6281,12 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "serviceProvider",
-                "serviceTransactionId",
-                "sourceAmount"
-              ],
+              "required": ["serviceProvider", "serviceTransactionId", "sourceAmount"],
               "properties": {
                 "serviceProvider": {
                   "type": "string",
                   "description": "The service provider that processed the original transaction",
-                  "enum": [
-                    "AUTHORIZENET",
-                    "BRAINTREE",
-                    "CHECKOUT",
-                    "CIRCLE",
-                    "NMI",
-                    "STRIPE"
-                  ]
+                  "enum": ["AUTHORIZENET", "BRAINTREE", "CHECKOUT", "CIRCLE", "NMI", "STRIPE"]
                 },
                 "serviceTransactionId": {
                   "type": "string",
@@ -6595,21 +6341,12 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "achClass",
-                "amount",
-                "currencyCode"
-              ],
+              "required": ["achClass", "amount", "currencyCode"],
               "properties": {
                 "achClass": {
                   "type": "string",
                   "description": "The ACH class of the transaction (CCD, PPD, TEL, WEB)",
-                  "enum": [
-                    "CCD",
-                    "PPD",
-                    "TEL",
-                    "WEB"
-                  ]
+                  "enum": ["CCD", "PPD", "TEL", "WEB"]
                 },
                 "amount": {
                   "type": "number",
@@ -6646,10 +6383,7 @@
                     {
                       "type": "object",
                       "description": "The id and token for a Plaid account used in a transfer",
-                      "required": [
-                        "accessToken",
-                        "accountId"
-                      ],
+                      "required": ["accessToken", "accountId"],
                       "properties": {
                         "accessToken": {
                           "type": "string",
@@ -6772,7 +6506,7 @@
         {
           "id": "customer-post-accounts-customers",
           "operationId": "accounts-customers-create",
-          "name": "Create a new customer or retrieve a customer by its external id",
+          "name": "Create a new customer",
           "description": "Create a new customer or retrieve a customer by its external id",
           "method": "POST",
           "path": "/accounts/customers",
@@ -6835,10 +6569,7 @@
                 "type": {
                   "type": "string",
                   "description": "Customer type",
-                  "enum": [
-                    "INDIVIDUAL",
-                    "BUSINESS"
-                  ]
+                  "enum": ["INDIVIDUAL", "BUSINESS"]
                 }
               }
             }
@@ -6916,10 +6647,7 @@
               "schema": {
                 "type": "string",
                 "default": "",
-                "enum": [
-                  "ACTIVE",
-                  "INACTIVE"
-                ]
+                "enum": ["ACTIVE", "INACTIVE"]
               },
               "example": ""
             },
@@ -6931,10 +6659,7 @@
               "schema": {
                 "type": "string",
                 "default": "",
-                "enum": [
-                  "INDIVIDUAL",
-                  "BUSINESS"
-                ]
+                "enum": ["INDIVIDUAL", "BUSINESS"]
               },
               "example": ""
             },
@@ -7101,7 +6826,7 @@
         {
           "id": "customer-post-accounts-customers-by-customerid-addresses",
           "operationId": "accounts-customers-addresses-create",
-          "name": "Add an address to a customer",
+          "name": "Add customer address",
           "description": "Add an address to a customer",
           "method": "POST",
           "path": "/accounts/customers/{customerId}/addresses",
@@ -7135,21 +6860,12 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "address",
-                "type"
-              ],
+              "required": ["address", "type"],
               "properties": {
                 "address": {
                   "type": "object",
                   "description": "Address details",
-                  "required": [
-                    "city",
-                    "countryCode",
-                    "lineOne",
-                    "postalCode",
-                    "region"
-                  ],
+                  "required": ["city", "countryCode", "lineOne", "postalCode", "region"],
                   "properties": {
                     "city": {
                       "type": "string",
@@ -7185,11 +6901,7 @@
                 "type": {
                   "type": "string",
                   "description": "Address type",
-                  "enum": [
-                    "BILLING",
-                    "SHIPPING",
-                    "RESIDENCE"
-                  ]
+                  "enum": ["BILLING", "SHIPPING", "RESIDENCE"]
                 }
               }
             },
@@ -7243,10 +6955,7 @@
             "schema": {
               "type": "object",
               "description": "Request to initiate KYC for a customer with a given provider",
-              "required": [
-                "mode",
-                "serviceProvider"
-              ],
+              "required": ["mode", "serviceProvider"],
               "properties": {
                 "kycShareProviders": {
                   "type": "array",
@@ -7330,17 +7039,12 @@
                 "mode": {
                   "type": "string",
                   "description": "KYC initiation mode",
-                  "enum": [
-                    "HOSTED_URL",
-                    "TOKEN_IMPORT"
-                  ]
+                  "enum": ["HOSTED_URL", "TOKEN_IMPORT"]
                 },
                 "serviceProvider": {
                   "type": "string",
                   "description": "KYC provider to use (currently only SUMSUB is supported)",
-                  "enum": [
-                    "SUMSUB"
-                  ],
+                  "enum": ["SUMSUB"],
                   "minLength": 1
                 },
                 "serviceProviderDetails": {
@@ -7354,10 +7058,7 @@
                           "allOf": [
                             {
                               "description": "KYC details for TOKEN_IMPORT mode",
-                              "required": [
-                                "applicantId",
-                                "kycToken"
-                              ],
+                              "required": ["applicantId", "kycToken"],
                               "allOf": [
                                 {
                                   "type": "object",
@@ -7430,10 +7131,7 @@
             "schema": {
               "type": "object",
               "description": "Request to initiate KYC for a customer with a given provider",
-              "required": [
-                "mode",
-                "serviceProvider"
-              ],
+              "required": ["mode", "serviceProvider"],
               "properties": {
                 "kycShareProviders": {
                   "type": "array",
@@ -7517,17 +7215,12 @@
                 "mode": {
                   "type": "string",
                   "description": "KYC initiation mode",
-                  "enum": [
-                    "HOSTED_URL",
-                    "TOKEN_IMPORT"
-                  ]
+                  "enum": ["HOSTED_URL", "TOKEN_IMPORT"]
                 },
                 "serviceProvider": {
                   "type": "string",
                   "description": "KYC provider to use (currently only SUMSUB is supported)",
-                  "enum": [
-                    "SUMSUB"
-                  ],
+                  "enum": ["SUMSUB"],
                   "minLength": 1
                 },
                 "serviceProviderDetails": {
@@ -7541,10 +7234,7 @@
                           "allOf": [
                             {
                               "description": "KYC details for TOKEN_IMPORT mode",
-                              "required": [
-                                "applicantId",
-                                "kycToken"
-                              ],
+                              "required": ["applicantId", "kycToken"],
                               "allOf": [
                                 {
                                   "type": "object",
@@ -7584,7 +7274,7 @@
         {
           "id": "customer-post-accounts-customers-by-customerid-verifications",
           "operationId": "accounts-customers-verifications-create",
-          "name": "Send a verification code to a customer's email or phone",
+          "name": "Send a verification code",
           "description": "Sends a one-time code to the given target over the given channel and returns the verification to confirm it against. While a resend cooldown is active the pending verification is returned without sending a new code.",
           "method": "POST",
           "path": "/accounts/customers/{customerId}/verifications",
@@ -7625,17 +7315,12 @@
             "schema": {
               "type": "object",
               "description": "Request to send a verification code to a customer's email or phone",
-              "required": [
-                "channel"
-              ],
+              "required": ["channel"],
               "properties": {
                 "channel": {
                   "type": "string",
                   "description": "Contact channel to verify",
-                  "enum": [
-                    "EMAIL",
-                    "PHONE"
-                  ],
+                  "enum": ["EMAIL", "PHONE"],
                   "minLength": 1
                 },
                 "serviceProvider": {
@@ -7657,7 +7342,7 @@
         {
           "id": "customer-get-accounts-customers-by-customerid-verifications",
           "operationId": "accounts-customers-verifications-search",
-          "name": "List a customer's verification receipts",
+          "name": "List verification receipts",
           "description": "Audit listing of the customer's contact-verification attempts, newest first. Targets are masked.",
           "method": "GET",
           "path": "/accounts/customers/{customerId}/verifications",
@@ -7690,10 +7375,7 @@
               "description": "Contact channel",
               "schema": {
                 "type": "string",
-                "enum": [
-                  "EMAIL",
-                  "PHONE"
-                ]
+                "enum": ["EMAIL", "PHONE"]
               }
             },
             {
@@ -7703,13 +7385,7 @@
               "description": "Verification status",
               "schema": {
                 "type": "string",
-                "enum": [
-                  "PENDING",
-                  "VERIFIED",
-                  "EXPIRED",
-                  "FAILED",
-                  "INVALIDATED"
-                ]
+                "enum": ["PENDING", "VERIFIED", "EXPIRED", "FAILED", "INVALIDATED"]
               }
             }
           ]
@@ -7767,9 +7443,7 @@
             "schema": {
               "type": "object",
               "description": "Request to confirm a verification with the code the customer received",
-              "required": [
-                "code"
-              ],
+              "required": ["code"],
               "properties": {
                 "code": {
                   "type": "string",
@@ -8785,7 +8459,7 @@
         {
           "id": "webhooks-post-notifications-webhooks",
           "operationId": "webhooks-profiles-create",
-          "name": "Create a new webhook profile",
+          "name": "Create webhook profile",
           "description": "Create a new webhook profile",
           "method": "POST",
           "path": "/notifications/webhooks",
@@ -8808,10 +8482,7 @@
             "contentType": "application/json",
             "schema": {
               "type": "object",
-              "required": [
-                "name",
-                "url"
-              ],
+              "required": ["name", "url"],
               "properties": {
                 "eventTypes": {
                   "type": "array",
@@ -8916,7 +8587,7 @@
         {
           "id": "webhooks-get-notifications-webhooks-event-types",
           "operationId": "webhooks-events-get",
-          "name": "Get all webhook event types that can be sent",
+          "name": "Get webhook event types",
           "description": "Get all webhook event types that can be sent",
           "method": "GET",
           "path": "/notifications/webhooks/event-types",
@@ -8938,7 +8609,7 @@
         {
           "id": "webhooks-get-notifications-webhooks-by-webhookprofileid",
           "operationId": "webhooks-profiles-get",
-          "name": "Get an existing webhook profile",
+          "name": "Get webhook profile",
           "description": "Get an existing webhook profile",
           "method": "GET",
           "path": "/notifications/webhooks/{webhookProfileId}",
@@ -8969,7 +8640,7 @@
         {
           "id": "webhooks-patch-notifications-webhooks-by-webhookprofileid",
           "operationId": "webhooks-profiles-update",
-          "name": "Update an existing webhook profile",
+          "name": "Update webhook profile",
           "description": "Update an existing webhook profile",
           "method": "PATCH",
           "path": "/notifications/webhooks/{webhookProfileId}",
@@ -9041,10 +8712,7 @@
                 "status": {
                   "type": "string",
                   "description": "Status",
-                  "enum": [
-                    "ACTIVE",
-                    "DISABLED"
-                  ]
+                  "enum": ["ACTIVE", "DISABLED"]
                 },
                 "url": {
                   "type": "string",
@@ -9057,7 +8725,7 @@
         {
           "id": "webhooks-post-notifications-webhooks-by-webhookprofileid-test",
           "operationId": "webhooks-profiles-test",
-          "name": "Test an existing webhook profile",
+          "name": "Test webhook profile",
           "description": "Sends a WEBHOOK_TEST event to the URL in the profile",
           "method": "POST",
           "path": "/notifications/webhooks/{webhookProfileId}/test",
