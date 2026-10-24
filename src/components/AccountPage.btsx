@@ -1,27 +1,47 @@
 import { Link, useRouter } from "@octanejs/tanstack-router";
+import { useState } from "octane";
 import { endDemoAccountSession } from "@/lib/account-session";
-import {Icon} from "@/lib/icons";
+import { Icon } from "@/lib/icons";
+import Sidebar from "@/components/Sidebar.btsx";
+import { ThemeToggle } from "@/components/ThemeProvider.btsx";
 
 setup
   const router = useRouter();
+  const [isSidebarCompact, setIsSidebarCompact] = useState(false);
+  const toggleSidebar = () => setIsSidebarCompact((compact) => !compact);
+  const frameClassName = isSidebarCompact
+    ? "account-dashboard-frame account-dashboard-frame--sidebar-compact"
+    : "account-dashboard-frame";
   const handleSignOut = () => {
     endDemoAccountSession();
     void router.navigate({ to: "/account/sign-in" });
   };
 
 main.account-dashboard-page
-  div.account-dashboard-frame
-    aside.account-sidebar(aria-label="Account navigation")
-      div.account-brand
-        Icon(name='logo' className='size-4')
-        span cex
-        button.account-sidebar-collapse(type="button" aria-label="Collapse sidebar") ◫
-      div.account-workspace
-        span.account-workspace-icon ◈
-        div.account-workspace-copy
-          strong Northstar Wallet
-          span Sandbox workspace
-        span.account-workspace-chevron ⌄
+  div(className={frameClassName})
+    Sidebar(
+      ~ path="/account"
+      ~ isCompact={isSidebarCompact}
+      ~ toggleSidebar={toggleSidebar}
+      ~ className="account-sidebar"
+      ~ childrenClassName="account-sidebar-custom-navigation"
+      ~ ariaLabel="Account navigation"
+      ~ hideOnMobile={false}
+      ~ hideHeader={true}
+      ~ hideFooter={true}
+      ~ childrenAlwaysVisible={true}
+      ~ )
+      div.account-sidebar-header
+        Link.account-brand(to='/')
+          Icon(name='logo' className='size-4')
+          span cex
+          button.account-sidebar-collapse(type="button" aria-label={isSidebarCompact ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!isSidebarCompact} onClick={toggleSidebar}) ◫
+        div.account-workspace
+          span.account-workspace-icon ◈
+          div.account-workspace-copy
+            strong Northstar Wallet
+            span Sandbox workspace
+          span.account-workspace-chevron ⌄
       nav.account-sidebar-navigation
         p.account-nav-label Workspace
         Link.account-sidebar-link.account-sidebar-link--active(to="/account" aria-current="page")
@@ -51,6 +71,15 @@ main.account-dashboard-page
           span.account-flight-dot.account-flight-dot--yellow
           span Northstar Wallet
           small Day 47
+      nav.account-sidebar-compact-navigation(aria-label="Account navigation")
+        Link.account-sidebar-link.account-sidebar-link--active.account-sidebar-compact-link(to="/account" aria-current="page" aria-label="Overview" title="Overview")
+          span.account-sidebar-icon ▦
+        a.account-sidebar-link.account-sidebar-compact-link(href="#transactions" aria-label="Transactions" title="Transactions")
+          span.account-sidebar-icon ▤
+        a.account-sidebar-link.account-sidebar-compact-link(href="#payment-routes" aria-label="Payment routes" title="Payment routes")
+          span.account-sidebar-icon ⇄
+        a.account-sidebar-link.account-sidebar-compact-link(href="#developers" aria-label="Developers" title="Developers")
+          span.account-sidebar-icon ⌘
       div.account-sidebar-bottom
         div.account-sidebar-gate
           span.account-sidebar-gate-icon ⚑
@@ -63,11 +92,13 @@ main.account-dashboard-page
         button.account-sidebar-link(type="button" onClick={handleSignOut})
           span.account-sidebar-icon ↪
           span Sign out
+        div.account-sidebar-theme-toggle
+          ThemeToggle
 
     section.account-dashboard-content
       header.account-dashboard-header
         div.account-heading
-          p.account-breadcrumb CEX · Account · Overview
+          p.account-breadcrumb Active
           div.account-heading-title
             h1 Northstar Wallet
             span.account-day-badge Demo workspace

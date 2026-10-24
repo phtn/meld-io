@@ -4,6 +4,7 @@ module
   type MethodProps = {
     method: string
     selected?: boolean
+    showFullMethod?: boolean
   }
   const METHOD_STYLES = {
     GET: {
@@ -32,12 +33,12 @@ module
       unselected: "bg-[#FC9785] dark:bg-[#FB806A]/75",
     },
   } as const
-props { method, selected }: MethodProps
+props { method, selected, showFullMethod = false }: MethodProps
 setup
   const methodStyle = METHOD_STYLES[method as keyof typeof METHOD_STYLES];
   const methodColor = (methodStyle ?? METHOD_STYLES.DELETE)[selected ? "selected" : "unselected"];
   const letter = methodStyle?.letter ?? "P";
 span(
-  ~ className={cn("grid size-5 shrink-0 place-items-center rounded-[5px] font-mono text-[13px] font-bold leading-none text-[#111111] dark:text-white shadow-xs", methodColor)}
+  ~ className={cn("grid h-5 shrink-0 place-items-center rounded-[5px] font-mono text-[11px] font-bold leading-none text-[#111111] dark:text-white shadow-xs", showFullMethod ? "w-auto px-1.5 text-[13px]" : "w-5 text-[13px]", methodColor)}
   ~ )
-  | #{letter}
+  | #{showFullMethod ? method : letter}

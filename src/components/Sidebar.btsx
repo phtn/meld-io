@@ -12,6 +12,13 @@ module
     isCompact?: boolean
     toggleSidebar: VoidFunction
     children?: OctaneNode
+    className?: string
+    childrenClassName?: string
+    ariaLabel?: string
+    hideOnMobile?: boolean
+    hideHeader?: boolean
+    hideFooter?: boolean
+    childrenAlwaysVisible?: boolean
   }
 
   export interface SidebarItemProps {
@@ -25,10 +32,10 @@ module
     // onNavigate: (to: string) => (event: MouseEvent) => void
   }
 
-  const SIDEBAR_CLASS = "hidden md:flex flex-col w-full h-full min-h-0 bg-background dark:bg-surface/33 overflow-hidden"
+  const SIDEBAR_CLASS = "flex flex-col w-full h-full min-h-0 bg-background dark:bg-surface/33 overflow-hidden"
   const SIDEBAR_ITEM_CLASS = "relative z-10 flex w-full items-center gap-1.75 rounded-[10px] border-0 py-1.75 pl-1.75 text-left transition-colors focus-visible:ring-2 focus-visible:ring-focus"
   // const SIDEBAR_ITEM_SELECTED_CLASS = "bg-[linear-gradient(in_oklab_180deg,oklab(95.2%_0_0)_0%,oklab(91.3%_0_0)_100%)] shadow-[inset_0_1px_0_#FFFFFF54,0_2.5px_3.5px_-1px_#00000026,0_0_0_1px_#D4D4D4] bg-origin-border dark:bg-[linear-gradient(in_oklab_180deg,oklab(32%_0_0)_0%,oklab(25%_0_0)_100%)] dark:shadow-[inset_0_1px_0_#F0F0F010,0_3px_3px_-0.5px_#00000026,0_0_0_1px_#04040460] border-border/0"
-  const SIDEBAR_ITEM_SELECTED_CLASS_DARK = "_bg-[linear-gradient(in_oklab_180deg,oklab(95.2%_0_0)_0%,oklab(91.3%_0_0)_100%)] _shadow-[inset_0_1px_0_#FFFFFF54,0_2.5px_3.5px_-1px_#00000026,0_0_0_1px_#D4D4D4] bg-origin-border bg-[linear-gradient(in_oklab_180deg,oklab(32%_0_0)_0%,oklab(25%_0_0)_100%)] border-border/0"
+  const SIDEBAR_ITEM_SELECTED_CLASS_DARK = "border-border/0"
   const SIDEBAR_ITEM_DEFAULT_CLASS = "border-transparent bg-transparent"
   const SIDEBAR_ICON_CONTAINER_CLASS = "flex size-7.5 shrink-0 items-center justify-center rounded-[8px] bg-transparent"
   const SIDEBAR_ICON_SELECTED_CONTAINER_CLASS = "flex size-7.5 shrink-0 items-center justify-center rounded-[8px]"
@@ -46,7 +53,7 @@ component SidebarItem
   setup
     const isExternal = href.startsWith("http")
     const isSelected = path === href || (href !== '/' && path?.startsWith(href + '/'))
-    const itemClassName = cn(SIDEBAR_ITEM_CLASS, isSelected ? cn(SIDEBAR_ITEM_SELECTED_CLASS_DARK, "hover:brightness-110") : cn(SIDEBAR_ITEM_DEFAULT_CLASS, "hover:bg-foreground/10"), isCompact && SIDEBAR_ITEM_COMPACT_CLASS)
+    const itemClassName = cn(SIDEBAR_ITEM_CLASS, isSelected ? cn(SIDEBAR_ITEM_SELECTED_CLASS_DARK, "") : cn(SIDEBAR_ITEM_DEFAULT_CLASS, "hover:bg-foreground/10"), isCompact && SIDEBAR_ITEM_COMPACT_CLASS)
     const labelClassName = cn(SIDEBAR_LABEL_CLASS, isSelected && SIDEBAR_SELECTED_TEXT_CLASS_DARK)
     const iconClassName = cn(SIDEBAR_ICON_CLASS, isSelected && SIDEBAR_SELECTED_TEXT_CLASS_DARK)
     const iconContainerClassName = isSelected ? cn(SIDEBAR_ICON_SELECTED_CONTAINER_CLASS, isCompact && "bg-transparent dark:bg-transparent shadow-none") : SIDEBAR_ICON_CONTAINER_CLASS
@@ -133,7 +140,7 @@ component SidebarNavContent
             SidebarItem({...item} path={path} isCompact={isCompact} onHover={handleHover})
     div(
       ~ aria-hidden='true'
-      ~ className='pointer-events-none absolute top-0 left-0 z-0 m-0! rounded-[10px] transition-[transform,width,height,opacity] duration-180 ease-out motion-reduce:transition-none shadow-none'
+      ~ className='pointer-events-none absolute top-0 left-0 z-1 m-0! rounded-[10px] bg-transparent transition-[transform,width,height,opacity] duration-180 ease-out motion-reduce:transition-none shadow-none'
       ~ style={{ width: 'var(--hovered-nav-width, 0px)', height: 'var(--hovered-nav-height, 0px)', opacity: 'var(--hovered-nav-opacity, 0)', transform: 'translate3d(var(--hovered-nav-left, 0px), var(--hovered-nav-top, 0px), 0)' }}
       ~ )
 
@@ -149,8 +156,10 @@ component SidebarNav
   props { path, className, isCompact = false }: { path: string; className?: string; isCompact?: boolean }
   SidebarNavTooltips(path={path} className={cn('mt-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden', className)} isCompact={isCompact})
 
-props { path, isCompact = false, toggleSidebar, children }: SidebarProps
+props { path, isCompact = false, toggleSidebar, children, className, childrenClassName, ariaLabel, hideOnMobile = true, hideHeader = false, hideFooter = false, childrenAlwaysVisible = false }: SidebarProps
 setup
+  const activeChildren = childrenAlwaysVisible || !isCompact ? children : undefined
+  const sidebarClassName = cn(SIDEBAR_CLASS, className, hideOnMobile && "hidden md:flex")
   const childNavRef = useRef<HTMLDivElement | null>(null)
   const hoveredChildItemRef = useRef<HTMLElement | null>(null)
 
@@ -195,23 +204,24 @@ setup
     return () => resizeObserver.disconnect()
   }, [children, isCompact])
 
-aside(className={SIDEBAR_CLASS} data-compact={isCompact || undefined})
-
-  div(className="flex items-center justify-center size-16")
-    button(className={cn('h-[16px] w-[19px] rounded-[4px] bg-muted-foreground flex items-center px-0.75 py-0.75 relative transition-all duration-180 active:scale-97 active:bg-foreground group active:skew-2', {'active:-skew-3': isCompact})} onClick={toggleSidebar})
-      div(className={cn('h-[10px] w-[6.25px] rounded-[2.5px] bg-background absolute transition-all duration-240 ease-out group-active:scale-102 active:shadow-1px', {'translate-x-[6.5px] group-active:scale-85': !isCompact})})
-  if children && !isCompact
-    div(ref={childNavRef} className="relative isolate mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden" onMouseOver={handleChildMouseOver} onMouseLeave={clearChildHover})
-      | #{children}
+aside(className={sidebarClassName} data-compact={isCompact || undefined} aria-label={ariaLabel})
+  if !hideHeader
+    div(className="flex items-center justify-center size-16")
+      button(type="button" aria-label={isCompact ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!isCompact} className={cn('h-[16px] w-[19px] rounded-[4px] bg-muted-foreground flex items-center px-0.75 py-0.75 relative transition-all duration-180 active:scale-97 active:bg-foreground group active:skew-2', {'active:-skew-3': isCompact})} onClick={toggleSidebar})
+        div(className={cn('h-[10px] w-[6.25px] rounded-[2.5px] bg-background absolute transition-all duration-240 ease-out group-active:scale-102 active:shadow-1px', {'translate-x-[6.5px] group-active:scale-85': !isCompact})})
+  if activeChildren
+    div(ref={childNavRef} className={cn("relative isolate mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden", childrenClassName)} onMouseOver={handleChildMouseOver} onMouseLeave={clearChildHover})
+      | #{activeChildren}
       div(
         ~ aria-hidden='true'
-        ~ className='pointer-events-none absolute top-0 left-0 z-0 m-0! rounded-[10px] bg-muted transition-[transform,width,height,opacity] duration-200 ease-out motion-reduce:transition-none shadow-none'
+        ~ className='pointer-events-none absolute top-0 left-0 z-0 m-0! rounded-[10px] bg-sunken transition-[transform,width,height,opacity] duration-200 ease-out motion-reduce:transition-none shadow-none'
         ~ style={{ width: 'var(--hovered-nav-width, 0px)', height: 'var(--hovered-nav-height, 0px)', opacity: 'var(--hovered-nav-opacity, 0)', transform: 'translate3d(var(--hovered-nav-left, 0px), var(--hovered-nav-top, 0px), 0)' }}
         ~ )
   else
     SidebarNavTooltips(path={path} isCompact={isCompact} className="mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden")
-  div(className="h-12 shrink-0")
-    div(className="flex items-center h-12 gap-2 px-2-xs")
-      div(className="flex-1 min-w-0")
-        div(className={cn("text-xs font-medium text-foreground leading-none px-4 text-left", {'text-center': isCompact})})
-          ThemeToggle
+  if !hideFooter
+    div(className="h-12 shrink-0")
+      div(className="flex items-center h-12 gap-2 px-2-xs")
+        div(className="flex-1 min-w-0")
+          div(className={cn("text-xs font-medium text-foreground leading-none px-4 text-left", {'text-center': isCompact})})
+            ThemeToggle

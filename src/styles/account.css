@@ -28,14 +28,115 @@
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
 }
 
+.account-dashboard-frame--sidebar-compact {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
 .account-sidebar {
   display: flex;
+  position: sticky;
+  top: 11px;
+  height: calc(100svh - 22px);
+  align-self: start;
   min-width: 0;
   flex-direction: column;
   padding: 10px 3px 9px;
   /*border: 1px solid #202023;*/
   border-radius: 8px;
   background: #101012;
+}
+
+.account-sidebar-custom-navigation {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.account-sidebar-header {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+
+.account-sidebar-compact-navigation {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  gap: 3px;
+  padding: 0 7px;
+}
+
+.account-sidebar-compact-link {
+  justify-content: center;
+  min-height: 42px;
+  gap: 0;
+  padding: 0;
+}
+
+.account-sidebar-compact-link .account-sidebar-icon {
+  margin: 0;
+}
+
+.account-sidebar[data-compact] .account-brand {
+  min-height: 96px;
+  height: auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.account-sidebar[data-compact] .account-workspace {
+  display: none;
+}
+
+.account-sidebar[data-compact] .account-brand > span {
+  display: block;
+  font-size: 11px;
+}
+
+.account-sidebar[data-compact] .account-sidebar-collapse {
+  margin-left: 0;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
+
+.account-sidebar[data-compact] .account-sidebar-navigation {
+  display: none;
+}
+
+.account-sidebar[data-compact] .account-sidebar-compact-navigation {
+  display: flex;
+}
+
+.account-sidebar[data-compact] .account-sidebar-bottom {
+  align-items: center;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.account-sidebar[data-compact] .account-sidebar-gate {
+  display: none;
+}
+
+.account-sidebar[data-compact] .account-sidebar-bottom .account-sidebar-link {
+  justify-content: center;
+  gap: 0;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.account-sidebar[data-compact] .account-sidebar-bottom .account-sidebar-link > span:not(.account-sidebar-icon) {
+  display: none;
+}
+
+.account-sidebar[data-compact] .account-sidebar-theme-toggle {
+  justify-content: center;
+  padding-right: 0;
+  padding-left: 0;
 }
 
 .account-brand {
@@ -48,6 +149,10 @@
   font-size: 20px;
   font-weight: 500;
   letter-spacing: -0.055em;
+}
+
+.account-sidebar .account-brand > span {
+  display: inline-flex;
 }
 
 .account-brand-mark {
@@ -130,8 +235,10 @@
 .account-sidebar-navigation {
   display: flex;
   flex: 1;
+  min-height: 0;
   flex-direction: column;
   gap: 3px;
+  overflow-y: auto;
   padding: 0 7px;
 }
 
@@ -255,6 +362,13 @@
   padding: 9px 7px 0;
 }
 
+.account-sidebar-theme-toggle {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  padding: 0 6px;
+}
+
 .account-sidebar-gate {
   display: flex;
   min-height: 78px;
@@ -316,10 +430,11 @@
 }
 
 .account-breadcrumb {
-  margin: 0 0 5px;
+  margin: 0 0 2px;
   color: #82828a;
   font-size: 9px;
   letter-spacing: 0.015em;
+  text-transform: uppercase;
 }
 
 .account-heading-title {
@@ -1209,7 +1324,7 @@
 
 .signin-card h1 {
   margin: 0;
-  color: #90283b;
+  color: #fafafa;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 47px;
   font-weight: 400;
@@ -1219,7 +1334,7 @@
 
 .signin-description {
   margin: 15px 0 24px;
-  color: #655f55;
+  color: #d0d0d0;
   font-size: 12px;
   line-height: 1.7;
 }
@@ -1237,17 +1352,14 @@
   color: #282621;
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   text-align: left;
-  transition:
-    transform 150ms ease,
-    box-shadow 150ms ease;
+  transition: transform 150ms ease;
 }
 
 .signin-google-button:hover {
   box-shadow: 0 5px 15px rgba(65, 57, 42, 0.1);
-  transform: translateY(-1px);
 }
 
 .signin-google-button:focus-visible {
@@ -1262,9 +1374,9 @@
   place-items: center;
   border-radius: 50%;
   background: #fff;
-  color: #4285f4;
+  color: #14141b;
   font-family: Arial, sans-serif;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -1276,8 +1388,8 @@
 
 .signin-demo-note {
   margin: 12px 0 0;
-  color: #8a8375;
-  font-size: 9px;
+  color: #a0a0a0;
+  font-size: 11px;
   line-height: 1.5;
   text-align: center;
 }
@@ -1289,25 +1401,25 @@
   margin: 26px 0 18px;
   color: #a09a8d;
   font-size: 9px;
-  text-transform: uppercase;
+  /*text-transform: uppercase;*/
 }
 
 .signin-card-divider span {
-  height: 1px;
+  height: 0.5px;
   flex: 1;
-  background: #e0d9c9;
+  background: #a09a8d;
 }
 
 .signin-api-link {
   display: block;
-  color: #686153;
+  color: #a0a0a0;
   font-size: 11px;
   font-weight: 550;
   text-align: center;
 }
 
 .signin-api-link:hover {
-  color: #27241f;
+  color: #fafafa;
 }
 
 .signin-orbit {
@@ -1360,6 +1472,10 @@
     padding: 9px;
   }
 
+  .account-dashboard-frame--sidebar-compact {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
   .account-dashboard-grid {
     grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.8fr);
     gap: 10px;
@@ -1401,11 +1517,24 @@
   }
 
   .account-sidebar {
+    position: static;
+    top: auto;
+    height: auto;
     min-height: 58px;
     flex-direction: row;
     align-items: center;
     padding: 4px 8px;
     border-radius: 15px;
+  }
+
+  .account-sidebar-custom-navigation {
+    flex-direction: row;
+    align-items: center;
+    overflow: visible;
+  }
+
+  .account-sidebar-header {
+    display: contents;
   }
 
   .account-brand {
@@ -1416,6 +1545,7 @@
   .account-sidebar-collapse,
   .account-workspace,
   .account-sidebar-navigation,
+  .account-sidebar-compact-navigation,
   .account-sidebar-gate,
   .account-sidebar-bottom > a {
     display: none;
@@ -1622,4 +1752,238 @@
     height: 38px;
     font-size: 15px;
   }
+}
+
+html.light .account-dashboard-page {
+  --account-bg: #f5f6f8;
+  --account-panel: #ffffff;
+  --account-panel-raised: #f8f9fb;
+  --account-border: #e1e4e9;
+  --account-text: #202329;
+  --account-muted: #646a74;
+  --account-blue: #4777e8;
+  --account-green: #278151;
+  background: #e9ebef;
+  color: var(--account-text);
+}
+
+html.light .account-dashboard-frame {
+  border-color: #d8dce2;
+  background: var(--account-bg);
+  box-shadow: 0 16px 48px rgba(24, 31, 43, 0.1);
+}
+
+html.light .account-sidebar {
+  background: #fbfcfd;
+}
+
+html.light .account-sidebar-collapse,
+html.light .account-workspace,
+html.light .account-sidebar-gate,
+html.light .account-search,
+html.light .account-user-menu,
+html.light .account-notifications,
+html.light .account-dashboard-tabs,
+html.light .account-chart-switcher,
+html.light .account-provider-row {
+  border-color: #e1e4e9;
+  background-color: #ffffff;
+}
+
+html.light .account-sidebar-collapse,
+html.light .account-user-menu,
+html.light .account-notifications {
+  color: #5b626e;
+}
+
+html.light .account-brand,
+html.light .account-workspace-copy strong,
+html.light .account-heading-title h1,
+html.light .account-user-menu,
+html.light .account-user-copy strong,
+html.light .account-panel-header h2,
+html.light .account-volume-summary > strong,
+html.light .account-transaction-id strong,
+html.light .account-transaction-amount,
+html.light .account-provider-row strong,
+html.light .account-api-metric strong,
+html.light .account-sidebar-gate strong {
+  color: #202329;
+}
+
+html.light .account-workspace-icon,
+html.light .account-sidebar-icon,
+html.light .account-provider-icon {
+  background: #eef1f5;
+  color: #59616d;
+}
+
+html.light .account-workspace-copy span,
+html.light .account-workspace-chevron,
+html.light .account-nav-label,
+html.light .account-flight-item,
+html.light .account-flight-item small,
+html.light .account-sidebar-gate span:last-child,
+html.light .account-breadcrumb,
+html.light .account-user-copy small,
+html.light .account-user-chevron,
+html.light .account-tab,
+html.light .account-environment-badge,
+html.light .account-panel-header p,
+html.light .account-chart-switcher span,
+html.light .account-volume-summary > span,
+html.light .account-chart-background span,
+html.light .account-chart-dates,
+html.light .account-chart-footer,
+html.light .account-table-head,
+html.light .account-transaction-id small,
+html.light .account-transaction-time,
+html.light .account-transaction-direction,
+html.light .account-transaction-direction span,
+html.light .account-health-copy,
+html.light .account-provider-row small,
+html.light .account-api-bar-value,
+html.light .account-api-bar-item small,
+html.light .account-api-footnote,
+html.light .account-setup-step small {
+  color: #69717d;
+}
+
+html.light .account-sidebar-link {
+  color: #626a76;
+}
+
+html.light .account-sidebar-link:hover {
+  background: #edf0f4;
+  color: #202329;
+}
+
+html.light .account-sidebar-link--active,
+html.light .account-sidebar-link--active:hover,
+html.light .account-tab--active,
+html.light .account-tab--active:hover,
+html.light .account-open-api {
+  background: #e8edf7;
+  color: #24344f;
+}
+
+html.light .account-sidebar-link--active .account-sidebar-icon {
+  color: #24344f;
+}
+
+html.light .account-sidebar-count,
+html.light .account-sidebar-tag {
+  background: #edf0f4;
+  color: #555e6a;
+}
+
+html.light .account-sidebar-tag,
+html.light .account-volume-summary .account-volume-change,
+html.light .account-transaction-icon,
+html.light .account-status,
+html.light .account-health-status,
+html.light .account-provider-state,
+html.light .account-setup-step--complete > span {
+  background-color: #e6f5ec;
+  color: #26764a;
+}
+
+html.light .account-panel {
+  border-color: var(--account-border);
+  background: var(--account-panel);
+}
+
+html.light .account-chart-switcher,
+html.light .account-provider-row {
+  background: var(--account-panel-raised);
+}
+
+html.light .account-chart-switcher .account-chart-switcher-active,
+html.light .account-open-api {
+  background: #edf1f7;
+  color: #26334a;
+}
+
+html.light .account-environment-badge,
+html.light .account-volume-summary .account-demo-pill,
+html.light .account-panel-open,
+html.light .account-setup-step > span {
+  border-color: #dfe3e9;
+}
+
+html.light .account-chart-baseline {
+  stroke: #b9c0ca;
+}
+
+html.light .account-chart-line,
+html.light .account-chart-point,
+html.light .account-legend-swatch,
+html.light .account-inline-link,
+html.light .account-sparkle,
+html.light .account-api-bar-item i.account-api-bar--today,
+html.light .account-setup-progress {
+  color: #4777e8;
+  stroke: #4777e8;
+}
+
+html.light .account-chart-point {
+  fill: #ffffff;
+}
+
+html.light .account-chart-point--current,
+html.light .account-legend-swatch,
+html.light .account-setup-progress-track span {
+  background: #4777e8;
+  fill: #4777e8;
+}
+
+html.light .account-chart-footer,
+html.light .account-table-head,
+html.light .account-transaction-row,
+html.light .account-api-bars {
+  border-color: #e3e6eb;
+}
+
+html.light .account-transaction-row {
+  color: #39414d;
+}
+
+html.light .account-transaction-icon--blue {
+  background: #e9efff;
+  color: #3d68c8;
+}
+
+html.light .account-transaction-icon--purple {
+  background: #f1eafa;
+  color: #7951aa;
+}
+
+html.light .account-status--pending {
+  background: #fff3d9;
+  color: #88651c;
+}
+
+html.light .account-provider-icon--bank {
+  color: #4777e8;
+}
+
+html.light .account-provider-icon--crypto {
+  color: #7951aa;
+}
+
+html.light .account-api-bar-item i {
+  border-color: #dce1e9;
+  background: repeating-linear-gradient(135deg, #edf0f4 0, #edf0f4 3px, #e4e8ee 3px, #e4e8ee 5px);
+}
+
+html.light .account-setup-progress-track {
+  background: #e4e7ec;
+}
+
+html.light .account-setup-step > span {
+  color: #717985;
+}
+
+html.light .account-setup-step--complete > span {
+  border-color: #c8e6d2;
 }

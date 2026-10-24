@@ -5,17 +5,21 @@ import { type ReactNode, useId, useState } from "octane";
 import { AnimatePresence, motion, useReducedMotion } from "@octanejs/motion"
 import { createEmptyWalletAddressSettings, REQUEST_VALUE_PRESETS, WALLET_ADDRESS_ASSETS } from "@/lib/meld/request-presets"
 import type { WalletAddressSettings } from "@/lib/meld/request-presets"
+import type { MeldMethod } from "@/lib/meld/endpoints"
 import {Icon} from "@/lib/icons";
+import Method from "./Method.btsx";
 
 
 module
   const MotionLi = motion.li
+  const MotionSpan = motion.span
   interface TopbarProps {
       toggleSidebar?: VoidFunction
       toggleExtra?: VoidFunction
       isCompact?: boolean
       isMobile?: boolean
       endpointPath?: string
+      method?: MeldMethod
       defaultSetIndex?: number
       onDefaultSetChange?: (index: number) => void
       walletAddresses?: WalletAddressSettings
@@ -48,7 +52,7 @@ component Brand
     div #{children}
 
 
-props { toggleExtra, isCompact = false, endpointPath, defaultSetIndex = 0, onDefaultSetChange, walletAddresses = createEmptyWalletAddressSettings(), onWalletAddressesChange, children }: TopbarProps
+props { toggleExtra, isCompact = false, endpointPath, method = "GET", defaultSetIndex = 0, onDefaultSetChange, walletAddresses = createEmptyWalletAddressSettings(), onWalletAddressesChange, children }: TopbarProps
 setup
   const reducedMotion = useReducedMotion() === true
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -56,7 +60,15 @@ setup
   const walletAddressesId = useId()
 header(className="sticky top-0 z-40 backdrop-blur-3xl w-full border-b border-sidebar-border dark:border-surface/33")
   div(className="topbar w-full px-6 flex items-center justify-between gap-4")
-    nav(aria-label="Endpoint path" className="min-w-0 flex-1 overflow-x-auto")
+    nav(aria-label="Endpoint path" className="min-w-0 flex flex-1 items-center space-x-2 overflow-x-auto")
+      AnimatePresence(mode="sync" initial={false})
+        each currentMethod in [method] key currentMethod
+          MotionSpan(
+            ~ initial={{ opacity: 0, scale: 0.85 }}
+            ~ animate={{ opacity: 1, scale: 1, transition: { duration: reducedMotion ? 0 : 0.18 } }}
+            ~ exit={{ opacity: 0, scale: 0.85, transition: { duration: reducedMotion ? 0 : 0.18 } }}
+            ~ )
+            Method(method={currentMethod} showFullMethod)
       ol(className="flex w-max min-w-0 items-center gap-1 py-1 text-sm")
         AnimatePresence(mode="sync")
           each path in endpointPath ? [endpointPath] : [] key path
@@ -68,7 +80,7 @@ header(className="sticky top-0 z-40 backdrop-blur-3xl w-full border-b border-sid
               ~ )
               span(className="smooth-reveal breadcrumb-reveal")
                 span
-                  code(aria-current="page" title={path} className="inline-block max-w-[min(55vw,42rem)] truncate align-bottom font-mono text-xs font-medium text-foreground sm:text-sm") #{path}
+                  code(aria-current="page" title={path} className="inline-block max-w-[min(55vw,42rem)] truncate align-bottom font-mono text-xs font-medium text-foreground/80 sm:text-sm") #{path}
     if toggleExtra || onDefaultSetChange || onWalletAddressesChange || children
       div(className="relative flex shrink-0 items-center gap-2")
         if toggleExtra

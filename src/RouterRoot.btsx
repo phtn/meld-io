@@ -1,7 +1,7 @@
 module "use client";
 import { createRootRoute, createRoute, createRouter, Outlet, redirect, RouterProvider } from "@octanejs/tanstack-router";
 import App from "./App.btsx";
-import AccountPage from "./components/AccountPage.btsx";
+import AccountPage from "./components/AccountPageTheme.btsx";
 import LandingPage from "./components/LandingPage.btsx";
 import SignInPage from "./components/SignInPage.btsx";
 import { hasDemoAccountSession } from "./lib/account-session";
