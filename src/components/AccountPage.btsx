@@ -13,8 +13,8 @@ main.account-dashboard-page
   div.account-dashboard-frame
     aside.account-sidebar(aria-label="Account navigation")
       div.account-brand
-        Icon(name='logo')
-        span exch
+        Icon(name='logo' className='size-4')
+        span cex
         button.account-sidebar-collapse(type="button" aria-label="Collapse sidebar") ◫
       div.account-workspace
         span.account-workspace-icon ◈
@@ -67,23 +67,23 @@ main.account-dashboard-page
     section.account-dashboard-content
       header.account-dashboard-header
         div.account-heading
-          p.account-breadcrumb Exch · Account · Overview
+          p.account-breadcrumb CEX · Account · Overview
           div.account-heading-title
             h1 Northstar Wallet
             span.account-day-badge Demo workspace
         div.account-header-actions
-          div.account-search
+          div.account-search(className='hidden!')
             span.account-search-icon ⌕
             span Search
             span.account-search-shortcut ⌘ K
           button.account-user-menu(type="button" aria-label="Current demo user")
-            span.account-user-avatar JD
+            span.account-user-avatar XP
             span.account-user-copy
-              strong Jordan Davis
-              small jordan.davis@example.com
-            span.account-user-chevron ⌄
+              strong Reverse
+              small xpriori@cex.com
+            Icon.account-user-chevron(name='chevron-down' className='size-2')
           button.account-notifications(type="button" aria-label="Notifications")
-            span ♧
+            Icon(name='bell' className='size-4')
             i
       nav.account-dashboard-tabs(aria-label="Account sections")
         a.account-tab.account-tab--active(href="#overview") Overview

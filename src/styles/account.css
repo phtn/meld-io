@@ -33,14 +33,14 @@
   min-width: 0;
   flex-direction: column;
   padding: 10px 3px 9px;
-  border: 1px solid #202023;
-  border-radius: 21px;
+  /*border: 1px solid #202023;*/
+  border-radius: 8px;
   background: #101012;
 }
 
 .account-brand {
   display: flex;
-  height: 50px;
+  height: 75px;
   align-items: center;
   gap: 9px;
   padding: 0 11px 10px;
@@ -423,7 +423,7 @@
 
 .account-user-copy small {
   color: #85858d;
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .account-user-chevron {
@@ -1180,7 +1180,7 @@
   z-index: 1;
   width: min(100%, 440px);
   padding: 35px;
-  /*border: 1px solid rgba(40, 37, 31, 0.12);*/
+  border: 1px solid rgba(40, 37, 31, 0.12);
   border-radius: 24px;
   background: #14141b;
   box-shadow:
@@ -1209,7 +1209,7 @@
 
 .signin-card h1 {
   margin: 0;
-  color: #fafafa;
+  color: #90283b;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 47px;
   font-weight: 400;
@@ -1247,6 +1247,7 @@
 
 .signin-google-button:hover {
   box-shadow: 0 5px 15px rgba(65, 57, 42, 0.1);
+  transform: translateY(-1px);
 }
 
 .signin-google-button:focus-visible {
@@ -1276,7 +1277,7 @@
 .signin-demo-note {
   margin: 12px 0 0;
   color: #8a8375;
-  font-size: 11px;
+  font-size: 9px;
   line-height: 1.5;
   text-align: center;
 }
@@ -1306,7 +1307,7 @@
 }
 
 .signin-api-link:hover {
-  color: #fafafa;
+  color: #27241f;
 }
 
 .signin-orbit {
@@ -1408,7 +1409,7 @@
   }
 
   .account-brand {
-    height: 42px;
+    height: 96px;
     padding: 0 7px;
   }
 
@@ -1473,6 +1474,8 @@
 
   .account-brand {
     font-size: 18px;
+    height: 96px;
+    border: 1px solid var(--border);
   }
 
   .account-sidebar-bottom button.account-sidebar-link {

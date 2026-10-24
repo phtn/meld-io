@@ -12,7 +12,7 @@ header.landing-header
     span.landing-brand-name cex
   nav.landing-nav(aria-label="Main navigation")
     Link(
-      ~ to="/account"
+      ~ to="/account/sign-in"
       ~ className={active === "account" ? "landing-nav-cta" : "landing-nav-link"}
       ~ aria-current={active === "account" ? "page" : undefined}
       ~ ) Account
