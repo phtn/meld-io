@@ -1,0 +1,125 @@
+import { useEffect } from "octane";
+import { useMeldApi } from "@/hooks/use-meld-api";
+import { DEMO_CUSTOMER_ID } from "@/lib/account-session";
+import { formatAccountDate, getAccountText, getApiError, isRecord } from "@/lib/account-data";
+import type { SearchPaymentTransaction, SearchPaymentTransactionResponseData } from "@/lib/meld/response-types";
+
+module
+  function getTransactionCountLabel(count: number): string {
+    return `${count} transaction${count === 1 ? "" : "s"}`;
+  }
+
+  const SAMPLE_TRANSACTION: SearchPaymentTransaction = {
+    id: "SAMPLE-EX-20418",
+    createdAt: "Demo data",
+    serviceProvider: "SAMPLE",
+    sessionId: "SAMPLE-SESSION",
+    status: "Sample",
+    transactionType: "ONRAMP",
+    updatedAt: "Demo data",
+    sourceAmount: "125.00",
+    sourceCurrencyCode: "USD",
+    destinationCurrencyCode: "USDC",
+  };
+
+  function isSearchPaymentTransaction(value: unknown): value is SearchPaymentTransaction {
+    return isRecord(value) &&
+      typeof value.id === "string" &&
+      typeof value.createdAt === "string" &&
+      typeof value.serviceProvider === "string" &&
+      typeof value.sessionId === "string" &&
+      typeof value.status === "string" &&
+      typeof value.transactionType === "string" &&
+      typeof value.updatedAt === "string";
+  }
+
+  function getTransactionResponse(data: unknown): SearchPaymentTransactionResponseData | null {
+    if (!isRecord(data) || !Array.isArray(data.transactions)) return null;
+    return {
+      transactions: data.transactions.filter(isSearchPaymentTransaction),
+      count: typeof data.count === "number" ? data.count : undefined,
+      remaining: typeof data.remaining === "number" ? data.remaining : undefined,
+      totalCount: typeof data.totalCount === "number" ? data.totalCount : undefined,
+    };
+  }
+
+  function getTransactionReference(transaction: SearchPaymentTransaction): string {
+    return getAccountText(transaction, ["id", "transactionId", "orderId", "referenceId"]);
+  }
+
+  function getTransactionFlow(transaction: SearchPaymentTransaction): string {
+    const source = getAccountText(transaction, ["sourceCurrencyCode", "sourceCurrency", "sourceAssetCode"]);
+    const destination = getAccountText(transaction, ["destinationCurrencyCode", "destinationCurrency", "destinationAssetCode"]);
+    if (source === "—" && destination === "—") return getAccountText(transaction, ["type", "direction"]);
+    return `${source} → ${destination}`;
+  }
+
+  function getTransactionAmount(transaction: SearchPaymentTransaction): string {
+    const amount = getAccountText(transaction, ["sourceAmount", "amount", "amountInUsd"]);
+    if (amount === "—") return amount;
+    const currency = getAccountText(transaction, ["sourceCurrencyCode", "currencyCode"]);
+    return currency === "—" ? amount : `${amount} ${currency}`;
+  }
+
+  function getStatusClass(status: string): string {
+    return /settled|success|complete|authorized/i.test(status)
+      ? "account-status"
+      : "account-status account-status--failed";
+  }
+
+setup
+  const { loading, response, handleApiCall } = useMeldApi();
+  const error = getApiError(response);
+  const transactionData = response?.success ? getTransactionResponse(response.data) : null;
+  const transactions = transactionData?.transactions ?? [];
+  const displayTransactions = transactions.length > 0
+    ? transactions
+    : response?.success
+      ? [SAMPLE_TRANSACTION]
+      : [];
+  const transactionRequestPending = loading || !response;
+
+  useEffect(() => {
+    void handleApiCall(
+      "/payments/transactions",
+      "",
+      "sandbox",
+      "GET",
+      undefined,
+      { customerIds: DEMO_CUSTOMER_ID },
+      undefined,
+      true,
+    );
+  }, [handleApiCall]);
+
+div.account-dashboard-grid.account-route-record-grid
+  section.account-panel.account-route-panel(aria-labelledby="transactions-title")
+    div.account-route-panel-header
+      div(className='flex items-center gap-3')
+        h2#transactions-title Transactions
+        span(className='size-6 rounded-full bg-sunken font-sans font-[450] text-sm flex items-center justify-center') #{transactionData?.count ?? transactions.length}
+      span.account-route-date-pill #{getTransactionCountLabel(transactionData?.count ?? transactions.length)}
+    if transactionRequestPending
+      p.account-route-state(role="status") Loading live transactions…
+    if error
+      p.account-route-state.account-route-state--error(role="alert") #{error}
+    if response?.success && transactions.length === 0
+      p.account-route-sample-note No transaction rows were found in the API response. Showing a sample row.
+    div.account-route-table-scroll
+      table.account-route-table
+        thead
+          tr
+            th(scope="col") Transaction Id
+            th(scope="col") Flow
+            th(scope="col") Amount
+            th(scope="col") Status
+            th(scope="col") Created
+        tbody
+          each transaction, index in displayTransactions key index
+            tr
+              td.account-route-id #{getTransactionReference(transaction)}
+              td #{getTransactionFlow(transaction)}
+              td #{getTransactionAmount(transaction)}
+              td
+                span(className={getStatusClass(getAccountText(transaction, ["status", "state"]))}) #{getAccountText(transaction, ["status", "state"])}
+              td(className='font-mono') #{formatAccountDate(getAccountText(transaction, ["createdAt", "createdDate", "timestamp"]))}

@@ -121,7 +121,6 @@ const emptyFieldsByEndpointId: Record<string, string[]> = {
     'before',
     'after',
     'apiaccessprofileids',
-    'customerids',
     'externalcustomerids',
     'sessionids',
     'externalsessionids',
@@ -156,7 +155,17 @@ const emptyFieldsByEndpointId: Record<string, string[]> = {
   'network-partners-get-network-partner-defaults-limits': [],
   'network-partners-get-network-partner-defaults-limits-by-currency': [],
   'network-partners-get-network-partner-defaults-by-country-by-category': [],
-  'bank-linking-post-bank-linking-connect-start': [],
+  'bank-linking-post-bank-linking-connect-start': [
+    'accountlogourl',
+    'bordercolor',
+    'bordertextcolor',
+    'font',
+    'institutionselectiontext',
+    'routingentry',
+    'routingretrybankbuttoncolor',
+    'routingretryproviderbuttoncolor',
+    'selectionstyle'
+  ],
   'bank-linking-post-bank-linking-connect-repair': [],
   'bank-linking-get-bank-linking-connections-by-connectionid': [],
   'bank-linking-delete-bank-linking-connections-by-connectionid': [],
@@ -315,7 +324,10 @@ const defaultFieldValuesByEndpointId: Record<string, Record<string, unknown>> = 
       'webhooks-get-notifications-webhooks-by-webhookprofileid': {},
       'webhooks-patch-notifications-webhooks-by-webhookprofileid': {},
       'webhooks-post-notifications-webhooks-by-webhookprofileid-test': {},
-      'beta-get-activity-log': {},
+      'beta-get-activity-log': {
+        start: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+        end: new Date().toISOString()
+      },
       'beta-get-activity-log-details': {}
     }
   : {}

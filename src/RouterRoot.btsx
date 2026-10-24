@@ -2,9 +2,12 @@ module "use client";
 import { createRootRoute, createRoute, createRouter, Outlet, redirect, RouterProvider } from "@octanejs/tanstack-router";
 import App from "./App.btsx";
 import AccountPage from "./components/AccountPageTheme.btsx";
+import AccountOverviewPage from "./components/AccountOverviewPage.btsx";
 import LandingPage from "./components/LandingPage.btsx";
 import SignInPage from "./components/SignInPage.btsx";
 import TransactionResultPage from "./components/TransactionResultPage.btsx";
+import AccountTransactionsPage from "./components/AccountTransactionsPage.btsx";
+import AccountLogsPage from "./components/AccountLogsPage.btsx";
 import { hasDemoAccountSession } from "./lib/account-session";
 
 component RouteLayout
@@ -31,7 +34,34 @@ setup
     },
     component: AccountPage,
   });
-  const routeTree = rootRoute.addChildren([landingRoute, apiRoute, successRoute, failedRoute, accountSignInRoute, accountRoute]);
+  const accountOverviewRoute = createRoute({
+    getParentRoute: () => accountRoute,
+    path: "/",
+    component: AccountOverviewPage,
+  });
+  const accountTransactionsRoute = createRoute({
+    getParentRoute: () => accountRoute,
+    path: "transactions",
+    component: AccountTransactionsPage,
+  });
+  const accountLogsRoute = createRoute({
+    getParentRoute: () => accountRoute,
+    path: "logs",
+    component: AccountLogsPage,
+  });
+  const accountRouteTree = accountRoute.addChildren([
+    accountOverviewRoute,
+    accountTransactionsRoute,
+    accountLogsRoute,
+  ]);
+  const routeTree = rootRoute.addChildren([
+    landingRoute,
+    apiRoute,
+    successRoute,
+    failedRoute,
+    accountSignInRoute,
+    accountRouteTree,
+  ]);
   const router = createRouter({ routeTree });
 
 RouterProvider(router={router})

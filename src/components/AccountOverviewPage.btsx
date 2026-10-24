@@ -1,0 +1,181 @@
+import { Link } from "@octanejs/tanstack-router";
+import AccountVolumeChart from "@/components/AccountVolumeChart.btsx";
+import Tabs, { type TabItem } from "@/ui/Tabs.btsx";
+
+module
+  const ACCOUNT_DASHBOARD_TABS: readonly TabItem[] = [
+    { href: "#overview", id: "on-ramp", label: "On-ramp", shortLabel: "On-ramp", icon: "on-ramp" },
+    { href: "#transactions", id: "off-ramp", label: "Off-ramp", shortLabel: "Off-ramp", icon: "off-ramp" },
+    { href: "#transfers", id: "transfers", label: "Transfers", shortLabel: "Transfers", icon: "arrow-right" },
+    { href: "#swaps", id: "swaps", label: "Swaps", shortLabel: "Swaps", icon: "swap" },
+  ];
+
+fragment
+  div.account-dashboard-tabs
+    Tabs(
+      ~ activeId="on-ramp"
+      ~ className="account-dashboard-tab-list"
+      ~ items={ACCOUNT_DASHBOARD_TABS}
+      ~ label="Account sections"
+      ~ )
+    div.account-tab-actions
+      span.account-environment-badge
+        i
+        | Sandbox
+      Link.account-open-api(to="/api") Open API Studio →
+
+  div.account-dashboard-grid#overview
+    div.account-dashboard-main-column
+      AccountVolumeChart
+
+      section.account-panel.account-transactions-panel#transactions(aria-labelledby="transactions-title")
+        div.account-panel-header
+          div
+            h2#transactions-title Recent transactions
+            p Latest activity across your onramp and offramp flows
+          Link.account-inline-link(to="/account/transactions") View all →
+        div.account-transactions-table
+          div.account-table-head
+            span Transaction
+            span Direction
+            span Amount
+            span Status
+            span Time
+          div.account-transaction-row
+            div.account-transaction-id
+              span.account-transaction-icon.account-transaction-icon--green ↗
+              div
+                strong EX-20418
+                small Customer · cst_84f2
+            span.account-transaction-direction
+              | USD
+              span →
+              | ETH
+            strong.account-transaction-amount $1,250.00
+            span.account-status.account-status--complete Completed
+            span.account-transaction-time Today, 10:42
+          div.account-transaction-row
+            div.account-transaction-id
+              span.account-transaction-icon.account-transaction-icon--blue ↙
+              div
+                strong EX-20417
+                small Customer · cst_719a
+            span.account-transaction-direction
+              | USDC
+              span →
+              | EUR
+            strong.account-transaction-amount $840.00
+            span.account-status.account-status--pending Processing
+            span.account-transaction-time Today, 09:16
+          div.account-transaction-row
+            div.account-transaction-id
+              span.account-transaction-icon.account-transaction-icon--purple ↗
+              div
+                strong EX-20412
+                small Customer · cst_5d31
+            span.account-transaction-direction
+              | USD
+              span →
+              | BTC
+            strong.account-transaction-amount $320.00
+            span.account-status.account-status--complete Completed
+            span.account-transaction-time Yesterday
+
+    aside.account-dashboard-side-column
+      section.account-panel.account-health-panel#payment-routes(aria-labelledby="health-title")
+        div.account-panel-header
+          div.account-health-heading
+            span.account-sparkle ✧
+            h2#health-title Network health
+          span.account-health-status Steady
+        p.account-health-copy Your payment routes are healthy and ready to serve customers.
+        div.account-provider-list
+          div.account-provider-row
+            span.account-provider-icon.account-provider-icon--card ▰
+            div
+              strong Card payments
+              small 14 providers available
+            span.account-provider-state Active
+          div.account-provider-row
+            span.account-provider-icon.account-provider-icon--bank ▤
+            div
+              strong Bank transfer
+              small 9 providers available
+            span.account-provider-state Active
+          div.account-provider-row
+            span.account-provider-icon.account-provider-icon--crypto ◈
+            div
+              strong Crypto payouts
+              small 6 networks connected
+            span.account-provider-state Active
+        a.account-inline-link.account-health-link(href="#payment-routes") Manage payment routes ↗
+
+      section.account-panel.account-api-activity-panel#developers(aria-labelledby="activity-title")
+        div.account-panel-header
+          div
+            h2#activity-title API activity
+            p Requests · last 7 days
+          Link.account-panel-open(to="/api" aria-label="Open Meld API Studio") ↗
+        div.account-api-metric
+          strong 24,861
+          span.account-api-metric-change +8.4%
+        div.account-api-bars(aria-label="Sample API requests by day")
+          div.account-api-bar-item
+            span.account-api-bar-value 2.8k
+            i(style={{ height: "47%" }})
+            small Mon
+          div.account-api-bar-item
+            span.account-api-bar-value 3.4k
+            i(style={{ height: "58%" }})
+            small Tue
+          div.account-api-bar-item
+            span.account-api-bar-value 3.1k
+            i(style={{ height: "52%" }})
+            small Wed
+          div.account-api-bar-item
+            span.account-api-bar-value 4.1k
+            i(style={{ height: "70%" }})
+            small Thu
+          div.account-api-bar-item
+            span.account-api-bar-value 3.7k
+            i(style={{ height: "63%" }})
+            small Fri
+          div.account-api-bar-item
+            span.account-api-bar-value 4.5k
+            i.account-api-bar--today(style={{ height: "78%" }})
+            small Sat
+          div.account-api-bar-item
+            span.account-api-bar-value 3.3k
+            i(style={{ height: "56%" }})
+            small Sun
+        p.account-api-footnote Sample data from your sandbox workspace.
+
+      section.account-panel.account-setup-panel(aria-labelledby="setup-title" className='hidden!')
+        div.account-panel-header
+          div
+            h2#setup-title Go live checklist
+            p 3 of 4 steps complete
+          span.account-setup-progress 75%
+        div.account-setup-progress-track
+          span
+        div.account-setup-steps
+          div.account-setup-step.account-setup-step--complete
+            span ✓
+            div
+              strong Create your account
+              small Complete
+          div.account-setup-step.account-setup-step--complete
+            span ✓
+            div
+              strong Configure API keys
+              small Sandbox connected
+          div.account-setup-step.account-setup-step--complete
+            span ✓
+            div
+              strong Test a transaction
+              small 4 successful tests
+          div.account-setup-step
+            span 4
+            div
+              strong Request production access
+              small Ready when you are

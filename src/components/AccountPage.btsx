@@ -1,10 +1,8 @@
-import { Link, useRouter } from "@octanejs/tanstack-router";
+import { Link, Outlet, useRouter, useRouterState } from "@octanejs/tanstack-router";
 import { useEffect, useState } from "octane";
 import { Group, Panel, Separator, usePanelRef, type PanelSize } from "@octanejs/resizable-panels";
-import { endDemoAccountSession } from "@/lib/account-session";
+import { DEMO_CUSTOMER_ID, endDemoAccountSession } from "@/lib/account-session";
 import { useMeldApi } from "@/hooks/use-meld-api";
-import AccountVolumeChart from "@/components/AccountVolumeChart.btsx";
-import Tabs, { type TabItem } from "@/ui/Tabs.btsx";
 import { Icon } from "@/lib/icons";
 import Sidebar, {ToggleSidebar} from "@/components/Sidebar.btsx";
 import { ThemeToggle } from "@/components/ThemeProvider.btsx";
@@ -12,15 +10,6 @@ import { cn } from "@/lib/utils";
 import type { ApiResponse } from "@/types";
 
 module
-  const EXAMPLE_CUSTOMER_ID = "WmYtQbDgrToZG684RC2bpJ";
-
-  const ACCOUNT_DASHBOARD_TABS: readonly TabItem[] = [
-    { href: "#overview", id: "on-ramp", label: "On-ramp", shortLabel: "On-ramp", icon: "on-ramp" },
-    { href: "#transactions", id: "off-ramp", label: "Off-ramp", shortLabel: "Off-ramp", icon: "off-ramp" },
-    { href: "#transfers", id: "transfers", label: "Transfers", shortLabel: "Transfers", icon: "arrow-right" },
-    { href: "#swaps", id: "swaps", label: "Swaps", shortLabel: "Swaps", icon: "swap" },
-  ];
-
   interface MeldCustomer {
     id: string;
     externalId?: string;
@@ -36,12 +25,12 @@ module
 
   function getExampleCustomer(data: unknown): MeldCustomer | null {
     if (!isRecord(data) || !Array.isArray(data.customers)) return null;
-    const customer = data.customers.find((value) => isRecord(value) && value.id === EXAMPLE_CUSTOMER_ID);
+    const customer = data.customers.find((value) => isRecord(value) && value.id === DEMO_CUSTOMER_ID);
     if (!isRecord(customer)) return null;
 
     const name = isRecord(customer.name) ? customer.name : undefined;
     return {
-      id: typeof customer.id === "string" ? customer.id : EXAMPLE_CUSTOMER_ID,
+      id: typeof customer.id === "string" ? customer.id : DEMO_CUSTOMER_ID,
       externalId: typeof customer.externalId === "string" ? customer.externalId : undefined,
       name: name ? {
         firstName: typeof name.firstName === "string" ? name.firstName : undefined,
@@ -65,6 +54,8 @@ module
 
 setup
   const router = useRouter();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isOverviewActive = pathname === "/account" || pathname === "/account/";
   const [isSidebarCompact, setIsSidebarCompact] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { loading: customerLoading, response: customerResponse, handleApiCall } = useMeldApi();
@@ -76,9 +67,9 @@ setup
     : "";
   const customerInitials = customerName.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "XP";
   const userMenuName = customer
-    ? customerName
+    ? customerName.split(' ').shift()
     : customerLoading || !customerResponse
-      ? "Loading customer…"
+      ? "Loading …"
       : customerError
         ? "Demo user"
         : "Customer not found";
@@ -103,7 +94,7 @@ setup
       "sandbox",
       "GET",
       undefined,
-      { customerIds: EXAMPLE_CUSTOMER_ID },
+      { customerIds: DEMO_CUSTOMER_ID },
       undefined,
       true,
     );
@@ -150,17 +141,29 @@ main.account-dashboard-page
               span.account-workspace-chevron ⌄
           nav.account-sidebar-navigation
             p.account-nav-label Workspace
-            Link.account-sidebar-link.account-sidebar-link--active(to="/account" aria-current="page")
+            Link(
+              ~ to="/account"
+              ~ className={cn("account-sidebar-link", isOverviewActive && "account-sidebar-link--active")}
+              ~ aria-current={isOverviewActive ? "page" : undefined}
+              ~ )
               Icon.account-sidebar-icon(name='bar-chart' className='size-2')
               span Overview
-            a.account-sidebar-link(href="#transactions")
+            Link(
+              ~ to="/account/transactions"
+              ~ className={cn("account-sidebar-link", pathname === "/account/transactions" && "account-sidebar-link--active")}
+              ~ aria-current={pathname === "/account/transactions" ? "page" : undefined}
+              ~ )
               Icon.account-sidebar-icon(name='transaction' className='-rotate-90')
               span Transactions
               span.account-sidebar-count 8
             a.account-sidebar-link(href="#bank-accounts")
               Icon.account-sidebar-icon(name='bank')
               span Bank Accounts
-            a.account-sidebar-link(href="#logs")
+            Link(
+              ~ to="/account/logs"
+              ~ className={cn("account-sidebar-link", pathname === "/account/logs" && "account-sidebar-link--active")}
+              ~ aria-current={pathname === "/account/logs" ? "page" : undefined}
+              ~ )
               Icon.account-sidebar-icon(name='list')
               span Logs
               span.account-sidebar-tag Live
@@ -178,10 +181,30 @@ main.account-dashboard-page
               span Northstar Wallet
               small Day 47
           nav.account-sidebar-compact-navigation(aria-label="Account navigation")
-            Link.account-sidebar-link.account-sidebar-link--active.account-sidebar-compact-link(to="/account" aria-current="page" aria-label="Overview" title="Overview")
+            Link(
+              ~ to="/account"
+              ~ className={cn("account-sidebar-link", "account-sidebar-compact-link", isOverviewActive && "account-sidebar-link--active")}
+              ~ aria-current={isOverviewActive ? "page" : undefined}
+              ~ aria-label="Overview"
+              ~ title="Overview"
+              ~ )
               span.account-sidebar-icon ▦
-            a.account-sidebar-link.account-sidebar-compact-link(href="#transactions" aria-label="Transactions" title="Transactions")
+            Link(
+              ~ to="/account/transactions"
+              ~ className={cn("account-sidebar-link", "account-sidebar-compact-link", pathname === "/account/transactions" && "account-sidebar-link--active")}
+              ~ aria-current={pathname === "/account/transactions" ? "page" : undefined}
+              ~ aria-label="Transactions"
+              ~ title="Transactions"
+              ~ )
               span.account-sidebar-icon ▤
+            Link(
+              ~ to="/account/logs"
+              ~ className={cn("account-sidebar-link", "account-sidebar-compact-link", pathname === "/account/logs" && "account-sidebar-link--active")}
+              ~ aria-current={pathname === "/account/logs" ? "page" : undefined}
+              ~ aria-label="Logs"
+              ~ title="Logs"
+              ~ )
+              Icon.account-sidebar-icon(name='list')
             a.account-sidebar-link.account-sidebar-compact-link(href="#payment-routes" aria-label="Payment routes" title="Payment routes")
               span.account-sidebar-icon ⇄
             a.account-sidebar-link.account-sidebar-compact-link(href="#developers" aria-label="Developers" title="Developers")
@@ -235,7 +258,6 @@ main.account-dashboard-page
                   span.account-user-avatar #{customerInitials}
                   div.account-user-copy
                     strong #{userMenuName}
-                    small #{userMenuSubtitle}
                 if isUserMenuOpen
                   div#account-customer-menu.account-user-menu-dropdown(role="dialog" aria-labelledby="account-customer-menu-title")
                     div.account-user-menu-dropdown-header
@@ -249,7 +271,7 @@ main.account-dashboard-page
                     if customerError
                       p.account-user-menu-state.account-user-menu-state--error(role="alert") #{customerError}
                     if customerResponse?.success && !customer
-                      p.account-user-menu-state No customer was returned for #{EXAMPLE_CUSTOMER_ID}.
+                      p.account-user-menu-state No customer was returned for #{DEMO_CUSTOMER_ID}.
                     if customer
                       dl.account-user-detail-list
                         div.account-user-detail
@@ -271,171 +293,4 @@ main.account-dashboard-page
               button.account-notifications(type="button" aria-label="Notifications")
                 Icon(name='bell' className='size-4')
                 i
-          div.account-dashboard-tabs
-            Tabs(
-              ~ activeId="on-ramp"
-              ~ className="account-dashboard-tab-list"
-              ~ items={ACCOUNT_DASHBOARD_TABS}
-              ~ label="Account sections"
-              ~ )
-            div.account-tab-actions
-              span.account-environment-badge
-                i
-                | Sandbox
-              Link.account-open-api(to="/api") Open API Studio →
-
-          div.account-dashboard-grid#overview
-            div.account-dashboard-main-column
-              AccountVolumeChart
-
-              section.account-panel.account-transactions-panel#transactions(aria-labelledby="transactions-title")
-                div.account-panel-header
-                  div
-                    h2#transactions-title Recent transactions
-                    p Latest activity across your onramp and offramp flows
-                  a.account-inline-link(href="#transactions") View all →
-                div.account-transactions-table
-                  div.account-table-head
-                    span Transaction
-                    span Direction
-                    span Amount
-                    span Status
-                    span Time
-                  div.account-transaction-row
-                    div.account-transaction-id
-                      span.account-transaction-icon.account-transaction-icon--green ↗
-                      div
-                        strong EX-20418
-                        small Customer · cst_84f2
-                    span.account-transaction-direction
-                      | USD
-                      span →
-                      | ETH
-                    strong.account-transaction-amount $1,250.00
-                    span.account-status.account-status--complete Completed
-                    span.account-transaction-time Today, 10:42
-                  div.account-transaction-row
-                    div.account-transaction-id
-                      span.account-transaction-icon.account-transaction-icon--blue ↙
-                      div
-                        strong EX-20417
-                        small Customer · cst_719a
-                    span.account-transaction-direction
-                      | USDC
-                      span →
-                      | EUR
-                    strong.account-transaction-amount $840.00
-                    span.account-status.account-status--pending Processing
-                    span.account-transaction-time Today, 09:16
-                  div.account-transaction-row
-                    div.account-transaction-id
-                      span.account-transaction-icon.account-transaction-icon--purple ↗
-                      div
-                        strong EX-20412
-                        small Customer · cst_5d31
-                    span.account-transaction-direction
-                      | USD
-                      span →
-                      | BTC
-                    strong.account-transaction-amount $320.00
-                    span.account-status.account-status--complete Completed
-                    span.account-transaction-time Yesterday
-
-            aside.account-dashboard-side-column
-              section.account-panel.account-health-panel#payment-routes(aria-labelledby="health-title")
-                div.account-panel-header
-                  div.account-health-heading
-                    span.account-sparkle ✧
-                    h2#health-title Network health
-                  span.account-health-status Steady
-                p.account-health-copy Your payment routes are healthy and ready to serve customers.
-                div.account-provider-list
-                  div.account-provider-row
-                    span.account-provider-icon.account-provider-icon--card ▰
-                    div
-                      strong Card payments
-                      small 14 providers available
-                    span.account-provider-state Active
-                  div.account-provider-row
-                    span.account-provider-icon.account-provider-icon--bank ▤
-                    div
-                      strong Bank transfer
-                      small 9 providers available
-                    span.account-provider-state Active
-                  div.account-provider-row
-                    span.account-provider-icon.account-provider-icon--crypto ◈
-                    div
-                      strong Crypto payouts
-                      small 6 networks connected
-                    span.account-provider-state Active
-                a.account-inline-link.account-health-link(href="#payment-routes") Manage payment routes ↗
-
-              section.account-panel.account-api-activity-panel#developers(aria-labelledby="activity-title")
-                div.account-panel-header
-                  div
-                    h2#activity-title API activity
-                    p Requests · last 7 days
-                  Link.account-panel-open(to="/api" aria-label="Open Meld API Studio") ↗
-                div.account-api-metric
-                  strong 24,861
-                  span.account-api-metric-change +8.4%
-                div.account-api-bars(aria-label="Sample API requests by day")
-                  div.account-api-bar-item
-                    span.account-api-bar-value 2.8k
-                    i(style={{ height: "47%" }})
-                    small Mon
-                  div.account-api-bar-item
-                    span.account-api-bar-value 3.4k
-                    i(style={{ height: "58%" }})
-                    small Tue
-                  div.account-api-bar-item
-                    span.account-api-bar-value 3.1k
-                    i(style={{ height: "52%" }})
-                    small Wed
-                  div.account-api-bar-item
-                    span.account-api-bar-value 4.1k
-                    i(style={{ height: "70%" }})
-                    small Thu
-                  div.account-api-bar-item
-                    span.account-api-bar-value 3.7k
-                    i(style={{ height: "63%" }})
-                    small Fri
-                  div.account-api-bar-item
-                    span.account-api-bar-value 4.5k
-                    i.account-api-bar--today(style={{ height: "78%" }})
-                    small Sat
-                  div.account-api-bar-item
-                    span.account-api-bar-value 3.3k
-                    i(style={{ height: "56%" }})
-                    small Sun
-                p.account-api-footnote Sample data from your sandbox workspace.
-
-              section.account-panel.account-setup-panel(aria-labelledby="setup-title")
-                div.account-panel-header
-                  div
-                    h2#setup-title Go live checklist
-                    p 3 of 4 steps complete
-                  span.account-setup-progress 75%
-                div.account-setup-progress-track
-                  span
-                div.account-setup-steps
-                  div.account-setup-step.account-setup-step--complete
-                    span ✓
-                    div
-                      strong Create your account
-                      small Complete
-                  div.account-setup-step.account-setup-step--complete
-                    span ✓
-                    div
-                      strong Configure API keys
-                      small Sandbox connected
-                  div.account-setup-step.account-setup-step--complete
-                    span ✓
-                    div
-                      strong Test a transaction
-                      small 4 successful tests
-                  div.account-setup-step
-                    span 4
-                    div
-                      strong Request production access
-                      small Ready when you are
+          Outlet

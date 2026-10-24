@@ -1,4 +1,5 @@
 export const DEMO_ACCOUNT_SESSION_KEY = "exch-demo-account-session";
+export const DEMO_CUSTOMER_ID = "WmZXuiLVHUcv1rrgALNia4";
 let inMemoryDemoSession = false;
 
 export function hasDemoAccountSession(): boolean {

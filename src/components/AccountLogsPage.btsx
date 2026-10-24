@@ -1,0 +1,68 @@
+import { useEffect, useState } from "octane";
+import { useMeldApi } from "@/hooks/use-meld-api";
+import { formatAccountDate, getAccountRecords, getAccountText, getApiError } from "@/lib/account-data";
+import { ActivityLogsResponseData } from '@/lib/meld/response-types';
+
+module
+  const ACTIVITY_COLLECTIONS = ["activities", "activity", "activityLog", "activityLogs", "logs", "items", "results"];
+
+  function getActivityTitle(activity: ActivityLogsResponseData): string {
+    return activity.action;
+  }
+
+setup
+  const [dateRange] = useState(() => {
+    const end = new Date();
+    const start = new Date(end.getTime() - 31 * 24 * 60 * 60 * 1000);
+    return { start: start.toISOString(), end: end.toISOString() };
+  });
+  const { loading, response, handleApiCall } = useMeldApi();
+  const error = getApiError(response);
+  const activities: ActivityLogsResponseData[] = response?.success ? getAccountRecords(response.data, ACTIVITY_COLLECTIONS) : [];
+
+  useEffect(() => {
+    void handleApiCall(
+      "/activity-log",
+      "",
+      "sandbox",
+      "GET",
+      undefined,
+      { start: dateRange.start, end: dateRange.end },
+      undefined,
+      true,
+    );
+  }, [dateRange.end, dateRange.start, handleApiCall]);
+
+div.account-dashboard-grid.account-route-record-grid
+  section.account-panel.account-route-panel(aria-labelledby="logs-title")
+    div.account-route-panel-header
+      div
+        h2#logs-title Activity log
+        p Search activity log · #{formatAccountDate(dateRange.start)} – #{formatAccountDate(dateRange.end)}
+      span.account-route-date-pill Last 31 days
+    if loading || !response
+      p.account-route-state(role="status") Loading activity…
+    elseif error
+      p.account-route-state.account-route-state--error(role="alert") #{error}
+    elseif activities.length === 0
+      p.account-route-state No activity was found for this date range.
+    else
+      div.account-route-table-scroll
+        table.account-route-table
+          thead
+            tr
+              th(scope="col") Activity
+              th(scope="col") Actor
+              th(scope="col") Customer
+              th(scope="col") Request
+              th(scope="col") Provider
+              th(scope="col") Time
+          tbody
+            each activity, index in activities key index
+              tr
+                td.account-route-id #{activity.action}
+                td #{activity.actor.type}
+                td #{activity.attributes.accountId}
+                td #{activity.attributes.requestId}
+                td #{activity.attributes.serviceProviders[0]}
+                td #{activity.occurredAt}

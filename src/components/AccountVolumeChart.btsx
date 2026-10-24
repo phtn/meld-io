@@ -104,6 +104,8 @@ setup
   const [tooltipTop, setTooltipTop] = useState(7);
   const chartInteractionRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const periodControlsRef = useRef<HTMLDivElement | null>(null);
+  const periodPillRef = useRef<HTMLSpanElement | null>(null);
   const referenceTime = useRef(Date.now());
   const points = getAccountVolumePoints(period, referenceTime.current);
   const latest = points[points.length - 1]!;
@@ -114,6 +116,25 @@ setup
   const hoverPercent = Math.max(18, Math.min(82, ((activeIndex ?? 32) / 32) * 100));
   const hovered = activeIndex === undefined ? undefined : points[activeIndex];
   const periodChange = ACCOUNT_VOLUME_CHANGES[period];
+
+  useLayoutEffect(() => {
+    const controls = periodControlsRef.current;
+    const pill = periodPillRef.current;
+    if (!controls || !pill) return;
+
+    const syncPill = () => {
+      const activeButton = controls.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
+      if (!activeButton) return;
+      pill.style.width = `${activeButton.offsetWidth}px`;
+      pill.style.transform = `translateX(${activeButton.offsetLeft}px)`;
+    };
+
+    syncPill();
+    const resizeObserver = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(syncPill);
+    resizeObserver?.observe(controls);
+    for (const button of controls.querySelectorAll("button")) resizeObserver?.observe(button);
+    return () => resizeObserver?.disconnect();
+  }, [period]);
 
   useLayoutEffect(() => {
     if (!hovered || !chartInteractionRef.current || !tooltipRef.current) {
@@ -173,7 +194,12 @@ section.account-panel.account-volume-panel(aria-labelledby="volume-title")
   div.account-volume-heading
     div.account-volume-heading-copy
       h2#volume-title Onramp volume vs baseline
-    div.account-volume-periods(role="group" aria-label="Chart period")
+    div.account-volume-periods(
+      ~ ref={periodControlsRef}
+      ~ role="group"
+      ~ aria-label="Chart period"
+      ~ )
+      span.account-volume-period-pill(ref={periodPillRef} aria-hidden="true")
       each item in ACCOUNT_VOLUME_PERIODS key item
         button(
           ~ type="button"

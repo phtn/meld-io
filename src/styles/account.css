@@ -418,7 +418,7 @@
 
 .account-sidebar-theme-toggle {
   display: flex;
-  min-height: 36px;
+  min-height: 32px;
   align-items: center;
   padding: 0 6px;
 }
@@ -432,10 +432,10 @@
 
 .account-sidebar-gate {
   display: flex;
-  min-height: 78px;
+  min-height: 72px;
   align-items: start;
   gap: 10px;
-  margin: 1px 1px 4px;
+  margin: 4px;
   padding: 10px;
   border: 1px solid #29292d;
   border-radius: 13px;
@@ -585,7 +585,7 @@
   border-radius: 50%;
   background: linear-gradient(145deg, #d0d1d4, #777980);
   color: #252529;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -905,28 +905,47 @@
 }
 
 .account-volume-periods {
+  position: relative;
   display: flex;
   flex: 0 0 auto;
   gap: 3px;
   padding: 3px;
   border: 1px solid #2d2d31;
-  border-radius: 999px;
-  background: #1b1b1e;
+  border-radius: 8px;
+  background: var(--sunken);
+}
+
+.account-volume-period-pill {
+  position: absolute;
+  z-index: 0;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: 0;
+  border-radius: 5px;
+  background: #f0f0f1;
+  pointer-events: none;
+  transition:
+    width 180ms ease-out,
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .account-volume-period {
-  min-width: 34px;
-  padding: 6px 8px;
+  position: relative;
+  z-index: 1;
+  min-width: 32px;
+  padding: 3px 8px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 5px;
   background: transparent;
   color: #85858d;
   cursor: pointer;
   font: inherit;
-  font-size: 8px;
+  font-size: 11px;
+  font-weight: 450;
   transition:
-    background-color 140ms ease,
-    color 140ms ease;
+    background-color 180ms ease-out,
+    color 180ms ease-out;
 }
 
 .account-volume-period:hover {
@@ -939,9 +958,19 @@
 }
 
 .account-volume-period--active {
-  background: #f0f0f1;
+  background: var(--foreground);
   color: #202024;
   font-weight: 600;
+}
+.account-volume-period--active:hover {
+  background: transparent;
+  color: var(--mac-blue);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-volume-period-pill {
+    transition: none;
+  }
 }
 
 .account-volume-metrics {
@@ -1291,19 +1320,121 @@
   color: #72727a;
 }
 
+.account-dashboard-grid.account-route-record-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.account-route-panel {
+  padding: 22px;
+}
+
+.account-route-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.account-route-panel-header h2 {
+  margin: 0;
+  color: var(--account-text);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.account-route-panel-header p {
+  margin: 6px 0 0;
+  color: var(--account-muted);
+  font-size: 12px;
+}
+
+.account-route-date-pill {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border: 1px solid var(--account-border);
+  border-radius: 999px;
+  color: var(--account-muted);
+  font-size: 11px;
+}
+
+.account-route-state {
+  margin: 0;
+  padding: 36px 16px;
+  color: var(--account-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.account-route-state--error {
+  color: #e77f82;
+}
+
+.account-route-sample-note {
+  margin: 0 0 12px;
+  color: var(--account-muted);
+  font-size: 11px;
+}
+
+.account-route-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.account-route-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.account-route-table th {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--account-border);
+  color: var(--account-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.account-route-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--account-border), transparent 20%);
+  color: var(--account-text);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.account-route-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.account-route-table .account-route-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
 .account-status {
   width: fit-content;
   padding: 5px 7px;
-  border-radius: 999px;
+  border-radius: 8px;
   background: #173526;
   color: #68d297;
-  font-size: 8px;
+  font-size: 10px;
+  font-family: var(--font-mono);
   white-space: nowrap;
 }
 
 .account-status--pending {
   background: #3a3018;
   color: #e8ca68;
+}
+.account-status--failed {
+  background: #fc423d10;
+  color: #fc423d;
 }
 
 .account-health-panel,
@@ -1906,6 +2037,14 @@
 }
 
 @media (max-width: 620px) {
+  .account-route-panel {
+    padding: 16px 12px;
+  }
+
+  .account-route-panel-header {
+    flex-direction: column;
+  }
+
   .account-dashboard-page {
     padding: 0;
   }
@@ -2215,7 +2354,6 @@ html.light .account-sidebar-tag {
 html.light .account-sidebar-tag,
 html.light .account-volume-metric .account-volume-change,
 html.light .account-transaction-icon,
-html.light .account-status,
 html.light .account-health-status,
 html.light .account-provider-state,
 html.light .account-setup-step--complete > span {
@@ -2238,10 +2376,21 @@ html.light .account-provider-row {
   background: var(--account-panel-raised);
 }
 
-html.light .account-volume-period--active,
 html.light .account-open-api {
   background: #edf1f7;
   color: #26334a;
+}
+
+html.light .account-volume-period-pill {
+  background: var(--foreground);
+}
+html.light .account-volume-period:hover {
+  color: var(--foreground);
+}
+html.light .account-volume-period--active,
+html.light .account-volume-period--active:hover {
+  background: transparent;
+  color: var(--background);
 }
 
 html.light .account-environment-badge,
