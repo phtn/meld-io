@@ -15,29 +15,56 @@
 }
 
 .account-dashboard-frame {
-  display: grid;
   width: min(100%, 1760px);
-  min-height: calc(100svh - clamp(24px, 5.6vw, 84px));
-  grid-template-columns: 238px minmax(0, 1fr);
-  gap: 15px;
+  height: 100dvh;
   margin: 0 auto;
-  padding: 11px;
-  border: 1px solid #252528;
+  padding: 0;
   /*border-radius: 30px;*/
   background: var(--account-bg);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
 }
 
-.account-dashboard-frame--sidebar-compact {
-  grid-template-columns: 76px minmax(0, 1fr);
+.account-dashboard-layout {
+  gap: 0;
+}
+
+.account-sidebar-panel,
+.account-dashboard-content-panel {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.account-dashboard-resize-separator {
+  position: relative;
+  width: 1px;
+  outline: none;
+  cursor: col-resize;
+}
+
+.account-dashboard-resize-separator::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: transparent;
+  content: '';
+  transform: translateX(-50%);
+  transition: background-color 150ms ease;
+}
+
+.account-dashboard-resize-separator:hover::before,
+.account-dashboard-resize-separator:focus-visible::before,
+.account-dashboard-resize-separator[data-separator='active']::before {
+  background: #5d5d64;
 }
 
 .account-sidebar {
+  --account-sidebar-hover-bg: #1b1b1e;
   display: flex;
-  position: sticky;
-  top: 11px;
-  height: calc(100svh - 22px);
-  align-self: start;
+  position: relative;
+  height: 100%;
+  min-height: 0;
   min-width: 0;
   flex-direction: column;
   padding: 10px 3px 9px;
@@ -53,6 +80,10 @@
   flex-direction: column;
 }
 
+.account-sidebar-custom-navigation > div[aria-hidden='true'] {
+  background: var(--account-sidebar-hover-bg);
+}
+
 .account-sidebar-header {
   display: flex;
   flex: none;
@@ -64,7 +95,7 @@
   flex-direction: column;
   flex: 1;
   gap: 3px;
-  padding: 0 7px;
+  padding: 19px 6px 6px;
 }
 
 .account-sidebar-compact-link {
@@ -79,7 +110,7 @@
 }
 
 .account-sidebar[data-compact] .account-brand {
-  min-height: 96px;
+  min-height: 60px;
   height: auto;
   flex-direction: column;
   justify-content: center;
@@ -92,7 +123,15 @@
   display: none;
 }
 
-.account-sidebar[data-compact] .account-brand > span {
+.account-sidebar[data-compact] .account-brand-link {
+  flex: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+}
+
+.account-sidebar[data-compact] .account-brand-link > span {
   display: block;
   font-size: 11px;
 }
@@ -141,7 +180,8 @@
 
 .account-brand {
   display: flex;
-  height: 75px;
+  width: 100%;
+  height: 52px;
   align-items: center;
   gap: 9px;
   padding: 0 11px 10px;
@@ -151,7 +191,17 @@
   letter-spacing: -0.055em;
 }
 
-.account-sidebar .account-brand > span {
+.account-brand-link {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 9px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.account-sidebar .account-brand-link > span {
   display: inline-flex;
 }
 
@@ -168,6 +218,8 @@
 
 .account-sidebar-collapse {
   display: grid;
+  position: relative;
+  z-index: 10;
   width: 32px;
   height: 32px;
   place-items: center;
@@ -177,6 +229,10 @@
   background: #171719;
   color: #a6a6ad;
   font-size: 15px;
+}
+
+.account-sidebar-collapse:hover {
+  background: #222225;
 }
 
 .account-workspace {
@@ -239,7 +295,7 @@
   flex-direction: column;
   gap: 3px;
   overflow-y: auto;
-  padding: 0 7px;
+  padding: 4px 8px 4px;
 }
 
 .account-nav-label {
@@ -258,16 +314,19 @@
 
 .account-sidebar-link {
   display: flex;
-  min-height: 42px;
+  position: relative;
+  z-index: 10;
+  min-height: 36px;
   align-items: center;
   gap: 10px;
-  padding: 0 10px;
+  padding: 0 8px;
   border: 0;
-  border-radius: 11px;
+  border-radius: 10px;
   background: transparent;
   color: #92929a;
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 450;
   text-align: left;
   transition:
     background 140ms ease,
@@ -275,7 +334,6 @@
 }
 
 .account-sidebar-link:hover {
-  background: #1b1b1e;
   color: #f0f0f2;
 }
 
@@ -285,7 +343,6 @@
 }
 
 .account-sidebar-link--active:hover {
-  background: #fff;
   color: #161618;
 }
 
@@ -369,6 +426,13 @@
   padding: 0 6px;
 }
 
+.account-sidebar-theme-toggle > button,
+.account-sidebar-theme-toggle > button:hover {
+  position: relative;
+  z-index: 10;
+  background: transparent;
+}
+
 .account-sidebar-gate {
   display: flex;
   min-height: 78px;
@@ -410,19 +474,21 @@
 
 .account-dashboard-content {
   display: flex;
+  min-height: 0;
   min-width: 0;
   flex-direction: column;
   gap: 14px;
-  padding: 4px 4px 4px 0;
+  padding: 0;
 }
 
 .account-dashboard-header {
   display: flex;
-  min-height: 72px;
+  min-height: 64px;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 0 4px;
+  padding: 0 12px;
+  background-color: color-mix(in srgb, var(--border), transparent 80%);
 }
 
 .account-heading {
@@ -447,9 +513,9 @@
   overflow: hidden;
   margin: 0;
   color: #f3f3f5;
-  font-size: clamp(18px, 1.7vw, 25px);
-  font-weight: 500;
-  letter-spacing: -0.045em;
+  font-size: clamp(16px, 1.7vw, 24px);
+  font-weight: 450;
+  letter-spacing: -0.03em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -458,8 +524,8 @@
   flex: 0 0 auto;
   padding: 6px 9px;
   border-radius: 999px;
-  background: #f3f3f4;
-  color: #242428;
+  background: var(--foreground);
+  color: var(--background);
   font-size: 9px;
   font-weight: 600;
 }
@@ -476,7 +542,7 @@
   display: flex;
   height: 43px;
   align-items: center;
-  border: 1px solid #2a2a2e;
+  /*border: 1px solid #2a2a2e;*/
   border-radius: 999px;
   background: #171719;
   color: #888890;
@@ -505,7 +571,7 @@
 
 .account-user-menu {
   gap: 9px;
-  padding: 4px 12px 4px 5px;
+  padding: 4px;
   color: #dddde1;
   text-align: left;
 }
@@ -527,13 +593,13 @@
   display: flex;
   min-width: 100px;
   flex-direction: column;
-  gap: 2px;
+  gap: 0px;
 }
 
 .account-user-copy strong {
   color: #ececef;
-  font-size: 10px;
-  font-weight: 550;
+  font-size: 13px;
+  font-weight: 450;
 }
 
 .account-user-copy small {
@@ -544,12 +610,12 @@
 .account-user-chevron {
   margin-left: 5px;
   color: #85858d;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .account-notifications {
   position: relative;
-  width: 43px;
+  width: 42px;
   justify-content: center;
   color: #c8c8ce;
   font-size: 17px;
@@ -567,39 +633,41 @@
 
 .account-dashboard-tabs {
   display: flex;
-  min-height: 46px;
+  min-height: 50px;
   align-items: center;
-  gap: 3px;
-  padding: 4px;
-  border: 1px solid #28282b;
+  gap: 4px;
+  padding: 0px 4px;
+  margin: 4px 6px 0px;
+  /*border: 1px solid var(--border);*/
   border-radius: 999px;
-  background: #171719;
+  /*background: #171719;*/
 }
 
 .account-tab {
   display: inline-flex;
-  min-height: 35px;
+  min-height: 36px;
   align-items: center;
   justify-content: center;
-  padding: 0 15px;
+  padding: 0 16px;
   border-radius: 999px;
   color: #9898a0;
-  font-size: 10px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
 .account-tab:hover {
-  color: #e8e8eb;
+  color: var(--foreground);
 }
 
 .account-tab--active {
-  background: #f1f1f2;
-  color: #1b1b1e;
-  font-weight: 600;
+  background: color-mix(in srgb, var(--mac-blue), transparent 20%);
+  color: #fafafa;
+  font-weight: 450;
 }
 
 .account-tab--active:hover {
-  color: #1b1b1e;
+  background: color-mix(in srgb, var(--mac-blue), transparent 30%);
+  color: #fafafa;
 }
 
 .account-tab-actions {
@@ -607,18 +675,17 @@
   align-items: center;
   gap: 12px;
   margin-left: auto;
-  padding-right: 4px;
 }
 
 .account-environment-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 9px;
-  border: 1px solid #323237;
+  padding: 7px 12px;
+  background: color-mix(in srgb, var(--border), transparent 60%);
   border-radius: 999px;
   color: #a6a6ad;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .account-environment-badge i {
@@ -634,15 +701,15 @@
   align-items: center;
   padding: 0 14px;
   border-radius: 999px;
-  background: #f1f1f2;
-  color: #17171a;
-  font-size: 9px;
+  background: color-mix(in srgb, var(--mac-blue), transparent 80%);
+  color: #dadada;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .account-open-api:hover {
-  background: #fff;
+  background: color-mix(in srgb, var(--mac-blue), transparent 60%);
 }
 
 .account-dashboard-grid {
@@ -652,6 +719,7 @@
   grid-template-columns: minmax(0, 1.7fr) minmax(270px, 0.82fr);
   align-items: start;
   gap: 15px;
+  padding: 0px 12px;
 }
 
 .account-dashboard-main-column,
@@ -659,7 +727,7 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: 15px;
+  gap: 16px;
 }
 
 .account-panel {
@@ -1466,16 +1534,6 @@
 }
 
 @media (max-width: 1180px) {
-  .account-dashboard-frame {
-    grid-template-columns: 205px minmax(0, 1fr);
-    gap: 10px;
-    padding: 9px;
-  }
-
-  .account-dashboard-frame--sidebar-compact {
-    grid-template-columns: 76px minmax(0, 1fr);
-  }
-
   .account-dashboard-grid {
     grid-template-columns: minmax(0, 1.35fr) minmax(250px, 0.8fr);
     gap: 10px;
@@ -1506,14 +1564,48 @@
 
 @media (max-width: 900px) {
   .account-dashboard-page {
-    padding: 10px;
+    padding: 0px;
   }
 
   .account-dashboard-frame {
-    min-height: calc(100svh - 20px);
-    grid-template-columns: 1fr;
-    padding: 8px;
-    border-radius: 23px;
+    height: auto;
+    min-height: 100svh;
+    padding: 0px;
+    border-radius: 0px;
+  }
+
+  .account-dashboard-layout {
+    display: block !important;
+    height: auto !important;
+    min-height: 100svh;
+    overflow: visible !important;
+  }
+
+  .account-dashboard-layout > [data-panel] {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    flex: none !important;
+    overflow: visible !important;
+  }
+
+  .account-dashboard-layout > [data-panel] > .account-sidebar-panel,
+  .account-dashboard-layout > [data-panel] > .account-dashboard-content-panel {
+    width: 100%;
+    height: auto;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .account-dashboard-layout > [data-panel]:first-child {
+    margin-bottom: 8px;
+  }
+
+  .account-dashboard-resize-separator {
+    display: none;
   }
 
   .account-sidebar {
@@ -1538,8 +1630,13 @@
   }
 
   .account-brand {
-    height: 96px;
-    padding: 0 7px;
+    height: 54px;
+    padding: 0;
+  }
+
+  .account-brand-link {
+    height: 54px;
+    padding: 0 8px;
   }
 
   .account-sidebar-collapse,
@@ -1559,16 +1656,16 @@
 
   .account-sidebar-bottom button.account-sidebar-link {
     width: auto;
-    min-height: 38px;
+    height: 36px;
     padding: 0 9px;
   }
 
   .account-dashboard-content {
-    padding: 3px;
+    padding: 0px;
   }
 
   .account-dashboard-header {
-    min-height: 62px;
+    min-height: 64px;
   }
 
   .account-dashboard-grid {
@@ -1593,8 +1690,7 @@
 
   .account-dashboard-frame {
     min-height: 100svh;
-    gap: 7px;
-    padding: 7px;
+    padding: 0px;
     border-radius: 0;
   }
 
@@ -1608,6 +1704,10 @@
     border: 1px solid var(--border);
   }
 
+  .account-brand-link {
+    height: 96px;
+  }
+
   .account-sidebar-bottom button.account-sidebar-link {
     min-height: 34px;
     padding: 0 7px;
@@ -1619,6 +1719,7 @@
     flex-direction: column;
     gap: 12px;
     padding: 4px 2px;
+    border-bottom: 0px solid var(--border);
   }
 
   .account-header-actions {
@@ -1633,7 +1734,6 @@
   }
 
   .account-user-menu {
-    width: 43px;
     justify-content: center;
     padding: 4px;
   }
@@ -1650,13 +1750,13 @@
 
   .account-dashboard-tabs {
     overflow-x: auto;
-    border-radius: 13px;
+    border-radius: 0px;
   }
 
   .account-tab {
     min-height: 32px;
     padding: 0 10px;
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .account-tab-actions {
@@ -1770,10 +1870,10 @@ html.light .account-dashboard-page {
 html.light .account-dashboard-frame {
   border-color: #d8dce2;
   background: var(--account-bg);
-  box-shadow: 0 16px 48px rgba(24, 31, 43, 0.1);
 }
 
 html.light .account-sidebar {
+  --account-sidebar-hover-bg: #edf0f4;
   background: #fbfcfd;
 }
 
@@ -1783,7 +1883,7 @@ html.light .account-sidebar-gate,
 html.light .account-search,
 html.light .account-user-menu,
 html.light .account-notifications,
-html.light .account-dashboard-tabs,
+/*html.light .account-dashboard-tabs,*/
 html.light .account-chart-switcher,
 html.light .account-provider-row {
   border-color: #e1e4e9;
@@ -1794,6 +1894,10 @@ html.light .account-sidebar-collapse,
 html.light .account-user-menu,
 html.light .account-notifications {
   color: #5b626e;
+}
+
+html.light .account-sidebar-collapse:hover {
+  background: #edf0f4;
 }
 
 html.light .account-brand,
@@ -1827,7 +1931,7 @@ html.light .account-sidebar-gate span:last-child,
 html.light .account-breadcrumb,
 html.light .account-user-copy small,
 html.light .account-user-chevron,
-html.light .account-tab,
+/*html.light .account-tab,*/
 html.light .account-environment-badge,
 html.light .account-panel-header p,
 html.light .account-chart-switcher span,
@@ -1854,14 +1958,12 @@ html.light .account-sidebar-link {
 }
 
 html.light .account-sidebar-link:hover {
-  background: #edf0f4;
   color: #202329;
 }
 
 html.light .account-sidebar-link--active,
-html.light .account-sidebar-link--active:hover,
-html.light .account-tab--active,
-html.light .account-tab--active:hover,
+/*html.light .account-tab--active,*/
+/*html.light .account-tab--active:hover,*/
 html.light .account-open-api {
   background: #e8edf7;
   color: #24344f;

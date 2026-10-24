@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils"
 import {Icon, type IconName} from "@/lib/icons"
 import { navGroups } from "@/lib/navs"
 import { Link } from "@octanejs/tanstack-router"
-import { createElement, useRef, useLayoutEffect, type OctaneNode } from "octane"
+import { createElement, useRef, useLayoutEffect, type OctaneNode, type ClassValue } from "octane"
 import FluidTooltip, { FluidTooltipContent, FluidTooltipRoot, FluidTooltipTrigger } from "@/ui/FluidTooltip.btsx"
 import { ThemeToggle } from './ThemeProvider.btsx';
 
@@ -31,6 +31,7 @@ module
     isCompact?: boolean
     // onNavigate: (to: string) => (event: MouseEvent) => void
   }
+  export {ToggleSidebar}
 
   const SIDEBAR_CLASS = "flex flex-col w-full h-full min-h-0 bg-background dark:bg-surface/33 overflow-hidden"
   const SIDEBAR_ITEM_CLASS = "relative z-10 flex w-full items-center gap-1.75 rounded-[10px] border-0 py-1.75 pl-1.75 text-left transition-colors focus-visible:ring-2 focus-visible:ring-focus"
@@ -143,6 +144,11 @@ component SidebarNavContent
       ~ className='pointer-events-none absolute top-0 left-0 z-1 m-0! rounded-[10px] bg-transparent transition-[transform,width,height,opacity] duration-180 ease-out motion-reduce:transition-none shadow-none'
       ~ style={{ width: 'var(--hovered-nav-width, 0px)', height: 'var(--hovered-nav-height, 0px)', opacity: 'var(--hovered-nav-opacity, 0)', transform: 'translate3d(var(--hovered-nav-left, 0px), var(--hovered-nav-top, 0px), 0)' }}
       ~ )
+component ToggleSidebar
+  props {isCompact, toggleSidebar, className}: {isCompact: boolean, toggleSidebar: VoidFunction, className?: ClassValue}
+  div(className={cn("flex items-center justify-center size-16", className)})
+    button(type="button" aria-label={isCompact ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!isCompact} className={cn('h-[16px] w-[19px] rounded-[4px] bg-foreground/80 flex items-center px-0.75 py-0.75 relative transition-all duration-180 active:scale-97 active:bg-foreground group active:skew-2', {'active:-skew-3': isCompact})} onClick={toggleSidebar})
+      div(className={cn('h-[10px] w-[6.25px] rounded-[2.5px] bg-background absolute transition-all duration-240 ease-out group-active:scale-102 active:shadow-1px', {'translate-x-[6.5px] group-active:scale-85': !isCompact})})
 
 component SidebarNavTooltips
   props { path, className, isCompact = false }: { path: string; className?: string; isCompact?: boolean }
@@ -179,7 +185,13 @@ setup
   const handleChildMouseOver = (event: MouseEvent) => {
     const navlist = childNavRef.current
     if (!navlist) return
-    const item = (event.target as HTMLElement).closest<HTMLElement>('button, a')
+    const target = event.target as HTMLElement
+    if (target.closest('[data-sidebar-hover-ignore]')) {
+      hoveredChildItemRef.current = null
+      navlist.style.setProperty('--hovered-nav-opacity', '0')
+      return
+    }
+    const item = target.closest<HTMLElement>('button, a')
     if (!item || !navlist.contains(item)) {
       hoveredChildItemRef.current = null
       navlist.style.setProperty('--hovered-nav-opacity', '0')
@@ -206,9 +218,7 @@ setup
 
 aside(className={sidebarClassName} data-compact={isCompact || undefined} aria-label={ariaLabel})
   if !hideHeader
-    div(className="flex items-center justify-center size-16")
-      button(type="button" aria-label={isCompact ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!isCompact} className={cn('h-[16px] w-[19px] rounded-[4px] bg-muted-foreground flex items-center px-0.75 py-0.75 relative transition-all duration-180 active:scale-97 active:bg-foreground group active:skew-2', {'active:-skew-3': isCompact})} onClick={toggleSidebar})
-        div(className={cn('h-[10px] w-[6.25px] rounded-[2.5px] bg-background absolute transition-all duration-240 ease-out group-active:scale-102 active:shadow-1px', {'translate-x-[6.5px] group-active:scale-85': !isCompact})})
+    ToggleSidebar(isCompact={isCompact} toggleSidebar={toggleSidebar})
   if activeChildren
     div(ref={childNavRef} className={cn("relative isolate mt-0 h-auto min-h-0 flex-1 overflow-y-auto overflow-x-hidden", childrenClassName)} onMouseOver={handleChildMouseOver} onMouseLeave={clearChildHover})
       | #{activeChildren}

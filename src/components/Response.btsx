@@ -79,10 +79,10 @@ else
             ~ }}
             ~ )
             Icon(name='copy' className='size-3.5')
-        div(className="flex gap-x-2 p-2 bg-sunken rounded-lg border border-zinc-200 dark:border-zinc-800 font-mono text-zinc-700 text-xs dark:text-zinc-300 break-all")
+        div(className="flex items-center gap-2 p-2 bg-sunken rounded-lg border border-zinc-200 dark:border-zinc-800 font-mono text-zinc-700 text-xs dark:text-zinc-300 break-all")
           Method(method={displayMethod ?? ""})
           |
-          | #{displayUrl}
+          span(className='whitespace-nowrap overflow-scroll') #{displayUrl}
     if displayParams && Object.keys(displayParams).length > 0
       div
         label(className="text-xs font-medium text-zinc-600 dark:text-zinc-400 uppercase tracking-wide mb-2 block") Request Parameters
