@@ -1,0 +1,5 @@
+import AdminPage from "./AdminPage.btsx";
+import ThemeProvider from "./ThemeProvider.btsx";
+
+ThemeProvider
+  AdminPage

@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .beast/
+.data/
 *.tsbuildinfo
 .env
 .env.*

@@ -18,7 +18,7 @@ setup
   });
   const { loading, response, handleApiCall } = useMeldApi();
   const error = getApiError(response);
-  const activities: ActivityLogsResponseData[] = response?.success ? getAccountRecords(response.data, ACTIVITY_COLLECTIONS) : [];
+  const activities = (response?.success ? getAccountRecords(response.data, ACTIVITY_COLLECTIONS) : []) as ActivityLogsResponseData[];
 
   useEffect(() => {
     void handleApiCall(
@@ -61,8 +61,8 @@ div.account-dashboard-grid.account-route-record-grid
             each activity, index in activities key index
               tr
                 td.account-route-id #{activity.action}
-                td #{activity.actor.type}
-                td #{activity.attributes.accountId}
-                td #{activity.attributes.requestId}
-                td #{activity.attributes.serviceProviders[0]}
+                td #{activity.actor?.type ?? "—"}
+                td #{activity.attributes?.accountId ?? "—"}
+                td #{activity.attributes?.requestId ?? "—"}
+                td #{activity.attributes?.serviceProviders?.[0] ?? "—"}
                 td #{activity.occurredAt}

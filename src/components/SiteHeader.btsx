@@ -2,7 +2,7 @@ import { Link } from "@octanejs/tanstack-router";
 import { Icon } from '@/lib/icons'
 
 module
-  export type SiteHeaderPage = "home" | "account";
+  export type SiteHeaderPage = "home" | "account" | "admin";
 
 props { active }: { active: SiteHeaderPage }
 
@@ -20,3 +20,8 @@ header.landing-header
       ~ to="/api"
       ~ className={active === "home" ? "landing-nav-cta" : "landing-nav-link"}
       ~ ) Meld API
+
+    Link(
+      ~ to="/admin"
+      ~ className={active === "admin" ? "landing-nav-cta" : "landing-nav-link"}
+      ~ ) Admin

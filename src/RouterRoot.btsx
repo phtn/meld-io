@@ -8,6 +8,8 @@ import SignInPage from "./components/SignInPage.btsx";
 import TransactionResultPage from "./components/TransactionResultPage.btsx";
 import AccountTransactionsPage from "./components/AccountTransactionsPage.btsx";
 import AccountLogsPage from "./components/AccountLogsPage.btsx";
+import AdminPage from "./components/AdminPageTheme.btsx";
+import AdminWebhooksPage from "./components/AdminWebhooksPage.btsx";
 import { hasDemoAccountSession } from "./lib/account-session";
 
 component RouteLayout
@@ -54,6 +56,21 @@ setup
     accountTransactionsRoute,
     accountLogsRoute,
   ]);
+  // Admin is intentionally ungated for now.
+  const adminRoute = createRoute({ getParentRoute: () => rootRoute, path: "/admin", component: AdminPage });
+  const adminIndexRoute = createRoute({
+    getParentRoute: () => adminRoute,
+    path: "/",
+    beforeLoad: () => {
+      throw redirect({ to: "/admin/webhooks" });
+    },
+  });
+  const adminWebhooksRoute = createRoute({
+    getParentRoute: () => adminRoute,
+    path: "webhooks",
+    component: AdminWebhooksPage,
+  });
+  const adminRouteTree = adminRoute.addChildren([adminIndexRoute, adminWebhooksRoute]);
   const routeTree = rootRoute.addChildren([
     landingRoute,
     apiRoute,
@@ -61,6 +78,7 @@ setup
     failedRoute,
     accountSignInRoute,
     accountRouteTree,
+    adminRouteTree,
   ]);
   const router = createRouter({ routeTree });
 

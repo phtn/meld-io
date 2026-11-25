@@ -1,0 +1,94 @@
+import { Link, Outlet, useRouterState } from "@octanejs/tanstack-router";
+import { useState } from "octane";
+import { Group, Panel, Separator, usePanelRef, type PanelSize } from "@octanejs/resizable-panels";
+import { Icon } from "@/lib/icons";
+import Sidebar, {ToggleSidebar} from "@/components/Sidebar.btsx";
+import { ThemeToggle } from "@/components/ThemeProvider.btsx";
+import { cn } from "@/lib/utils";
+
+setup
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isWebhooksActive = pathname === "/admin" || pathname === "/admin/" || pathname === "/admin/webhooks";
+  const [isSidebarCompact, setIsSidebarCompact] = useState(false);
+  const sidebarPanelRef = usePanelRef();
+  const handleSidebarResize = (size: PanelSize) => setIsSidebarCompact(size.inPixels <= 90);
+  const toggleSidebar = () => {
+    const panel = sidebarPanelRef.current;
+    if (!panel) return;
+    if (panel.isCollapsed()) panel.expand();
+    else if (isSidebarCompact) panel.resize("238px");
+    else panel.collapse();
+  };
+
+main.account-dashboard-page
+  div.account-dashboard-frame
+    Group(id="admin-dashboard-layout" className="account-dashboard-layout" style={{ height: "100dvh" }})
+      Panel(
+        ~ id="admin-sidebar-panel"
+        ~ panelRef={sidebarPanelRef}
+        ~ defaultSize="238px"
+        ~ minSize="180px"
+        ~ maxSize="320px"
+        ~ collapsedSize="76px"
+        ~ collapsible={true}
+        ~ onResize={handleSidebarResize}
+        ~ className="account-sidebar-panel"
+        ~ style={{ overflow: "hidden" }}
+        ~ )
+        Sidebar(
+          ~ path="/admin"
+          ~ isCompact={isSidebarCompact}
+          ~ toggleSidebar={toggleSidebar}
+          ~ className="account-sidebar"
+          ~ childrenClassName="account-sidebar-custom-navigation"
+          ~ ariaLabel="Admin navigation"
+          ~ hideOnMobile={false}
+          ~ hideHeader={true}
+          ~ hideFooter={true}
+          ~ childrenAlwaysVisible={true}
+          ~ )
+          div.account-sidebar-header(data-sidebar-hover-ignore="true")
+            div.account-brand
+              Link.account-brand-link(to='/')
+                Icon(name='logo' className={cn('size-4', {'size-6': isSidebarCompact})})
+                span(className={isSidebarCompact ? 'hidden!': ''}) cex
+              ToggleSidebar(isCompact={isSidebarCompact} toggleSidebar={toggleSidebar} className={`justify-end ${isSidebarCompact && 'hidden'}`})
+          nav.account-sidebar-navigation
+            p.account-nav-label Admin
+            Link(
+              ~ to="/admin/webhooks"
+              ~ className={cn("account-sidebar-link", isWebhooksActive && "account-sidebar-link--active")}
+              ~ aria-current={isWebhooksActive ? "page" : undefined}
+              ~ )
+              Icon.account-sidebar-icon(name='webhooks')
+              span Webhooks
+          nav.account-sidebar-compact-navigation(aria-label="Admin navigation")
+            Link(
+              ~ to="/admin/webhooks"
+              ~ className={cn("account-sidebar-link", "account-sidebar-compact-link", isWebhooksActive && "account-sidebar-link--active")}
+              ~ aria-current={isWebhooksActive ? "page" : undefined}
+              ~ aria-label="Webhooks"
+              ~ title="Webhooks"
+              ~ )
+              Icon.account-sidebar-icon(name='bell')
+          div.account-sidebar-bottom
+            div.account-sidebar-theme-toggle
+              ThemeToggle
+
+      Separator(
+        ~ id="admin-sidebar-resize-separator"
+        ~ aria-label="Resize admin sidebar"
+        ~ className="account-dashboard-resize-separator"
+        ~ )
+      Panel(
+        ~ id="admin-content-panel"
+        ~ minSize="0px"
+        ~ className="account-dashboard-content-panel"
+        ~ style={{ overflow: "auto" }}
+        ~ )
+        section.account-dashboard-content
+          header.account-dashboard-header
+            div.account-heading
+              div.account-heading-title
+                h1 Admin
+          Outlet
